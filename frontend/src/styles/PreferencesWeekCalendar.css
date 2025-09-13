@@ -404,8 +404,8 @@
 }
 
 .preferences-time-block.wake {
-  background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
-  border: 1px solid rgba(255, 193, 7, 0.3);
+  background: linear-gradient(135deg, #ff8c00 0%, #ff6b00 100%);
+  border: 1px solid rgba(255, 140, 0, 0.4);
   height: 6.67px !important; /* 10 minutes in 30-minute grid (10/30 * 20px) */
   min-height: 6.67px;
 }

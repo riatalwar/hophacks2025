@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Navigation } from '../components/Navigation';
 import { WeekCalendar } from '../components/WeekCalendar';
 import '../styles/Preferences.css';
@@ -43,9 +43,9 @@ export function Preferences() {
     return colorMap[color] || color;
   };
 
-  const handleScheduleChange = (schedule: any[]) => {
+  const handleScheduleChange = useCallback((schedule: any[]) => {
     setStudySchedule(schedule);
-  };
+  }, []);
 
   const handleNotificationToggle = (notificationType: keyof typeof emailNotifications) => {
     setEmailNotifications(prev => ({

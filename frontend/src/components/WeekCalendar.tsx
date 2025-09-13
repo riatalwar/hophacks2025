@@ -28,6 +28,40 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
   const [isMinimized, setIsMinimized] = useState(false);
   const calendarRef = useRef<HTMLDivElement>(null);
 
+  // Helper functions for localStorage persistence
+  const saveTimeBlocks = (blocks: TimeBlock[]) => {
+    localStorage.setItem('studySchedule_timeBlocks', JSON.stringify(blocks));
+  };
+
+  const saveWakeUpTimes = (wakeTimes: { [day: number]: TimeBlock | null }) => {
+    localStorage.setItem('studySchedule_wakeUpTimes', JSON.stringify(wakeTimes));
+  };
+
+  const saveBedtimes = (bedTimes: { [day: number]: TimeBlock | null }) => {
+    localStorage.setItem('studySchedule_bedtimes', JSON.stringify(bedTimes));
+  };
+
+  // Load data from localStorage on component mount
+  useEffect(() => {
+    const savedTimeBlocks = localStorage.getItem('studySchedule_timeBlocks');
+    const savedWakeUpTimes = localStorage.getItem('studySchedule_wakeUpTimes');
+    const savedBedtimes = localStorage.getItem('studySchedule_bedtimes');
+    
+    if (savedTimeBlocks) {
+      const parsedBlocks = JSON.parse(savedTimeBlocks);
+      setTimeBlocks(parsedBlocks);
+      onScheduleChange(parsedBlocks);
+    }
+    
+    if (savedWakeUpTimes) {
+      setWakeUpTimes(JSON.parse(savedWakeUpTimes));
+    }
+    
+    if (savedBedtimes) {
+      setBedtimes(JSON.parse(savedBedtimes));
+    }
+  }, [onScheduleChange]);
+
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const timeSlots = Array.from({ length: 48 }, (_, i) => i); // 48 slots for 30-minute intervals
 
@@ -60,6 +94,18 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
     return `${displayHour}:${minute.toString().padStart(2, '0')} ${period}`;
   };
 
+  // Helper function to format time with day indication for cross-midnight times
+  const formatTimeWithDay = (minutes: number, isBedtime = false) => {
+    const timeStr = formatTime(minutes);
+    
+    // If it's a bedtime and it's early morning (before 6 AM), indicate it's the next day
+    if (isBedtime && minutes <= 360) {
+      return `${timeStr} (next day)`;
+    }
+    
+    return timeStr;
+  };
+
   // Button selection handlers
   const handleButtonSelect = (buttonType: 'wake' | 'bedtime' | 'study') => {
     setSelectedButton(selectedButton === buttonType ? null : buttonType);
@@ -76,7 +122,7 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
   // Toggle minimize/maximize
   const toggleMinimize = () => {
     setIsMinimized(!isMinimized);
-    // Clear any active states when minimizing
+    // Clear only active creation states when minimizing, but preserve data
     if (!isMinimized) {
       setSelectedButton(null);
       setIsCreating(false);
@@ -99,7 +145,7 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
     // Add visual feedback for hover
     const cell = e.currentTarget as HTMLElement;
     if (selectedButton === 'wake') {
-      cell.style.backgroundColor = 'rgba(255, 193, 7, 0.1)'; // Orange for wake up
+      cell.style.backgroundColor = 'rgba(255, 140, 0, 0.15)'; // Deeper orange for wake up
     } else if (selectedButton === 'bedtime') {
       cell.style.backgroundColor = 'rgba(156, 39, 176, 0.1)'; // Purple for bedtime
     } else if (selectedButton === 'study') {
@@ -162,10 +208,12 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
         return;
       }
 
-      setWakeUpTimes(prev => ({
-        ...prev,
+      const updatedWakeUpTimes = {
+        ...wakeUpTimes,
         [day]: newWakeTime
-      }));
+      };
+      setWakeUpTimes(updatedWakeUpTimes);
+      saveWakeUpTimes(updatedWakeUpTimes);
       setErrorMessage(''); // Clear error on successful placement
     } else if (selectedButton === 'bedtime') {
       // Convert slot to minutes (30-minute intervals)
@@ -187,10 +235,12 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
         return;
       }
 
-      setBedtimes(prev => ({
-        ...prev,
+      const updatedBedtimes = {
+        ...bedtimes,
         [day]: newBedtime
-      }));
+      };
+      setBedtimes(updatedBedtimes);
+      saveBedtimes(updatedBedtimes);
       setErrorMessage(''); // Clear error on successful placement
     } else if (selectedButton === 'study') {
       // Two-click study time creation pattern
@@ -241,8 +291,10 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
           type: 'study'
         };
         
-        setTimeBlocks(prev => [...prev, newStudyTime]);
-        onScheduleChange([...timeBlocks, newStudyTime]);
+        const updatedBlocks = [...timeBlocks, newStudyTime];
+        setTimeBlocks(updatedBlocks);
+        saveTimeBlocks(updatedBlocks);
+        onScheduleChange(updatedBlocks);
         
         // Reset creation state
         setIsCreating(false);
@@ -297,7 +349,7 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
     const time = Math.floor((y - 60) / HALF_HOUR_HEIGHT);
 
     if (time >= 0 && time < 48) {
-      setTimeBlocks(prev => prev.map(block => {
+      const updatedBlocks = timeBlocks.map(block => {
         if (block.id === resizing.blockId) {
           const newTime = time * 30; // Convert to minutes
           
@@ -312,7 +364,10 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
           }
         }
         return block;
-      }));
+      });
+      setTimeBlocks(updatedBlocks);
+      saveTimeBlocks(updatedBlocks);
+      onScheduleChange(updatedBlocks);
     }
   };
 
@@ -347,7 +402,7 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
     const deltaY = e.clientY - dragStart.y;
     const { dayWidth } = getGridDimensions();
 
-    setTimeBlocks(prev => prev.map(block => {
+    const updatedBlocks = timeBlocks.map(block => {
       if (block.id === dragging) {
         const newDay = Math.max(0, Math.min(6, Math.round((dayToPosition(block.day) + deltaX) / dayWidth)));
         const newStartTime = Math.max(0, Math.min(1380, positionToTime(timeToPosition(block.startTime) + deltaY)));
@@ -361,7 +416,10 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
         };
       }
       return block;
-    }));
+    });
+    setTimeBlocks(updatedBlocks);
+    saveTimeBlocks(updatedBlocks);
+    onScheduleChange(updatedBlocks);
   };
 
   const handleBlockMouseUp = () => {
@@ -375,30 +433,56 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
   const deleteBlock = (blockId: string) => {
     const updatedBlocks = timeBlocks.filter(block => block.id !== blockId);
     setTimeBlocks(updatedBlocks);
+    saveTimeBlocks(updatedBlocks);
     onScheduleChange(updatedBlocks);
   };
 
   const deleteWakeTime = (day: number) => {
-    setWakeUpTimes(prev => ({
-      ...prev,
+    const updatedWakeUpTimes = {
+      ...wakeUpTimes,
       [day]: null
-    }));
+    };
+    setWakeUpTimes(updatedWakeUpTimes);
+    saveWakeUpTimes(updatedWakeUpTimes);
   };
 
   const deleteBedtime = (day: number) => {
-    setBedtimes(prev => ({
-      ...prev,
+    const updatedBedtimes = {
+      ...bedtimes,
       [day]: null
-    }));
+    };
+    setBedtimes(updatedBedtimes);
+    saveBedtimes(updatedBedtimes);
   };
 
-  // Validation function to check if wake up is before bedtime
+  // Helper function to check if time A is before time B in a 24-hour cycle
+  const isTimeBefore = (timeA: number, timeB: number) => {
+    // If both times are in the same day (both AM or both PM, or one is very early AM and other is late PM)
+    if (timeA < timeB) {
+      // Check if this represents a cross-midnight scenario
+      // If timeA is late night (after 6 PM = 1080 minutes) and timeB is early morning (before 6 AM = 360 minutes)
+      // then timeA is actually the next day and should be considered "before" timeB
+      if (timeA >= 1080 && timeB <= 360) {
+        return false; // timeA (next day) is after timeB (current day)
+      }
+      return true; // timeA is before timeB on same day
+    } else {
+      // timeA >= timeB
+      // Check if this represents a cross-midnight scenario where timeA is early morning and timeB is late night
+      if (timeA <= 360 && timeB >= 1080) {
+        return true; // timeA (early morning) is before timeB (late night, next day)
+      }
+      return false; // timeA is after timeB on same day
+    }
+  };
+
+  // Validation function to check if wake up is before bedtime (handles cross-midnight)
   const validateWakeUpBedtime = (day: number, newWakeUp?: TimeBlock, newBedtime?: TimeBlock) => {
     const currentWakeUp = newWakeUp || wakeUpTimes[day];
     const currentBedtime = newBedtime || bedtimes[day];
     
     if (currentWakeUp && currentBedtime) {
-      if (currentWakeUp.startTime >= currentBedtime.startTime) {
+      if (!isTimeBefore(currentWakeUp.startTime, currentBedtime.startTime)) {
         return `Wake up time must be before bedtime on ${days[day]}`;
       }
     }
@@ -418,12 +502,14 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
       return `Please set a bedtime for ${days[day]} before creating study blocks`;
     }
     
-    if (startTime < wakeUp.startTime) {
-      return `Study time cannot start before wake up time (${formatTime(wakeUp.startTime)}) on ${days[day]}`;
+    // Check if study time starts before wake up time
+    if (!isTimeBefore(wakeUp.startTime, startTime)) {
+      return `Study time cannot start before wake up time (${formatTimeWithDay(wakeUp.startTime)}) on ${days[day]}`;
     }
     
-    if (endTime > bedtime.startTime) {
-      return `Study time cannot end after bedtime (${formatTime(bedtime.startTime)}) on ${days[day]}`;
+    // Check if study time ends after bedtime
+    if (!isTimeBefore(endTime, bedtime.startTime)) {
+      return `Study time cannot end after bedtime (${formatTimeWithDay(bedtime.startTime, true)}) on ${days[day]}`;
     }
     
     return null;
@@ -568,7 +654,7 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
             >
               <div className="preferences-block-content">
                 <span className="preferences-block-time">
-                  Study Time
+                  {formatTimeWithDay(block.startTime)} - {formatTimeWithDay(block.endTime)}
                 </span>
                 <button 
                   className="preferences-delete-block"
@@ -608,7 +694,7 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
               >
                 <div className="preferences-block-content">
                   <span className="preferences-block-time">
-                    Wake Up
+                    {formatTimeWithDay(wakeTime.startTime)}
                   </span>
                   <button 
                     className="preferences-delete-block"
@@ -638,7 +724,7 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
               >
                 <div className="preferences-block-content">
                   <span className="preferences-block-time">
-                    Bedtime
+                    {formatTimeWithDay(bedtime.startTime, true)}
                   </span>
                   <button 
                     className="preferences-delete-block"
