@@ -6,7 +6,7 @@ interface TimeBlock {
   day: number; // 0 = Monday, 1 = Tuesday, etc.
   startTime: number; // minutes from midnight
   endTime: number; // minutes from midnight
-  type: 'study';
+  type: 'study' | 'wake' | 'bedtime';
 }
 
 interface WeekCalendarProps {
@@ -15,10 +15,12 @@ interface WeekCalendarProps {
 
 export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
   const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([]);
+  const [wakeUpTimes, setWakeUpTimes] = useState<{ [day: number]: TimeBlock | null }>({});
   const [dragging, setDragging] = useState<string | null>(null);
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [createStart, setCreateStart] = useState<{ day: number; time: number } | null>(null);
+  const [selectedButton, setSelectedButton] = useState<'wake' | 'bedtime' | 'study' | null>(null);
   const calendarRef = useRef<HTMLDivElement>(null);
 
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -26,16 +28,15 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
 
   // Constants
   const HOUR_HEIGHT = 40;
-  const HEADER_OFFSET = 60;
   const DAYS_COUNT = 7;
 
   // Helper functions
-  const timeToPosition = (time: number) => (time / 60) * HOUR_HEIGHT + HEADER_OFFSET;
-  const positionToTime = (position: number) => Math.round(((position - HEADER_OFFSET) / HOUR_HEIGHT) * 60);
+  const timeToPosition = (time: number) => (time / 60) * HOUR_HEIGHT;
+  const positionToTime = (position: number) => Math.round((position / HOUR_HEIGHT) * 60);
   
   const dayToPosition = (day: number) => {
     if (!calendarRef.current) return 0;
-    const gridWidth = calendarRef.current.offsetWidth - 60;
+    const gridWidth = calendarRef.current.offsetWidth - 60; // Subtract time column width
     return (day * gridWidth) / DAYS_COUNT;
   };
 
@@ -47,6 +48,11 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
     return `${hour - 12} PM`;
   };
 
+  // Button selection handlers
+  const handleButtonSelect = (buttonType: 'wake' | 'bedtime' | 'study') => {
+    setSelectedButton(selectedButton === buttonType ? null : buttonType);
+  };
+
   const getGridDimensions = () => {
     if (!calendarRef.current) return { dayWidth: 0, gridWidth: 0 };
     const gridWidth = calendarRef.current.offsetWidth - 60;
@@ -55,22 +61,49 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
 
   // Mouse event handlers
   const handleMouseDown = (e: React.MouseEvent, day: number, time: number) => {
-    if (e.target !== e.currentTarget) return;
-    setIsCreating(true);
-    setCreateStart({ day, time });
+    if (e.target !== e.currentTarget || !selectedButton) return;
+    
+    if (selectedButton === 'wake') {
+      // For wake up times, place a 10-minute slot immediately
+      const startTime = time * 60;
+      const endTime = startTime + 10; // 10 minutes
+      
+      const newWakeTime: TimeBlock = {
+        id: `wake-${day}-${Date.now()}`,
+        day,
+        startTime,
+        endTime,
+        type: 'wake'
+      };
+
+      setWakeUpTimes(prev => ({
+        ...prev,
+        [day]: newWakeTime
+      }));
+    } else if (selectedButton === 'study') {
+      // For study times, use the original drag behavior
+      setIsCreating(true);
+      setCreateStart({ day, time });
+    }
+    
     e.preventDefault();
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isCreating || !createStart || !calendarRef.current) return;
+    if (!isCreating || !createStart || !calendarRef.current || selectedButton !== 'study') return;
 
     const rect = calendarRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     const { dayWidth } = getGridDimensions();
 
-    const day = Math.floor(x / dayWidth);
-    const time = Math.max(0, Math.min(23, Math.floor((y - HEADER_OFFSET) / HOUR_HEIGHT)));
+    // Calculate day based on grid position (accounting for 60px time column offset)
+    const gridX = x - 60; // Subtract time column width
+    const day = Math.floor(gridX / dayWidth);
+    
+    // Calculate time based on grid position (accounting for header offset)
+    const gridY = y - 60; // Subtract header height
+    const time = Math.max(0, Math.min(23, Math.floor(gridY / HOUR_HEIGHT)));
 
     if (day >= 0 && day <= 6 && time !== createStart.time) {
       const startTime = Math.min(createStart.time, time) * 60;
@@ -112,6 +145,7 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
   };
 
   const handleBlockMouseDown = (e: React.MouseEvent, blockId: string) => {
+    if (!selectedButton) return;
     setDragging(blockId);
     setDragStart({ x: e.clientX, y: e.clientY });
     e.preventDefault();
@@ -155,6 +189,13 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
     onScheduleChange(updatedBlocks);
   };
 
+  const deleteWakeTime = (day: number) => {
+    setWakeUpTimes(prev => ({
+      ...prev,
+      [day]: null
+    }));
+  };
+
   // Global mouse up handler
   useEffect(() => {
     const handleGlobalMouseUp = () => {
@@ -170,11 +211,33 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
     <div className="preferences-week-calendar-container">
       <div className="preferences-calendar-header">
         <h3>Weekly Study Schedule</h3>
-        <p>Drag to create study blocks</p>
+        <p>Click on the buttons below to set your wake up times, bedtimes, and valid study times</p>
+      </div>
+      
+      {/* Schedule Control Buttons */}
+      <div className="preferences-schedule-buttons">
+        <button 
+          className={`preferences-schedule-button ${selectedButton === 'wake' ? 'selected' : ''}`}
+          onClick={() => handleButtonSelect('wake')}
+        >
+          Wake Up Times
+        </button>
+        <button 
+          className={`preferences-schedule-button ${selectedButton === 'bedtime' ? 'selected' : ''}`}
+          onClick={() => handleButtonSelect('bedtime')}
+        >
+          Bedtimes
+        </button>
+        <button 
+          className={`preferences-schedule-button ${selectedButton === 'study' ? 'selected' : ''}`}
+          onClick={() => handleButtonSelect('study')}
+        >
+          Valid Study Times
+        </button>
       </div>
       
       <div 
-        className="preferences-week-calendar" 
+        className={`preferences-week-calendar ${!selectedButton ? 'disabled' : ''}`}
         ref={calendarRef}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
@@ -220,10 +283,10 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
               key={block.id}
               className={`preferences-time-block ${block.type}`}
               style={{
-                left: dayToPosition(block.day),
-                top: timeToPosition(block.startTime),
+                left: dayToPosition(block.day) + 60, // Add time column width offset
+                top: timeToPosition(block.startTime) + 60, // Add header height offset
                 height: timeToPosition(block.endTime - block.startTime),
-                width: 100
+                width: getGridDimensions().dayWidth
               }}
               onMouseDown={(e) => handleBlockMouseDown(e, block.id)}
               onMouseMove={handleBlockMouseMove}
@@ -242,6 +305,36 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
               </div>
             </div>
           ))}
+
+          {/* Wake up time blocks */}
+          {Object.entries(wakeUpTimes).map(([day, wakeTime]) => {
+            if (!wakeTime) return null;
+            return (
+              <div
+                key={wakeTime.id}
+                className={`preferences-time-block ${wakeTime.type}`}
+                style={{
+                  left: dayToPosition(parseInt(day)) + 60, // Add time column width offset
+                  top: timeToPosition(wakeTime.startTime),
+                  height: timeToPosition(wakeTime.endTime - wakeTime.startTime),
+                  width: getGridDimensions().dayWidth
+                }}
+              >
+                <div className="preferences-block-content">
+                  <span className="preferences-block-time">
+                    {formatTime(wakeTime.startTime)}
+                  </span>
+                  <button 
+                    className="preferences-delete-block"
+                    onClick={() => deleteWakeTime(parseInt(day))}
+                    title="Delete"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
