@@ -7,7 +7,7 @@ export function AboutUs() {
   return (
     <div className="about-us-page">
       {/* Navigation */}
-      <Navigation showBackButton={true} backTo="/home" backText="← Back to Home" />
+      <Navigation />
 
       {/* Main Content */}
       <div className="about-container">

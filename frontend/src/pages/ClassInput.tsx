@@ -54,7 +54,7 @@ export function ClassInput() {
   return (
     <div className="class-input-page">
       {/* Navigation */}
-      <Navigation showBackButton={true} backTo="/home" backText="← Back to Home" />
+      <Navigation />
 
       {/* Main Content */}
       <div className="class-input-container">
