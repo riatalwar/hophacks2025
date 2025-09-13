@@ -23,7 +23,7 @@ export function HomePage() {
             and creating efficient study schedules that actually work.
           </p>
           <div className="hero-buttons">
-            <Link to="/classes" className="primary-button">Start Organizing</Link>
+            <Link to="/activities" className="primary-button">Start Organizing</Link>
             <Link to="/about" className="secondary-button">Learn More</Link>
           </div>
         </div>
@@ -64,7 +64,7 @@ export function HomePage() {
           <div className="cta-content">
             <h2>Ready to Transform Your Academic Life?</h2>
             <p>Join thousands of students who have already streamlined their study process with Class Catcher.</p>
-            <Link to="/classes" className="primary-button large">Get Started Today</Link>
+            <Link to="/activities" className="primary-button large">Get Started Today</Link>
           </div>
         </div>
       </section>

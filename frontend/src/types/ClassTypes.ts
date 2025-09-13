@@ -1,6 +1,8 @@
 export interface Activity {
   id: string;
   name: string;
-  credits: number;
   color: string;
+  pdfFile?: File | null;
+  websiteLink?: string;
+  canvasContent?: string;
 }
