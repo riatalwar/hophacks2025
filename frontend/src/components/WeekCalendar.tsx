@@ -25,6 +25,7 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
   const [createStart, setCreateStart] = useState<{ day: number; time: number } | null>(null);
   const [hoverEnd, setHoverEnd] = useState<{ day: number; time: number } | null>(null);
   const [selectedButton, setSelectedButton] = useState<'wake' | 'bedtime' | 'study' | null>(null);
+  const [isMinimized, setIsMinimized] = useState(false);
   const calendarRef = useRef<HTMLDivElement>(null);
 
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -69,6 +70,19 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
       setIsCreating(false);
       setCreateStart(null);
       setHoverEnd(null);
+    }
+  };
+
+  // Toggle minimize/maximize
+  const toggleMinimize = () => {
+    setIsMinimized(!isMinimized);
+    // Clear any active states when minimizing
+    if (!isMinimized) {
+      setSelectedButton(null);
+      setIsCreating(false);
+      setCreateStart(null);
+      setHoverEnd(null);
+      setErrorMessage('');
     }
   };
 
@@ -442,50 +456,66 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
   }, [isCreating, selectedButton]);
 
   return (
-    <div className="preferences-week-calendar-container">
+    <div className={`preferences-week-calendar-container ${isMinimized ? 'minimized' : ''}`}>
       <div className="preferences-calendar-header">
-        <h3>Weekly Study Schedule</h3>
-        <p>Click on the buttons below to set your wake up times, bedtimes, and valid study times</p>
+        <div className="preferences-header-content">
+          <div className="preferences-header-text">
+            <h3>Weekly Study Schedule</h3>
+            <p>Click on the buttons below to set your wake up times, bedtimes, and valid study times</p>
+          </div>
+          <button 
+            className="preferences-minimize-button"
+            onClick={toggleMinimize}
+            title={isMinimized ? "Expand calendar" : "Minimize calendar"}
+          >
+            {isMinimized ? "▼" : "▲"}
+          </button>
+        </div>
       </div>
       
-      {/* Schedule Control Buttons */}
-      <div className="preferences-schedule-buttons">
-        <button 
-          className={`preferences-schedule-button ${selectedButton === 'wake' ? 'selected' : ''}`}
-          onClick={() => handleButtonSelect('wake')}
-        >
-          Wake Up Times
-        </button>
-        <button 
-          className={`preferences-schedule-button ${selectedButton === 'bedtime' ? 'selected' : ''}`}
-          onClick={() => handleButtonSelect('bedtime')}
-        >
-          Bedtimes
-        </button>
-        <button 
-          className={`preferences-schedule-button ${selectedButton === 'study' ? 'selected' : ''}`}
-          onClick={() => handleButtonSelect('study')}
-        >
-          Valid Study Times
-        </button>
-      </div>
+      {/* Schedule Control Buttons - only show when not minimized */}
+      {!isMinimized && (
+        <>
+          <div className="preferences-schedule-buttons">
+            <button 
+              className={`preferences-schedule-button ${selectedButton === 'wake' ? 'selected' : ''}`}
+              onClick={() => handleButtonSelect('wake')}
+            >
+              Wake Up Times
+            </button>
+            <button 
+              className={`preferences-schedule-button ${selectedButton === 'bedtime' ? 'selected' : ''}`}
+              onClick={() => handleButtonSelect('bedtime')}
+            >
+              Bedtimes
+            </button>
+            <button 
+              className={`preferences-schedule-button ${selectedButton === 'study' ? 'selected' : ''}`}
+              onClick={() => handleButtonSelect('study')}
+            >
+              Valid Study Times
+            </button>
+          </div>
 
-      {/* Error message */}
-      {errorMessage && (
-        <div className="preferences-error-message">
-          {errorMessage}
-        </div>
+          {/* Error message */}
+          {errorMessage && (
+            <div className="preferences-error-message">
+              {errorMessage}
+            </div>
+          )}
+        </>
       )}
       
-      <div 
-        className={`preferences-week-calendar ${!selectedButton ? 'disabled' : ''}`}
-        ref={calendarRef}
-        onMouseMove={(e) => {
-          handleMouseMove(e);
-          handleResizeMouseMove(e);
-        }}
-        onMouseUp={handleMouseUp}
-      >
+      {!isMinimized && (
+        <div 
+          className={`preferences-week-calendar ${!selectedButton ? 'disabled' : ''}`}
+          ref={calendarRef}
+          onMouseMove={(e) => {
+            handleMouseMove(e);
+            handleResizeMouseMove(e);
+          }}
+          onMouseUp={handleMouseUp}
+        >
         {/* Time column */}
         <div className="preferences-time-column">
           {timeSlots.map(slot => (
@@ -646,7 +676,8 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
             </div>
           )}
         </div>
-      </div>
+        </div>
+      )}
     </div>
   );
 }
