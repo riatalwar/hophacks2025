@@ -16,7 +16,7 @@
   "engines": {
     "node": "22"
   },
-  "main": "lib/index.js",
+  "main": "lib/backend/functions/src/index.js",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@types/multer": "^2.0.0",
