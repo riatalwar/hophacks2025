@@ -385,6 +385,22 @@
   min-height: 20px;
 }
 
+.preferences-time-block.preview {
+  background: rgba(78, 205, 196, 0.3);
+  border: 2px dashed rgba(78, 205, 196, 0.6);
+  opacity: 0.8;
+  animation: previewPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes previewPulse {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
 .preferences-block-content {
   padding: 0.25rem 0.5rem;
   height: 100%;
@@ -433,6 +449,36 @@
   background: rgba(255, 0, 0, 0.3);
   border-color: rgba(255, 0, 0, 0.5);
   transform: scale(1.1);
+}
+
+.preferences-resize-handle {
+  position: absolute;
+  width: 100%;
+  height: 4px;
+  background: rgba(78, 205, 196, 0.6);
+  cursor: ns-resize;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 2;
+}
+
+.preferences-resize-handle.start {
+  top: -2px;
+  border-radius: 2px 2px 0 0;
+}
+
+.preferences-resize-handle.end {
+  bottom: -2px;
+  border-radius: 0 0 2px 2px;
+}
+
+.preferences-time-block:hover .preferences-resize-handle {
+  opacity: 1;
+}
+
+.preferences-resize-handle:hover {
+  background: rgba(78, 205, 196, 0.9);
+  height: 6px;
 }
 
 /* Dragging states */

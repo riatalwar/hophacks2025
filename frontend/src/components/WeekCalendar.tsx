@@ -20,8 +20,10 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [dragging, setDragging] = useState<string | null>(null);
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
+  const [resizing, setResizing] = useState<{ blockId: string; handle: 'start' | 'end' } | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [createStart, setCreateStart] = useState<{ day: number; time: number } | null>(null);
+  const [hoverEnd, setHoverEnd] = useState<{ day: number; time: number } | null>(null);
   const [selectedButton, setSelectedButton] = useState<'wake' | 'bedtime' | 'study' | null>(null);
   const calendarRef = useRef<HTMLDivElement>(null);
 
@@ -29,7 +31,6 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
   const timeSlots = Array.from({ length: 48 }, (_, i) => i); // 48 slots for 30-minute intervals
 
   // Constants
-  const HOUR_HEIGHT = 40;
   const HALF_HOUR_HEIGHT = 20; // Half of hour height for 30-minute intervals
   const DAYS_COUNT = 7;
 
@@ -62,6 +63,13 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
   const handleButtonSelect = (buttonType: 'wake' | 'bedtime' | 'study') => {
     setSelectedButton(selectedButton === buttonType ? null : buttonType);
     setErrorMessage(''); // Clear any existing error when switching buttons
+    
+    // Cancel study time creation if switching away from study
+    if (isCreating && selectedButton === 'study' && buttonType !== 'study') {
+      setIsCreating(false);
+      setCreateStart(null);
+      setHoverEnd(null);
+    }
   };
 
   const getGridDimensions = () => {
@@ -71,8 +79,8 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
   };
 
   // Mouse event handlers
-  const handleCellHover = (e: React.MouseEvent, _day: number, _slot: number) => {
-    if (!selectedButton || (selectedButton !== 'wake' && selectedButton !== 'bedtime')) return;
+  const handleCellHover = (e: React.MouseEvent, day: number, slot: number) => {
+    if (!selectedButton) return;
     
     // Add visual feedback for hover
     const cell = e.currentTarget as HTMLElement;
@@ -80,6 +88,35 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
       cell.style.backgroundColor = 'rgba(255, 193, 7, 0.1)'; // Orange for wake up
     } else if (selectedButton === 'bedtime') {
       cell.style.backgroundColor = 'rgba(156, 39, 176, 0.1)'; // Purple for bedtime
+    } else if (selectedButton === 'study') {
+      if (isCreating && createStart) {
+        // Track hover position for dynamic preview
+        if (day === createStart.day && slot > createStart.time) {
+          const startTime = createStart.time * 30;
+          const endTime = slot * 30;
+          const validationError = validateStudyTime(day, startTime, endTime);
+          
+          if (validationError) {
+            cell.style.backgroundColor = 'rgba(244, 67, 54, 0.2)'; // Red for invalid
+          } else {
+            cell.style.backgroundColor = 'rgba(78, 205, 196, 0.2)'; // Accent color for valid
+          }
+          
+          setHoverEnd({ day, time: slot });
+        } else {
+          cell.style.backgroundColor = 'rgba(78, 205, 196, 0.1)'; // Light accent color
+        }
+      } else {
+        // Show start time selection - check if valid
+        const startTime = slot * 30;
+        const validationError = validateStudyTime(day, startTime, startTime + 30);
+        
+        if (validationError) {
+          cell.style.backgroundColor = 'rgba(244, 67, 54, 0.1)'; // Light red for invalid
+        } else {
+          cell.style.backgroundColor = 'rgba(78, 205, 196, 0.1)'; // Light accent color for valid
+        }
+      }
     }
     
     // Remove hover effect after a short delay
@@ -142,15 +179,70 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
       }));
       setErrorMessage(''); // Clear error on successful placement
     } else if (selectedButton === 'study') {
-      // For study times, use the original drag behavior
-      setIsCreating(true);
-      setCreateStart({ day, time: slot });
+      // Two-click study time creation pattern
+      if (!isCreating || !createStart) {
+        // First click: set start time
+        const startTime = slot * 30; // Convert to minutes
+        
+        // Validate that wake up and bedtime exist
+        const validationError = validateStudyTime(day, startTime, startTime + 30); // Check with minimum duration
+        if (validationError) {
+          setErrorMessage(validationError);
+          return;
+        }
+        
+        setIsCreating(true);
+        setCreateStart({ day, time: slot });
+        setHoverEnd(null); // Clear any previous hover end
+        setErrorMessage(''); // Clear any errors
+      } else {
+        // Second click: set end time and create block
+        const startTime = createStart.time * 30; // Convert to minutes
+        const endTime = slot * 30; // Convert to minutes
+        
+        // Validate that end time is after start time
+        if (endTime <= startTime) {
+          setErrorMessage('End time must be after start time');
+          return;
+        }
+        
+        // Only create if it's the same day
+        if (createStart.day !== day) {
+          setErrorMessage('Study time blocks must be on the same day');
+          return;
+        }
+        
+        // Validate study time placement
+        const validationError = validateStudyTime(day, startTime, endTime);
+        if (validationError) {
+          setErrorMessage(validationError);
+          return;
+        }
+        
+        const newStudyTime: TimeBlock = {
+          id: `study-${day}-${Date.now()}`,
+          day,
+          startTime,
+          endTime,
+          type: 'study'
+        };
+        
+        setTimeBlocks(prev => [...prev, newStudyTime]);
+        onScheduleChange([...timeBlocks, newStudyTime]);
+        
+        // Reset creation state
+        setIsCreating(false);
+        setCreateStart(null);
+        setHoverEnd(null);
+        setErrorMessage(''); // Clear any errors
+      }
     }
     
     e.preventDefault();
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
+    // Only handle study time creation preview, not block creation
     if (!isCreating || !createStart || !calendarRef.current || selectedButton !== 'study') return;
 
     const rect = calendarRef.current.getBoundingClientRect();
@@ -164,45 +256,61 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
     
     // Calculate time based on grid position (accounting for header offset)
     const gridY = y - 60; // Subtract header height
-    const time = Math.max(0, Math.min(23, Math.floor(gridY / HOUR_HEIGHT)));
+    const time = Math.max(0, Math.min(47, Math.floor(gridY / HALF_HOUR_HEIGHT))); // Use 48 slots for 30-minute intervals
 
-    if (day >= 0 && day <= 6 && time !== createStart.time) {
-      const startTime = Math.min(createStart.time, time) * 60;
-      const endTime = Math.max(createStart.time, time) * 60;
+    // Only update hover end if it's the same day and after start time
+    if (day === createStart.day && time > createStart.time) {
+      const startTime = createStart.time * 30;
+      const endTime = time * 30;
       
-      const newBlock: TimeBlock = {
-        id: `temp-${Date.now()}`,
-        day: createStart.day,
-        startTime,
-        endTime,
-        type: 'study'
-      };
+      // Validate the preview study time
+      const validationError = validateStudyTime(day, startTime, endTime);
+      if (validationError) {
+        setErrorMessage(validationError);
+      } else {
+        setErrorMessage(''); // Clear error if valid
+      }
+      
+      setHoverEnd({ day, time });
+    }
+  };
 
-      setTimeBlocks(prev => {
-        const filtered = prev.filter(block => !block.id.startsWith('temp-'));
-        return [...filtered, newBlock];
-      });
+  const handleResizeMouseMove = (e: React.MouseEvent) => {
+    if (!resizing || !dragStart || !calendarRef.current) return;
+
+    const rect = calendarRef.current.getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    const time = Math.floor((y - 60) / HALF_HOUR_HEIGHT);
+
+    if (time >= 0 && time < 48) {
+      setTimeBlocks(prev => prev.map(block => {
+        if (block.id === resizing.blockId) {
+          const newTime = time * 30; // Convert to minutes
+          
+          if (resizing.handle === 'start') {
+            // Ensure start time is before end time
+            const newStartTime = Math.min(newTime, block.endTime - 30); // Minimum 30 minutes
+            return { ...block, startTime: newStartTime };
+          } else {
+            // Ensure end time is after start time
+            const newEndTime = Math.max(newTime, block.startTime + 30); // Minimum 30 minutes
+            return { ...block, endTime: newEndTime };
+          }
+        }
+        return block;
+      }));
     }
   };
 
   const handleMouseUp = () => {
-    if (isCreating && createStart) {
-      setTimeBlocks(prev => {
-        const filtered = prev.filter(block => !block.id.startsWith('temp-'));
-        const finalBlock = prev.find(block => block.id.startsWith('temp-'));
-        if (finalBlock) {
-          const permanentBlock = {
-            ...finalBlock,
-            id: `block-${Date.now()}-${Math.random()}`
-          };
-          onScheduleChange([...filtered, permanentBlock]);
-          return [...filtered, permanentBlock];
-        }
-        return filtered;
-      });
+    // Handle resize completion
+    if (resizing) {
+      setResizing(null);
+      setDragStart(null);
     }
-    setIsCreating(false);
-    setCreateStart(null);
+    
+    // Note: Study time creation is handled in handleMouseDown, not here
+    // This function only handles cleanup for other operations
   };
 
   const handleBlockMouseDown = (e: React.MouseEvent, blockId: string) => {
@@ -210,6 +318,12 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
     setDragging(blockId);
     setDragStart({ x: e.clientX, y: e.clientY });
     e.preventDefault();
+  };
+
+  const handleResizeMouseDown = (e: React.MouseEvent, blockId: string, handle: 'start' | 'end') => {
+    e.stopPropagation();
+    setResizing({ blockId, handle });
+    setDragStart({ x: e.clientX, y: e.clientY });
   };
 
   const handleBlockMouseMove = (e: React.MouseEvent) => {
@@ -277,6 +391,30 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
     return null;
   };
 
+  // Validation function to check if study time is valid (between wake up and bedtime)
+  const validateStudyTime = (day: number, startTime: number, endTime: number) => {
+    const wakeUp = wakeUpTimes[day];
+    const bedtime = bedtimes[day];
+    
+    if (!wakeUp) {
+      return `Please set a wake up time for ${days[day]} before creating study blocks`;
+    }
+    
+    if (!bedtime) {
+      return `Please set a bedtime for ${days[day]} before creating study blocks`;
+    }
+    
+    if (startTime < wakeUp.startTime) {
+      return `Study time cannot start before wake up time (${formatTime(wakeUp.startTime)}) on ${days[day]}`;
+    }
+    
+    if (endTime > bedtime.startTime) {
+      return `Study time cannot end after bedtime (${formatTime(bedtime.startTime)}) on ${days[day]}`;
+    }
+    
+    return null;
+  };
+
   // Global mouse up handler
   useEffect(() => {
     const handleGlobalMouseUp = () => {
@@ -286,7 +424,22 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
 
     document.addEventListener('mouseup', handleGlobalMouseUp);
     return () => document.removeEventListener('mouseup', handleGlobalMouseUp);
-  }, [isCreating, dragging]);
+  }, [isCreating, dragging, resizing]);
+
+  // Escape key handler to cancel study time creation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isCreating && selectedButton === 'study') {
+        setIsCreating(false);
+        setCreateStart(null);
+        setHoverEnd(null);
+        setErrorMessage('');
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isCreating, selectedButton]);
 
   return (
     <div className="preferences-week-calendar-container">
@@ -327,7 +480,10 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
       <div 
         className={`preferences-week-calendar ${!selectedButton ? 'disabled' : ''}`}
         ref={calendarRef}
-        onMouseMove={handleMouseMove}
+        onMouseMove={(e) => {
+          handleMouseMove(e);
+          handleResizeMouseMove(e);
+        }}
         onMouseUp={handleMouseUp}
       >
         {/* Time column */}
@@ -382,7 +538,7 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
             >
               <div className="preferences-block-content">
                 <span className="preferences-block-time">
-                  {formatTime(block.startTime)}
+                  Study Time
                 </span>
                 <button 
                   className="preferences-delete-block"
@@ -392,6 +548,17 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
                   ×
                 </button>
               </div>
+              {/* Resize handles */}
+              <div 
+                className="preferences-resize-handle start"
+                onMouseDown={(e) => handleResizeMouseDown(e, block.id, 'start')}
+                title="Resize start time"
+              />
+              <div 
+                className="preferences-resize-handle end"
+                onMouseDown={(e) => handleResizeMouseDown(e, block.id, 'end')}
+                title="Resize end time"
+              />
             </div>
           ))}
 
@@ -454,6 +621,30 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
               </div>
             );
           })}
+
+          {/* Study time creation preview */}
+          {isCreating && createStart && selectedButton === 'study' && (
+            <div
+              className="preferences-time-block study preview"
+              style={{
+                left: dayToPosition(createStart.day),
+                top: timeToPosition(createStart.time * 30),
+                height: hoverEnd && hoverEnd.day === createStart.day && hoverEnd.time > createStart.time
+                  ? timeToPosition(hoverEnd.time * 30) - timeToPosition(createStart.time * 30)
+                  : 6.67, // Default height if no hover end
+                width: getGridDimensions().dayWidth
+              }}
+            >
+              <div className="preferences-block-content">
+                <span className="preferences-block-time">
+                  {hoverEnd && hoverEnd.day === createStart.day && hoverEnd.time > createStart.time
+                    ? `${formatTime(createStart.time * 30)} - ${formatTime(hoverEnd.time * 30)}`
+                    : `Start: ${formatTime(createStart.time * 30)}`
+                  }
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
