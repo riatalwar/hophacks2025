@@ -18,6 +18,7 @@
   },
   "main": "lib/index.js",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "firebase-admin": "^12.6.0",
