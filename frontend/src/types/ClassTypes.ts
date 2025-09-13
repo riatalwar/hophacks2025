@@ -1,6 +1,6 @@
 export interface Activity {
   id: string;
-  name: string;
+  activityName: string;
   color: string;
   pdfFile?: File | null;
   websiteLink?: string;
