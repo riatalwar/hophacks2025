@@ -45,7 +45,7 @@
 
 .class-input-header p {
   font-size: 1.1rem;
-  color: #a0a0a0;
+  color: var(--text-secondary);
   max-width: 600px;
   margin: 0 auto;
 }
@@ -54,7 +54,7 @@
 .add-class-form {
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
   border-radius: 20px;
   padding: 2rem;
   margin-bottom: 3rem;
@@ -85,7 +85,7 @@
 }
 
 .form-group label {
-  color: #ffffff;
+  color: var(--text-primary);
   font-weight: 600;
   margin-bottom: 0.5rem;
   font-size: 0.9rem;
@@ -94,10 +94,10 @@
 .form-group input,
 .form-group select {
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
   border-radius: 10px;
   padding: 0.75rem 1rem;
-  color: #ffffff;
+  color: var(--text-primary);
   font-size: 1rem;
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
@@ -106,7 +106,7 @@
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
-  border-color: rgba(255, 255, 255, 0.3);
+  border-color: var(--border-strong);
   background: rgba(255, 255, 255, 0.08);
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 }
@@ -138,7 +138,7 @@
 }
 
 .color-option.selected {
-  border-color: #ffffff;
+  border-color: var(--border-color);
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
 }
 
@@ -193,7 +193,7 @@
 
 /* Activities List */
 .activities-list h2 {
-  color: #ffffff;
+  color: var(--text-primary);
   font-size: 1.5rem;
   font-weight: 700;
   margin-bottom: 1.5rem;
@@ -202,7 +202,7 @@
 /* Add Activity Button */
 .add-activity-button {
   background: transparent;
-  border: 2px dashed rgba(255, 255, 255, 0.3);
+  border: 2px dashed var(--border-strong);
   border-radius: 20px;
   padding: 2rem;
   cursor: pointer;
@@ -214,7 +214,7 @@
 }
 
 .add-activity-button:hover {
-  border-color: rgba(255, 255, 255, 0.5);
+  border-color: var(--border-hover);
   background: rgba(255, 255, 255, 0.02);
   transform: translateY(-2px);
 }
@@ -231,7 +231,7 @@
 
 .plus-icon {
   font-size: 2rem;
-  color: #ffffff;
+  color: var(--text-primary);
   font-weight: 300;
   width: 50px;
   height: 50px;
@@ -256,35 +256,73 @@
 }
 
 .add-button-title {
-  color: #ffffff;
+  color: var(--text-primary);
   font-size: 1.2rem;
   font-weight: 600;
   margin-bottom: 0.25rem;
 }
 
 .add-button-subtitle {
-  color: #a0a0a0;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   font-weight: 400;
 }
 
 /* Activity Items */
 .activity-item {
-  background: rgba(255, 255, 255, 0.03);
+  background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-hover) 100%);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-left: 4px solid #ffffff;
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--accent-color);
   border-radius: 15px;
   padding: 1.5rem;
   margin-bottom: 1rem;
   position: relative;
   transition: all 0.3s ease;
+  overflow: hidden;
+  box-shadow: 
+    0 2px 8px var(--shadow-color),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.light-theme .activity-item {
+  box-shadow: 
+    0 4px 15px var(--shadow-color),
+    0 1px 5px var(--shadow-light),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.03);
+}
+
+.activity-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  opacity: 0.6;
+  z-index: 1;
 }
 
 .activity-item:hover {
   transform: translateY(-2px);
-  background: rgba(255, 255, 255, 0.05);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(135deg, var(--bg-hover) 0%, var(--bg-tertiary) 100%);
+  box-shadow: 
+    0 8px 25px var(--shadow-color),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.light-theme .activity-item:hover {
+  box-shadow: 
+    0 10px 30px var(--shadow-color),
+    0 3px 10px var(--shadow-light),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.06);
+}
+
+.activity-item:hover::before {
+  opacity: 1;
 }
 
 .activity-content {
@@ -301,7 +339,7 @@
 }
 
 .activity-header h3 {
-  color: #ffffff;
+  color: var(--text-primary);
   font-size: 1.1rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
@@ -317,12 +355,12 @@
 
 .attachment-tag {
   background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  color: var(--text-primary);
   padding: 0.25rem 0.75rem;
   border-radius: 15px;
   font-size: 0.8rem;
   font-weight: 500;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
 }
 
 .remove-activity {
@@ -351,14 +389,17 @@
 
 /* Add Activity Form */
 .add-activity-form {
-  background: rgba(255, 255, 255, 0.03);
+  background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-hover) 100%);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
   border-radius: 20px;
   padding: 2rem;
   margin-bottom: 2rem;
   position: relative;
   overflow: hidden;
+  box-shadow: 
+    0 4px 15px var(--shadow-color),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .add-activity-form::before {
@@ -368,7 +409,9 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  opacity: 0.6;
+  z-index: 1;
 }
 
 .form-section {
@@ -388,7 +431,7 @@
 }
 
 .form-group label {
-  color: #ffffff;
+  color: var(--text-primary);
   font-weight: 600;
   margin-bottom: 0.5rem;
   font-size: 0.9rem;
@@ -398,10 +441,10 @@
 .form-group input,
 .form-group textarea {
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
   border-radius: 10px;
   padding: 0.75rem 1rem;
-  color: #ffffff;
+  color: var(--text-primary);
   font-size: 1rem;
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
@@ -412,7 +455,7 @@
 .form-group input:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: rgba(255, 255, 255, 0.3);
+  border-color: var(--border-strong);
   background: rgba(255, 255, 255, 0.08);
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 }
@@ -429,7 +472,7 @@
 
 .file-input {
   background: rgba(255, 255, 255, 0.05) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid var(--border-color) !important;
   border-radius: 10px !important;
   padding: 0.75rem 1rem !important;
   color: #ffffff !important;
@@ -450,12 +493,12 @@
   justify-content: flex-end;
   margin-top: 2rem;
   padding-top: 1.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--border-color);
 }
 
 .cancel-button {
   background: transparent;
-  color: #a0a0a0;
+  color: var(--text-secondary);
   border: 1px solid rgba(160, 160, 160, 0.3);
   padding: 0.75rem 1.5rem;
   border-radius: 10px;
@@ -468,12 +511,12 @@
 .cancel-button:hover {
   background: rgba(160, 160, 160, 0.1);
   border-color: rgba(160, 160, 160, 0.5);
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .add-button {
   background: linear-gradient(135deg, #4ecdc4 0%, #45b7d1 100%);
-  color: #ffffff;
+  color: var(--text-primary);
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: 10px;
@@ -493,7 +536,7 @@
   text-align: center;
   padding: 3rem;
   background: rgba(255, 255, 255, 0.02);
-  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border: 1px dashed var(--border-color);
   border-radius: 20px;
 }
 
@@ -503,7 +546,7 @@
 }
 
 .empty-state p {
-  color: #a0a0a0;
+  color: var(--text-secondary);
   font-size: 1.1rem;
 }
 
@@ -516,7 +559,7 @@
 .class-card {
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
   border-left: 4px solid #ffffff;
   border-radius: 15px;
   padding: 1.5rem;
@@ -534,7 +577,7 @@
 }
 
 .class-info h3 {
-  color: #ffffff;
+  color: var(--text-primary);
   font-size: 1.1rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
@@ -542,7 +585,7 @@
 }
 
 .class-info .professor {
-  color: #a0a0a0;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   margin-bottom: 0.5rem;
   display: block;
@@ -550,7 +593,7 @@
 
 .class-info .credits {
   background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  color: var(--text-primary);
   padding: 0.25rem 0.75rem;
   border-radius: 20px;
   font-size: 0.8rem;
@@ -637,8 +680,8 @@
 
 .secondary-button {
   background: transparent;
-  color: #ffffff;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: var(--text-primary);
+  border: 2px solid var(--border-strong);
   padding: 1rem 2rem;
   border-radius: 50px;
   font-weight: 600;
@@ -653,7 +696,7 @@
 
 .secondary-button:hover {
   background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.5);
+  border-color: var(--border-hover);
   transform: translateY(-2px);
 }
 

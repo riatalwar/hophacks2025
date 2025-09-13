@@ -1,0 +1,354 @@
+/* Preferences Week Calendar Styles - For Preferences Page Only */
+.preferences-week-calendar-container {
+  background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-hover) 100%);
+  border: 1px solid var(--border-light);
+  border-radius: 15px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 
+    0 2px 10px var(--shadow-color),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.light-theme .preferences-week-calendar-container {
+  box-shadow: 
+    0 6px 20px var(--shadow-color),
+    0 2px 6px var(--shadow-light),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.03);
+}
+
+.preferences-week-calendar-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  opacity: 0.6;
+  z-index: 1;
+}
+
+.preferences-calendar-header {
+  margin-bottom: 1.5rem;
+}
+
+.preferences-calendar-header h3 {
+  color: var(--text-primary);
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.preferences-calendar-header p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.preferences-week-calendar {
+  position: relative;
+  background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-hover) 100%);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  overflow: hidden;
+  user-select: none;
+  box-shadow: 
+    0 2px 8px var(--shadow-color),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  height: 1020px; /* 24 hours * 40px + 60px for reduced header */
+  min-height: 1020px;
+  width: 100%;
+  max-width: 100%;
+}
+
+.light-theme .preferences-week-calendar {
+  box-shadow: 
+    0 4px 12px var(--shadow-color),
+    0 1px 4px var(--shadow-light),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.02);
+}
+
+.preferences-time-column {
+  position: absolute;
+  left: 0;
+  top: 60px; /* Start below the reduced header */
+  width: 60px;
+  height: 960px; /* 24 hours * 40px */
+  background: rgba(255, 255, 255, 0.05);
+  border-right: 1px solid var(--border-color);
+  z-index: 2;
+}
+
+.preferences-time-slot {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 500;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.preferences-calendar-grid {
+  margin-left: 60px;
+  position: relative;
+  height: 1020px; /* 24 hours * 40px + 60px for reduced header */
+  width: calc(100% - 60px); /* Full width minus time column */
+}
+
+.preferences-days-header {
+  display: flex;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--border-color);
+  height: 60px; /* Reduced height for header */
+  position: absolute;
+  top: -60px;
+  left: 0;
+  right: 0;
+  z-index: 3;
+}
+
+.preferences-day-header {
+  width: calc((100% - 60px) / 7); /* Distribute remaining width equally among 7 days */
+  padding: 0.5rem 0.25rem;
+  text-align: center;
+  border-right: 1px solid var(--border-light);
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.preferences-day-name {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.8rem;
+  margin-bottom: 0.25rem;
+  line-height: 1;
+}
+
+.preferences-day-controls {
+  display: flex;
+  gap: 0.125rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.preferences-time-button {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-medium);
+  border-radius: 4px;
+  padding: 0.125rem 0.25rem;
+  color: var(--text-primary);
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preferences-time-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: var(--border-strong);
+  transform: scale(1.05);
+}
+
+.preferences-wake-button:hover {
+  background: rgba(255, 193, 7, 0.2);
+  border-color: rgba(255, 193, 7, 0.4);
+}
+
+.preferences-sleep-button:hover {
+  background: rgba(78, 205, 196, 0.2);
+  border-color: rgba(78, 205, 196, 0.4);
+}
+
+.preferences-grid-cells {
+  display: flex;
+  position: relative;
+  margin-top: 60px; /* Push grid below the reduced header */
+  height: 960px; /* 24 hours * 40px */
+  width: 100%; /* Full width of parent */
+}
+
+.preferences-day-column {
+  width: calc((100% - 60px) / 7); /* Distribute remaining width equally among 7 days */
+  border-right: 1px solid var(--border-light);
+  flex-shrink: 0;
+}
+
+.preferences-time-cell {
+  height: 40px;
+  border-bottom: 1px solid var(--border-light);
+  cursor: crosshair;
+  transition: background-color 0.2s ease;
+  position: relative;
+}
+
+.preferences-time-cell:hover {
+  background: rgba(78, 205, 196, 0.05);
+}
+
+.preferences-time-cell:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.01);
+}
+
+/* Time Blocks */
+.preferences-time-block {
+  position: absolute;
+  border-radius: 6px;
+  cursor: move;
+  z-index: 3;
+  min-height: 20px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  margin: 0 5px; /* Add horizontal margin to align with grid cells */
+  width: calc((100% - 60px) / 7 - 10px) !important; /* Responsive width based on day column */
+}
+
+.preferences-time-block:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.preferences-time-block.study {
+  background: linear-gradient(135deg, #4ecdc4 0%, #45b7d1 100%);
+  border: 1px solid rgba(78, 205, 196, 0.3);
+}
+
+.preferences-time-block.wake {
+  background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  height: 20px !important;
+  min-height: 20px;
+}
+
+.preferences-time-block.sleep {
+  background: linear-gradient(135deg, #9c27b0 0%, #673ab7 100%);
+  border: 1px solid rgba(156, 39, 176, 0.3);
+  height: 20px !important;
+  min-height: 20px;
+}
+
+.preferences-block-content {
+  padding: 0.25rem 0.5rem;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 500;
+  position: relative;
+}
+
+.preferences-block-time {
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
+
+.preferences-delete-block {
+  background: rgba(255, 0, 0, 0.2);
+  border: 1px solid rgba(255, 0, 0, 0.3);
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ff6b6b;
+  font-size: 0.7rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0;
+}
+
+.preferences-time-block:hover .preferences-delete-block {
+  opacity: 1;
+}
+
+.preferences-delete-block:hover {
+  background: rgba(255, 0, 0, 0.3);
+  border-color: rgba(255, 0, 0, 0.5);
+  transform: scale(1.1);
+}
+
+/* Dragging states */
+.preferences-time-block.dragging {
+  opacity: 0.7;
+  transform: rotate(2deg);
+  z-index: 10;
+}
+
+.preferences-time-cell.creating {
+  background: rgba(78, 205, 196, 0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .preferences-week-calendar-container {
+    padding: 1rem;
+    overflow-x: auto;
+  }
+  
+  .preferences-week-calendar {
+    min-width: 320px; /* Minimum width for very small screens */
+    width: 100%;
+  }
+  
+  .preferences-day-header {
+    width: calc((100% - 50px) / 7); /* Distribute width among 7 days on mobile */
+    padding: 0.25rem 0.125rem;
+    flex-shrink: 0;
+  }
+  
+  .preferences-day-column {
+    width: calc((100% - 50px) / 7); /* Distribute width among 7 days on mobile */
+    flex-shrink: 0;
+  }
+  
+  .preferences-time-block {
+    width: calc((100% - 50px) / 7 - 6px) !important; /* Responsive width on mobile */
+    margin: 0 3px;
+  }
+  
+  .preferences-time-column {
+    width: 50px; /* Smaller time column on mobile */
+  }
+  
+  .preferences-calendar-grid {
+    margin-left: 50px; /* Adjust for smaller time column */
+    width: calc(100% - 50px);
+  }
+  
+  .preferences-time-slot {
+    font-size: 0.7rem;
+  }
+  
+  .preferences-day-name {
+    font-size: 0.8rem;
+  }
+  
+  .preferences-time-button {
+    min-width: 20px;
+    height: 20px;
+    font-size: 0.6rem;
+    padding: 0.1rem 0.2rem;
+  }
+  
+  .preferences-grid-cells {
+    width: 100%; /* Full width on mobile */
+  }
+}

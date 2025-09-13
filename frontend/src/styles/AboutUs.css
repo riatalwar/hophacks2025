@@ -46,7 +46,7 @@
 
 .about-subtitle {
   font-size: 1.3rem;
-  color: #a0a0a0;
+  color: var(--text-secondary);
   line-height: 1.7;
   max-width: 800px;
   margin: 0 auto;
@@ -68,7 +68,7 @@
 .student-card {
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
   border-radius: 20px;
   padding: 2rem;
   text-align: center;
@@ -98,7 +98,7 @@
   height: 150px;
   margin: 0 auto 1.5rem;
   background: rgba(255, 255, 255, 0.05);
-  border: 2px dashed rgba(255, 255, 255, 0.2);
+  border: 2px dashed var(--border-medium);
   border-radius: 50%;
   display: flex;
   flex-direction: column;
@@ -108,7 +108,7 @@
 }
 
 .student-card:hover .student-image-placeholder {
-  border-color: rgba(255, 255, 255, 0.4);
+  border-color: var(--border-hover);
   background: rgba(255, 255, 255, 0.08);
 }
 
@@ -119,20 +119,20 @@
 }
 
 .student-image-placeholder span {
-  color: #a0a0a0;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   font-weight: 500;
 }
 
 .student-info h3 {
-  color: #ffffff;
+  color: var(--text-primary);
   font-size: 1.2rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
 }
 
 .student-info p {
-  color: #a0a0a0;
+  color: var(--text-secondary);
   font-size: 0.9rem;
 }
 
@@ -144,7 +144,7 @@
 .mission-content {
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
   border-radius: 20px;
   padding: 3rem;
   position: relative;
@@ -162,7 +162,7 @@
 }
 
 .mission-content h2 {
-  color: #ffffff;
+  color: var(--text-primary);
   font-size: 2rem;
   font-weight: 700;
   margin-bottom: 2rem;
@@ -170,7 +170,7 @@
 }
 
 .mission-content p {
-  color: #a0a0a0;
+  color: var(--text-secondary);
   font-size: 1.1rem;
   line-height: 1.7;
   margin-bottom: 1.5rem;
@@ -188,18 +188,18 @@
   padding: 3rem;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
 }
 
 .about-cta h2 {
-  color: #ffffff;
+  color: var(--text-primary);
   font-size: 2.2rem;
   font-weight: 700;
   margin-bottom: 1rem;
 }
 
 .about-cta p {
-  color: #a0a0a0;
+  color: var(--text-secondary);
   font-size: 1.1rem;
   margin-bottom: 2rem;
 }
@@ -221,7 +221,7 @@
 /* Button Styles */
 .primary-button {
   background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
-  color: #000000;
+  color: var(--text-primary);
   border: none;
   padding: 1rem 2rem;
   border-radius: 50px;
@@ -259,8 +259,8 @@
 
 .secondary-button {
   background: transparent;
-  color: #ffffff;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: var(--text-primary);
+  border: 2px solid var(--border-strong);
   padding: 1rem 2rem;
   border-radius: 50px;
   font-weight: 600;
@@ -275,7 +275,7 @@
 
 .secondary-button:hover {
   background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.5);
+  border-color: var(--border-hover);
   transform: translateY(-2px);
 }
 
@@ -285,18 +285,18 @@
   padding: 2rem;
   background: rgba(255, 255, 255, 0.02);
   border-radius: 15px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
 }
 
 .university-info h3 {
-  color: #ffffff;
+  color: var(--text-primary);
   font-size: 1.5rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
 }
 
 .university-info p {
-  color: #a0a0a0;
+  color: var(--text-secondary);
   font-size: 1rem;
   margin-bottom: 1.5rem;
 }
@@ -309,12 +309,12 @@
 }
 
 .university-details span {
-  color: #a0a0a0;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   padding: 0.5rem 1rem;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
 }
 
 /* Responsive Design */

@@ -4,9 +4,11 @@ import { Signup } from './pages/Signup'
 import { Dashboard } from './pages/Dashboard'
 import { HomePage } from './pages/HomePage'
 import { ClassInput } from './pages/ActivityInput'
+import { Preferences } from './pages/Preferences'
 import { AboutUs } from './pages/AboutUs'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import './App.css'
+import './styles/GlobalTheme.css'
 
 function App() {
   return (
@@ -21,6 +23,14 @@ function App() {
         element={
           <ProtectedRoute>
             <ClassInput />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/preferences" 
+        element={
+          <ProtectedRoute>
+            <Preferences />
           </ProtectedRoute>
         } 
       />

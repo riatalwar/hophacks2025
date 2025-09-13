@@ -55,6 +55,7 @@ export function Navigation({
               {currentUser ? (
                 <>
                   <Link to="/dashboard" className="cta-button">Dashboard</Link>
+                  <Link to="/preferences" className="nav-link">Settings</Link>
                   <button onClick={handleLogout} className="logout-button">Logout</button>
                 </>
               ) : (

@@ -41,7 +41,8 @@ export function Login() {
         : formData.emailOrUsername;
 
       await signInWithEmailAndPassword(auth, email, formData.password);
-      navigate('/');
+      // Redirect to preferences for setup, users can navigate to dashboard from there
+      navigate('/preferences');
     } catch (error: unknown) {
       if (error && typeof error === 'object' && 'code' in error) {
         const firebaseError = error as { code: string; message: string };

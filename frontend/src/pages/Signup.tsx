@@ -64,7 +64,8 @@ export function Signup() {
         displayName: formData.name
       });
 
-      navigate('/');
+      // Redirect to preferences for first-time setup
+      navigate('/preferences');
     } catch (error: unknown) {
       if (error && typeof error === 'object' && 'message' in error) {
         setError((error as { message: string }).message);
