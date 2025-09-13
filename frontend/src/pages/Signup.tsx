@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '../firebase';
+import '../styles/Signup.css';
 
 export function Signup() {
   const [formData, setFormData] = useState({
@@ -64,7 +65,8 @@ export function Signup() {
         displayName: formData.name
       });
 
-      navigate('/');
+      // Redirect to preferences for first-time setup
+      navigate('/preferences');
     } catch (error: unknown) {
       if (error && typeof error === 'object' && 'message' in error) {
         setError((error as { message: string }).message);
@@ -77,13 +79,13 @@ export function Signup() {
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '0 auto', padding: '2rem' }}>
+    <div className="signup-container">
       <h2>Create Account</h2>
-      {error && <div style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
+      {error && <div className="form-error">{error}</div>}
       
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="email">Email:</label>
+      <form onSubmit={handleSubmit} className="form-container">
+        <div className="form-group">
+          <label htmlFor="email" className="form-label">Email:</label>
           <input
             type="email"
             id="email"
@@ -91,12 +93,13 @@ export function Signup() {
             value={formData.email}
             onChange={handleChange}
             required
-            style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
+            className="form-input"
+            placeholder="Enter your email address"
           />
         </div>
 
-        <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="name">Full Name:</label>
+        <div className="form-group">
+          <label htmlFor="name" className="form-label">Full Name:</label>
           <input
             type="text"
             id="name"
@@ -104,12 +107,13 @@ export function Signup() {
             value={formData.name}
             onChange={handleChange}
             required
-            style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
+            className="form-input"
+            placeholder="Enter your full name"
           />
         </div>
 
-        <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="username">Username:</label>
+        <div className="form-group">
+          <label htmlFor="username" className="form-label">Username:</label>
           <input
             type="text"
             id="username"
@@ -117,12 +121,13 @@ export function Signup() {
             value={formData.username}
             onChange={handleChange}
             required
-            style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
+            className="form-input"
+            placeholder="Choose a username"
           />
         </div>
 
-        <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="password">Password:</label>
+        <div className="form-group">
+          <label htmlFor="password" className="form-label">Password:</label>
           <input
             type="password"
             id="password"
@@ -130,12 +135,13 @@ export function Signup() {
             value={formData.password}
             onChange={handleChange}
             required
-            style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
+            className="form-input"
+            placeholder="Create a password"
           />
         </div>
 
-        <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="confirmPassword">Confirm Password:</label>
+        <div className="form-group">
+          <label htmlFor="confirmPassword" className="form-label">Confirm Password:</label>
           <input
             type="password"
             id="confirmPassword"
@@ -143,28 +149,21 @@ export function Signup() {
             value={formData.confirmPassword}
             onChange={handleChange}
             required
-            style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
+            className="form-input"
+            placeholder="Confirm your password"
           />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          style={{
-            width: '100%',
-            padding: '0.75rem',
-            backgroundColor: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: loading ? 'not-allowed' : 'pointer'
-          }}
+          className="primary-button form-button"
         >
           {loading ? 'Creating Account...' : 'Create Account'}
         </button>
       </form>
 
-      <p style={{ textAlign: 'center', marginTop: '1rem' }}>
+      <p className="form-link">
         Already a user? <Link to="/login">Sign in</Link>
       </p>
     </div>

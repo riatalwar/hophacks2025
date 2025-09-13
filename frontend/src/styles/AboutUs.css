@@ -1,10 +1,11 @@
 /* About Us Page Styles */
 .about-us-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #000000 0%, #0a0a0a 50%, #000000 100%);
+  background: var(--bg-primary);
   position: relative;
 }
 
+/* Dark mode background */
 .about-us-page::before {
   content: '';
   position: fixed;
@@ -17,6 +18,17 @@
               radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.05) 0%, transparent 50%);
   pointer-events: none;
   z-index: 0;
+}
+
+/* Light mode background with ombré effect */
+.light-theme .about-us-page {
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-primary) 100%);
+}
+
+.light-theme .about-us-page::before {
+  background: radial-gradient(circle at 20% 80%, rgba(78, 205, 196, 0.08) 0%, transparent 50%),
+              radial-gradient(circle at 80% 20%, rgba(255, 107, 107, 0.06) 0%, transparent 50%),
+              radial-gradient(circle at 40% 40%, rgba(69, 183, 209, 0.04) 0%, transparent 50%);
 }
 
 .about-container {
@@ -38,7 +50,7 @@
   font-size: 3rem;
   font-weight: 800;
   margin-bottom: 2rem;
-  background: linear-gradient(135deg, #ffffff 0%, #a0a0a0 100%);
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -46,7 +58,7 @@
 
 .about-subtitle {
   font-size: 1.3rem;
-  color: #a0a0a0;
+  color: var(--text-secondary);
   line-height: 1.7;
   max-width: 800px;
   margin: 0 auto;
@@ -66,15 +78,16 @@
 }
 
 .student-card {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-tertiary);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
   border-radius: 20px;
   padding: 2rem;
   text-align: center;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 8px 32px var(--shadow-color);
 }
 
 .student-card::before {
@@ -84,21 +97,21 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background: linear-gradient(90deg, transparent, var(--border-hover), transparent);
 }
 
 .student-card:hover {
   transform: translateY(-10px);
-  background: rgba(255, 255, 255, 0.05);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  background: var(--bg-hover);
+  box-shadow: 0 20px 40px var(--shadow-color);
 }
 
 .student-image-placeholder {
   width: 150px;
   height: 150px;
   margin: 0 auto 1.5rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 2px dashed rgba(255, 255, 255, 0.2);
+  background: var(--bg-hover);
+  border: 2px dashed var(--border-medium);
   border-radius: 50%;
   display: flex;
   flex-direction: column;
@@ -108,8 +121,8 @@
 }
 
 .student-card:hover .student-image-placeholder {
-  border-color: rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--border-hover);
+  background: var(--bg-tertiary);
 }
 
 .placeholder-icon {
@@ -119,20 +132,20 @@
 }
 
 .student-image-placeholder span {
-  color: #a0a0a0;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   font-weight: 500;
 }
 
 .student-info h3 {
-  color: #ffffff;
+  color: var(--text-primary);
   font-size: 1.2rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
 }
 
 .student-info p {
-  color: #a0a0a0;
+  color: var(--text-secondary);
   font-size: 0.9rem;
 }
 
@@ -142,13 +155,14 @@
 }
 
 .mission-content {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-tertiary);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
   border-radius: 20px;
   padding: 3rem;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 8px 32px var(--shadow-color);
 }
 
 .mission-content::before {
@@ -158,11 +172,11 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background: linear-gradient(90deg, transparent, var(--border-hover), transparent);
 }
 
 .mission-content h2 {
-  color: #ffffff;
+  color: var(--text-primary);
   font-size: 2rem;
   font-weight: 700;
   margin-bottom: 2rem;
@@ -170,7 +184,7 @@
 }
 
 .mission-content p {
-  color: #a0a0a0;
+  color: var(--text-secondary);
   font-size: 1.1rem;
   line-height: 1.7;
   margin-bottom: 1.5rem;
@@ -186,20 +200,21 @@
   text-align: center;
   margin-bottom: 4rem;
   padding: 3rem;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  background: var(--bg-tertiary);
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 8px 32px var(--shadow-color);
 }
 
 .about-cta h2 {
-  color: #ffffff;
+  color: var(--text-primary);
   font-size: 2.2rem;
   font-weight: 700;
   margin-bottom: 1rem;
 }
 
 .about-cta p {
-  color: #a0a0a0;
+  color: var(--text-secondary);
   font-size: 1.1rem;
   margin-bottom: 2rem;
 }
@@ -220,8 +235,8 @@
 
 /* Button Styles */
 .primary-button {
-  background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
-  color: #000000;
+  background: var(--accent-gradient);
+  color: var(--text-primary);
   border: none;
   padding: 1rem 2rem;
   border-radius: 50px;
@@ -259,8 +274,8 @@
 
 .secondary-button {
   background: transparent;
-  color: #ffffff;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: var(--text-primary);
+  border: 2px solid var(--border-strong);
   padding: 1rem 2rem;
   border-radius: 50px;
   font-weight: 600;
@@ -275,7 +290,7 @@
 
 .secondary-button:hover {
   background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.5);
+  border-color: var(--border-hover);
   transform: translateY(-2px);
 }
 
@@ -283,20 +298,21 @@
 .university-branding {
   text-align: center;
   padding: 2rem;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--bg-tertiary);
   border-radius: 15px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 8px 32px var(--shadow-color);
 }
 
 .university-info h3 {
-  color: #ffffff;
+  color: var(--text-primary);
   font-size: 1.5rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
 }
 
 .university-info p {
-  color: #a0a0a0;
+  color: var(--text-secondary);
   font-size: 1rem;
   margin-bottom: 1.5rem;
 }
@@ -309,12 +325,12 @@
 }
 
 .university-details span {
-  color: #a0a0a0;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   padding: 0.5rem 1rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-hover);
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
 }
 
 /* Responsive Design */

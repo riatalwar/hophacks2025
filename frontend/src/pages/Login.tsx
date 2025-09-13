@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase';
+import '../styles/Login.css';
 
 export function Login() {
   const [formData, setFormData] = useState({
@@ -41,7 +42,8 @@ export function Login() {
         : formData.emailOrUsername;
 
       await signInWithEmailAndPassword(auth, email, formData.password);
-      navigate('/');
+      // Redirect to preferences for setup, users can navigate to dashboard from there
+      navigate('/preferences');
     } catch (error: unknown) {
       if (error && typeof error === 'object' && 'code' in error) {
         const firebaseError = error as { code: string; message: string };
@@ -61,13 +63,13 @@ export function Login() {
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '0 auto', padding: '2rem' }}>
+    <div className="login-container">
       <h2>Sign In</h2>
-      {error && <div style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
+      {error && <div className="form-error">{error}</div>}
       
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="emailOrUsername">Email or Username:</label>
+      <form onSubmit={handleSubmit} className="form-container">
+        <div className="form-group">
+          <label htmlFor="emailOrUsername" className="form-label">Email or Username:</label>
           <input
             type="text"
             id="emailOrUsername"
@@ -75,12 +77,13 @@ export function Login() {
             value={formData.emailOrUsername}
             onChange={handleChange}
             required
-            style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
+            className="form-input"
+            placeholder="Enter your email or username"
           />
         </div>
 
-        <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="password">Password:</label>
+        <div className="form-group">
+          <label htmlFor="password" className="form-label">Password:</label>
           <input
             type="password"
             id="password"
@@ -88,28 +91,21 @@ export function Login() {
             value={formData.password}
             onChange={handleChange}
             required
-            style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
+            className="form-input"
+            placeholder="Enter your password"
           />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          style={{
-            width: '100%',
-            padding: '0.75rem',
-            backgroundColor: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: loading ? 'not-allowed' : 'pointer'
-          }}
+          className="primary-button form-button"
         >
           {loading ? 'Signing In...' : 'Sign In'}
         </button>
       </form>
 
-      <p style={{ textAlign: 'center', marginTop: '1rem' }}>
+      <p className="form-link">
         Not a user yet? <Link to="/signup">Create an account</Link>
       </p>
     </div>

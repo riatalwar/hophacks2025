@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { Navigation } from '../components/Navigation';
 import '../styles/AboutUs.css';
@@ -103,8 +102,8 @@ export function AboutUs() {
             <p>Created by students, for students</p>
             <div className="university-details">
               <span>📍 Baltimore, Maryland</span>
-              <span>🎓 Class of 2025</span>
-              <span>💡 Innovation in Education</span>
+              <span>🎓 Class of 2028</span>
+              <span>💡 Innovations in Education & AI</span>
             </div>
           </div>
         </div>

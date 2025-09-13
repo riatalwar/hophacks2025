@@ -1,0 +1,72 @@
+/* Login Page Styles */
+@import './FormStyles.css';
+
+.login-container {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 2rem;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+}
+
+.login-container h2 {
+  color: var(--text-primary);
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  text-align: center;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.login-error {
+  /* Inherits from .form-error in FormStyles.css */
+}
+
+.login-form {
+  /* Inherits from .form-container in FormStyles.css */
+}
+
+.login-button {
+  /* Inherits from .form-button in FormStyles.css */
+}
+
+.login-link {
+  /* Inherits from .form-link in FormStyles.css */
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .login-container {
+    padding: 1rem;
+    min-height: calc(100vh - 80px);
+  }
+  
+  .login-container h2 {
+    font-size: 1.75rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .login-form {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-container {
+    padding: 0.5rem;
+  }
+  
+  .login-form {
+    padding: 1rem;
+  }
+  
+  .form-input {
+    padding: 0.65rem 0.85rem;
+  }
+}

@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navigation } from '../components/Navigation';
 import '../styles/ClassInput.css';
 import type { Activity } from '../types/ClassTypes';
+import axios from 'axios';
+import { getAuth } from "firebase/auth";
 
-export function ClassInput() {
+export function ActivityInput() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newActivity, setNewActivity] = useState({
     name: '',
-    color: '#4ecdc4',
+    color: 'var(--accent-color)',
     pdfFile: null as File | null,
     websiteLink: '',
     canvasContent: ''
@@ -23,7 +25,7 @@ export function ClassInput() {
     if (newActivity.name.trim()) {
       const activityToAdd: Activity = {
         id: Date.now().toString(),
-        name: newActivity.name,
+        activityName: newActivity.name,
         color: newActivity.color,
         pdfFile: newActivity.pdfFile,
         websiteLink: newActivity.websiteLink,
@@ -32,7 +34,7 @@ export function ClassInput() {
       setActivities([...activities, activityToAdd]);
       setNewActivity({
         name: '',
-        color: '#4ecdc4',
+        color: 'var(--accent-color)',
         pdfFile: null,
         websiteLink: '',
         canvasContent: ''
@@ -56,6 +58,27 @@ export function ClassInput() {
     setNewActivity({...newActivity, pdfFile: file});
   };
 
+  useEffect(() => {
+    const fetchActivities = async () => {
+      try {
+        const auth = getAuth();
+        const user = auth.currentUser;
+        const userId = user?.uid;
+        const response = await axios.get(`/activities/${userId}`);
+        const data = response.data as { success: boolean; activities: Activity[]; message: string };
+        if (data.success) {
+          setActivities(data.activities);
+        } else {
+          console.error(data.message);
+        }
+      } catch (error) {
+        console.error("Failed to fetch activities", error);
+      }
+    };
+
+    fetchActivities();
+  }, []);
+
   return (
     <div className="class-input-page">
       {/* Navigation */}
@@ -77,7 +100,7 @@ export function ClassInput() {
             <div key={activity.id} className="activity-item" style={{ borderLeftColor: activity.color }}>
               <div className="activity-content">
                 <div className="activity-header">
-                  <h3>{activity.name}</h3>
+                  <h3>{activity.activityName}</h3>
                   <button 
                     className="remove-activity"
                     onClick={() => removeActivity(activity.id)}
