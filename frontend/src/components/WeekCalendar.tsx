@@ -24,15 +24,16 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
   const calendarRef = useRef<HTMLDivElement>(null);
 
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const timeSlots = Array.from({ length: 24 }, (_, i) => i);
+  const timeSlots = Array.from({ length: 48 }, (_, i) => i); // 48 slots for 30-minute intervals
 
   // Constants
   const HOUR_HEIGHT = 40;
+  const HALF_HOUR_HEIGHT = 20; // Half of hour height for 30-minute intervals
   const DAYS_COUNT = 7;
 
   // Helper functions
-  const timeToPosition = (time: number) => (time / 60) * HOUR_HEIGHT;
-  const positionToTime = (position: number) => Math.round((position / HOUR_HEIGHT) * 60);
+  const timeToPosition = (time: number) => (time / 30) * HALF_HOUR_HEIGHT; // 30-minute intervals
+  const positionToTime = (position: number) => Math.round((position / HALF_HOUR_HEIGHT) * 30); // 30-minute intervals
   
   const dayToPosition = (day: number) => {
     if (!calendarRef.current) return 0;
@@ -42,10 +43,17 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
 
   const formatTime = (minutes: number) => {
     const hour = Math.floor(minutes / 60);
-    if (hour === 0) return '12 AM';
-    if (hour < 12) return `${hour} AM`;
-    if (hour === 12) return '12 PM';
-    return `${hour - 12} PM`;
+    const minute = minutes % 60;
+    
+    // Handle 12 AM/PM format
+    let displayHour = hour;
+    if (hour === 0) displayHour = 12;
+    else if (hour > 12) displayHour = hour - 12;
+    
+    const period = hour < 12 ? 'AM' : 'PM';
+    
+    // Always show minutes with zero-padding
+    return `${displayHour}:${minute.toString().padStart(2, '0')} ${period}`;
   };
 
   // Button selection handlers
@@ -60,12 +68,25 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
   };
 
   // Mouse event handlers
-  const handleMouseDown = (e: React.MouseEvent, day: number, time: number) => {
+  const handleCellHover = (e: React.MouseEvent, _day: number, _slot: number) => {
+    if (!selectedButton || selectedButton !== 'wake') return;
+    
+    // Add visual feedback for hover
+    const cell = e.currentTarget as HTMLElement;
+    cell.style.backgroundColor = 'rgba(255, 165, 0, 0.1)';
+    
+    // Remove hover effect after a short delay
+    setTimeout(() => {
+      cell.style.backgroundColor = '';
+    }, 100);
+  };
+
+  const handleMouseDown = (e: React.MouseEvent, day: number, slot: number) => {
     if (e.target !== e.currentTarget || !selectedButton) return;
     
     if (selectedButton === 'wake') {
-      // For wake up times, place a 10-minute slot immediately
-      const startTime = time * 60;
+      // Convert slot to minutes (30-minute intervals)
+      const startTime = slot * 30; // Convert slot to minutes
       const endTime = startTime + 10; // 10 minutes
       
       const newWakeTime: TimeBlock = {
@@ -83,7 +104,7 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
     } else if (selectedButton === 'study') {
       // For study times, use the original drag behavior
       setIsCreating(true);
-      setCreateStart({ day, time });
+      setCreateStart({ day, time: slot });
     }
     
     e.preventDefault();
@@ -244,9 +265,9 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
       >
         {/* Time column */}
         <div className="preferences-time-column">
-          {timeSlots.map(hour => (
-            <div key={hour} className="preferences-time-slot">
-              {formatTime(hour * 60)}
+          {timeSlots.map(slot => (
+            <div key={slot} className="preferences-time-slot">
+              {formatTime(slot * 30)}
             </div>
           ))}
         </div>
@@ -266,11 +287,12 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
           <div className="preferences-grid-cells">
             {days.map((_, dayIndex) => (
               <div key={dayIndex} className="preferences-day-column">
-                {timeSlots.map(hour => (
+                {timeSlots.map(slot => (
                   <div
-                    key={`${dayIndex}-${hour}`}
+                    key={`${dayIndex}-${slot}`}
                     className="preferences-time-cell"
-                    onMouseDown={(e) => handleMouseDown(e, dayIndex, hour)}
+                    onMouseDown={(e) => handleMouseDown(e, dayIndex, slot)}
+                    onMouseMove={(e) => handleCellHover(e, dayIndex, slot)}
                   />
                 ))}
               </div>
@@ -283,8 +305,8 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
               key={block.id}
               className={`preferences-time-block ${block.type}`}
               style={{
-                left: dayToPosition(block.day) + 60, // Add time column width offset
-                top: timeToPosition(block.startTime) + 60, // Add header height offset
+                left: dayToPosition(block.day), // No additional offset needed - grid already accounts for time column
+                top: timeToPosition(block.startTime), // No additional offset - grid cells have margin-top
                 height: timeToPosition(block.endTime - block.startTime),
                 width: getGridDimensions().dayWidth
               }}
@@ -314,15 +336,15 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
                 key={wakeTime.id}
                 className={`preferences-time-block ${wakeTime.type}`}
                 style={{
-                  left: dayToPosition(parseInt(day)) + 60, // Add time column width offset
-                  top: timeToPosition(wakeTime.startTime),
+                  left: dayToPosition(parseInt(day)), // No additional offset needed - grid already accounts for time column
+                  top: timeToPosition(wakeTime.startTime), // No additional offset - grid cells have margin-top
                   height: timeToPosition(wakeTime.endTime - wakeTime.startTime),
                   width: getGridDimensions().dayWidth
                 }}
               >
                 <div className="preferences-block-content">
                   <span className="preferences-block-time">
-                    {formatTime(wakeTime.startTime)}
+                    Wake Up
                   </span>
                   <button 
                     className="preferences-delete-block"

@@ -191,19 +191,19 @@
   left: 0;
   top: 60px; /* Start below the reduced header */
   width: 60px;
-  height: 960px; /* 24 hours * 40px */
+  height: 1920px; /* 48 slots * 40px (30-minute intervals) */
   background: rgba(255, 255, 255, 0.05);
   border-right: 1px solid var(--border-color);
   z-index: 2;
 }
 
 .preferences-time-slot {
-  height: 40px;
+  height: 20px; /* Half hour height for 30-minute intervals */
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-secondary);
-  font-size: 0.8rem;
+  font-size: 0.7rem; /* Smaller font for more slots */
   font-weight: 500;
   border-bottom: 1px solid var(--border-light);
 }
@@ -211,7 +211,7 @@
 .preferences-calendar-grid {
   margin-left: 60px;
   position: relative;
-  height: 1020px; /* 24 hours * 40px + 60px for reduced header */
+  height: 1980px; /* 48 slots * 40px + 60px for reduced header */
   width: calc(100% - 60px); /* Full width minus time column */
 }
 
@@ -302,7 +302,7 @@
 }
 
 .preferences-time-cell {
-  height: 40px;
+  height: 20px; /* Half hour height for 30-minute intervals */
   border-bottom: 1px solid var(--border-light);
   cursor: crosshair;
   transition: background-color 0.2s ease;
@@ -343,8 +343,8 @@
 .preferences-time-block.wake {
   background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
   border: 1px solid rgba(255, 193, 7, 0.3);
-  height: 20px !important;
-  min-height: 20px;
+  height: 6.67px !important; /* 10 minutes in 30-minute grid (10/30 * 20px) */
+  min-height: 6.67px;
 }
 
 .preferences-time-block.sleep {
@@ -359,11 +359,13 @@
   height: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   color: var(--text-primary);
   font-size: 0.8rem;
   font-weight: 500;
   position: relative;
+  width: 100%;
+  text-align: center;
 }
 
 .preferences-block-time {
@@ -386,6 +388,10 @@
   cursor: pointer;
   transition: all 0.2s ease;
   opacity: 0;
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  z-index: 1;
 }
 
 .preferences-time-block:hover .preferences-delete-block {
