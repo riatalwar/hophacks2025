@@ -119,6 +119,23 @@ body {
   color: #a0a0a0;
 }
 
+.nav-link-button {
+  background: none;
+  border: none;
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  position: relative;
+  cursor: pointer;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+.nav-link-button:hover {
+  color: #a0a0a0;
+}
+
 .nav-links a::after {
   content: '';
   position: absolute;
