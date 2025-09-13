@@ -303,12 +303,13 @@ export function Preferences() {
   }, [accentColor, isDarkMode]); // Include dependencies that are used in the effect
 
   return (
-    <div className="preferences-page">
+    <>
       {/* Navigation */}
       <Navigation />
 
       {/* Main Content */}
-      <div className="preferences-container">
+      <div className="preferences-page">
+        <div className="preferences-container">
         <div className="preferences-header">
           <h1>Preferences & Settings</h1>
           <p>Customize your Class Catcher experience to match your study preferences and academic needs.</p>
@@ -550,6 +551,7 @@ export function Preferences() {
           </p>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
