@@ -3,7 +3,7 @@ import { Login } from './pages/Login'
 import { Signup } from './pages/Signup'
 import { Dashboard } from './pages/Dashboard'
 import { HomePage } from './pages/HomePage'
-import { ClassInput } from './pages/ClassInput'
+import { ClassInput } from './pages/ActivityInput'
 import { AboutUs } from './pages/AboutUs'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import './App.css'
@@ -17,7 +17,7 @@ function App() {
       <Route path="/home" element={<HomePage />} />
       <Route path="/about" element={<AboutUs />} />
       <Route 
-        path="/classes" 
+        path="/activities" 
         element={
           <ProtectedRoute>
             <ClassInput />
