@@ -29,4 +29,14 @@ app.get("/test-firestore", async (req, res) => {
   }
 });
 
+app.post('/activities', async (req, res) => {
+  try {
+    const activity = req.body;
+    const docRef = await db.collection('activities').add(activity);
+    res.status(201).json({ id: docRef.id, ...activity });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+})
+
 export default app;

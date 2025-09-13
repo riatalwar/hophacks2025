@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Navigation } from '../components/Navigation';
 import '../styles/ClassInput.css';
 import type { Activity } from '../types/ClassTypes';
+import { addDoc, collection } from 'firebase/firestore';
+import { db } from '../firebase';
 
 export function ClassInput() {
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -19,7 +21,7 @@ export function ClassInput() {
     '#feca57', '#ff9ff3', '#54a0ff', '#a55eea'
   ];
 
-  const addActivity = () => {
+  const addActivity = async () => {
     if (newActivity.name.trim()) {
       const activityToAdd: Activity = {
         id: Date.now().toString(),
@@ -29,15 +31,32 @@ export function ClassInput() {
         websiteLink: newActivity.websiteLink,
         canvasContent: newActivity.canvasContent
       };
-      setActivities([...activities, activityToAdd]);
-      setNewActivity({
-        name: '',
-        color: '#4ecdc4',
-        pdfFile: null,
-        websiteLink: '',
-        canvasContent: ''
-      });
-      setIsAddingNew(false);
+
+      try {
+        const response = await fetch('http://localhost:5000/activities', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(activityToAdd),
+        });
+        if (response.ok) {
+          const savedActivity = await response.json();
+          setActivities([...activities, activityToAdd]);
+          setNewActivity({
+            name: '',
+            color: '#4ecdc4',
+            pdfFile: null,
+            websiteLink: '',
+            canvasContent: ''
+          });
+          setIsAddingNew(false);
+        } else {
+          console.error('Failed to save activity:', response.statusText);
+        }
+      } catch (error) {
+        console.error('Error saving activity:', error);
+      }
     }
   };
 
