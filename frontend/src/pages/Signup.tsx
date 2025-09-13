@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { auth } from '../firebase';
 
 export function Signup() {
   const [formData, setFormData] = useState({
@@ -13,7 +14,6 @@ export function Signup() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { signUp } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -54,7 +54,16 @@ export function Signup() {
       setError('');
       setLoading(true);
       
-      await signUp(formData.email, formData.password, formData.name);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password
+      );
+
+      await updateProfile(userCredential.user, {
+        displayName: formData.name
+      });
+
       navigate('/');
     } catch (error: unknown) {
       if (error && typeof error === 'object' && 'message' in error) {
