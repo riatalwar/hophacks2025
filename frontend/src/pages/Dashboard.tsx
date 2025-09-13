@@ -14,6 +14,10 @@ export function Dashboard() {
     { id: '5', text: 'Submit project proposal', completed: true, priority: 'medium' },
   ]);
   const [newTodo, setNewTodo] = useState('');
+  const [selectedPriority, setSelectedPriority] = useState<'high' | 'medium' | 'low'>('medium');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
+  const [editPriority, setEditPriority] = useState<'high' | 'medium' | 'low'>('medium');
 
   const addTodo = () => {
     if (newTodo.trim()) {
@@ -21,10 +25,11 @@ export function Dashboard() {
         id: Date.now().toString(),
         text: newTodo.trim(),
         completed: false,
-        priority: 'medium'
+        priority: selectedPriority
       };
       setTodos([...todos, todo]);
       setNewTodo('');
+      setSelectedPriority('medium'); // Reset to default after adding
     }
   };
 
@@ -36,6 +41,31 @@ export function Dashboard() {
 
   const deleteTodo = (id: string) => {
     setTodos(todos.filter(todo => todo.id !== id));
+  };
+
+  const startEdit = (todo: TodoItem) => {
+    setEditingId(todo.id);
+    setEditText(todo.text);
+    setEditPriority(todo.priority);
+  };
+
+  const saveEdit = () => {
+    if (editText.trim() && editingId) {
+      setTodos(todos.map(todo => 
+        todo.id === editingId 
+          ? { ...todo, text: editText.trim(), priority: editPriority }
+          : todo
+      ));
+      setEditingId(null);
+      setEditText('');
+      setEditPriority('medium');
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditText('');
+    setEditPriority('medium');
   };
 
   const getPriorityColor = (priority: string) => {
@@ -62,44 +92,94 @@ export function Dashboard() {
         <div className="dashboard-section todo-section">
           <div className="section-header">
             <h2>📝 To-Do List</h2>
-            <div className="todo-input">
-              <input
-                type="text"
-                value={newTodo}
-                onChange={(e) => setNewTodo(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && addTodo()}
-                placeholder="Add a new task..."
-                className="todo-input-field"
-              />
-              <button onClick={addTodo} className="primary-button">
-                Add
-              </button>
-            </div>
+          </div>
+          <div className="todo-input">
+            <input
+              type="text"
+              value={newTodo}
+              onChange={(e) => setNewTodo(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && addTodo()}
+              placeholder="Add a new task..."
+              className="todo-input-field"
+            />
+            <select
+              value={selectedPriority}
+              onChange={(e) => setSelectedPriority(e.target.value as 'high' | 'medium' | 'low')}
+              className="priority-selector"
+            >
+              <option value="high">🔴 High</option>
+              <option value="medium">🟡 Medium</option>
+              <option value="low">🟢 Low</option>
+            </select>
+            <button onClick={addTodo} className="primary-button">
+              Add
+            </button>
           </div>
           <div className="todo-list">
             {todos.map(todo => (
               <div key={todo.id} className={`todo-item ${todo.completed ? 'completed' : ''}`}>
-                <div className="todo-content">
-                  <input
-                    type="checkbox"
-                    checked={todo.completed}
-                    onChange={() => toggleTodo(todo.id)}
-                    className="todo-checkbox"
-                  />
-                  <span className="todo-text">{todo.text}</span>
-                  <div 
-                    className="todo-priority"
-                    style={{ backgroundColor: getPriorityColor(todo.priority) }}
-                  >
-                    {todo.priority}
+                {editingId === todo.id ? (
+                  // Edit mode
+                  <div className="todo-edit">
+                    <input
+                      type="text"
+                      value={editText}
+                      onChange={(e) => setEditText(e.target.value)}
+                      className="edit-text-input"
+                      onKeyPress={(e) => e.key === 'Enter' && saveEdit()}
+                    />
+                    <select
+                      value={editPriority}
+                      onChange={(e) => setEditPriority(e.target.value as 'high' | 'medium' | 'low')}
+                      className="edit-priority-selector"
+                    >
+                      <option value="high">🔴 High</option>
+                      <option value="medium">🟡 Medium</option>
+                      <option value="low">🟢 Low</option>
+                    </select>
+                    <button onClick={saveEdit} className="save-button">
+                      ✓
+                    </button>
+                    <button onClick={cancelEdit} className="cancel-button">
+                      ×
+                    </button>
                   </div>
-                </div>
-                <button 
-                  onClick={() => deleteTodo(todo.id)}
-                  className="todo-delete"
-                >
-                  ×
-                </button>
+                ) : (
+                  // View mode
+                  <>
+                    <div className="todo-content">
+                      <input
+                        type="checkbox"
+                        checked={todo.completed}
+                        onChange={() => toggleTodo(todo.id)}
+                        className="todo-checkbox"
+                      />
+                      <span className="todo-text">{todo.text}</span>
+                      <div 
+                        className="todo-priority"
+                        style={{ backgroundColor: getPriorityColor(todo.priority) }}
+                      >
+                        {todo.priority}
+                      </div>
+                    </div>
+                    <div className="todo-actions">
+                      <button 
+                        onClick={() => startEdit(todo)}
+                        className="todo-edit-btn"
+                        title="Edit task"
+                      >
+                        ✏️
+                      </button>
+                      <button 
+                        onClick={() => deleteTodo(todo.id)}
+                        className="todo-delete"
+                        title="Delete task"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             ))}
           </div>

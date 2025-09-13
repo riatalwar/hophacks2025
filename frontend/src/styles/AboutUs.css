@@ -1,10 +1,11 @@
 /* About Us Page Styles */
 .about-us-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #000000 0%, #0a0a0a 50%, #000000 100%);
+  background: var(--bg-primary);
   position: relative;
 }
 
+/* Dark mode background */
 .about-us-page::before {
   content: '';
   position: fixed;
@@ -17,6 +18,17 @@
               radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.05) 0%, transparent 50%);
   pointer-events: none;
   z-index: 0;
+}
+
+/* Light mode background with ombré effect */
+.light-theme .about-us-page {
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-primary) 100%);
+}
+
+.light-theme .about-us-page::before {
+  background: radial-gradient(circle at 20% 80%, rgba(78, 205, 196, 0.08) 0%, transparent 50%),
+              radial-gradient(circle at 80% 20%, rgba(255, 107, 107, 0.06) 0%, transparent 50%),
+              radial-gradient(circle at 40% 40%, rgba(69, 183, 209, 0.04) 0%, transparent 50%);
 }
 
 .about-container {
@@ -66,7 +78,7 @@
 }
 
 .student-card {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-tertiary);
   backdrop-filter: blur(20px);
   border: 1px solid var(--border-color);
   border-radius: 20px;
@@ -75,6 +87,7 @@
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 8px 32px var(--shadow-color);
 }
 
 .student-card::before {
@@ -84,20 +97,20 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background: linear-gradient(90deg, transparent, var(--border-hover), transparent);
 }
 
 .student-card:hover {
   transform: translateY(-10px);
-  background: rgba(255, 255, 255, 0.05);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  background: var(--bg-hover);
+  box-shadow: 0 20px 40px var(--shadow-color);
 }
 
 .student-image-placeholder {
   width: 150px;
   height: 150px;
   margin: 0 auto 1.5rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-hover);
   border: 2px dashed var(--border-medium);
   border-radius: 50%;
   display: flex;
@@ -109,7 +122,7 @@
 
 .student-card:hover .student-image-placeholder {
   border-color: var(--border-hover);
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--bg-tertiary);
 }
 
 .placeholder-icon {
@@ -142,13 +155,14 @@
 }
 
 .mission-content {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-tertiary);
   backdrop-filter: blur(20px);
   border: 1px solid var(--border-color);
   border-radius: 20px;
   padding: 3rem;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 8px 32px var(--shadow-color);
 }
 
 .mission-content::before {
@@ -158,7 +172,7 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background: linear-gradient(90deg, transparent, var(--border-hover), transparent);
 }
 
 .mission-content h2 {
@@ -186,9 +200,10 @@
   text-align: center;
   margin-bottom: 4rem;
   padding: 3rem;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  background: var(--bg-tertiary);
   border-radius: 20px;
   border: 1px solid var(--border-color);
+  box-shadow: 0 8px 32px var(--shadow-color);
 }
 
 .about-cta h2 {
@@ -283,9 +298,10 @@
 .university-branding {
   text-align: center;
   padding: 2rem;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--bg-tertiary);
   border-radius: 15px;
   border: 1px solid var(--border-color);
+  box-shadow: 0 8px 32px var(--shadow-color);
 }
 
 .university-info h3 {
@@ -312,7 +328,7 @@
   color: var(--text-secondary);
   font-size: 0.9rem;
   padding: 0.5rem 1rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-hover);
   border-radius: 20px;
   border: 1px solid var(--border-color);
 }
