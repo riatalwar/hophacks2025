@@ -1,15 +1,7 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Navigation } from '../components/Navigation';
 import '../styles/ClassInput.css';
-
-interface Class {
-  id: string;
-  name: string;
-  professor: string;
-  credits: number;
-  color: string;
-}
+import type { Class } from '../types/ClassTypes';
 
 export function ClassInput() {
   const [classes, setClasses] = useState<Class[]>([]);
