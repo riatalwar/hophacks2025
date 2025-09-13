@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Navigation } from '../components/Navigation';
 import { WeekCalendar } from '../components/WeekCalendar';
-import type { StudyTimeList } from '../types/ClassTypes';
+import type { StudyTimeList, StudyTimeNode, Preferences } from '../types/ClassTypes';
 import '../styles/Preferences.css';
 
 export function Preferences() {
@@ -23,8 +23,9 @@ export function Preferences() {
     return saved || '#4ecdc4';
   });
 
-  // Array of size 7 initialized with all values set to 0
-  const [preferencesArray, setPreferencesArray] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
+  // Wake up times and bedtimes arrays (7 days)
+  const [wakeUpTimes, setWakeUpTimes] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
+  const [bedtimes, setBedtimes] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
 
   // Array called studyTimes storing linked lists (of 2-value tuples) in each index
   const [studyTimes, setStudyTimes] = useState<StudyTimeList[]>([
@@ -62,15 +63,174 @@ export function Preferences() {
     setStudySchedule(schedule);
   }, []);
 
+  // Comprehensive function to save all preferences
+  const saveAllPreferences = useCallback(() => {
+    const preferences: Preferences = {
+      wakeUpTimes,
+      bedtimes,
+      studyTimes,
+      studyReminders: emailNotifications.studyReminders,
+      assignmentDeadlines: emailNotifications.assignmentDeadlines,
+      weeklyDigest: emailNotifications.weeklyDigest,
+      courseUpdates: emailNotifications.courseUpdates,
+      systemAlerts: emailNotifications.systemAlerts,
+      shareDataAnonymously,
+      isDarkMode,
+      accentColor
+    };
+
+    // Save to localStorage
+    localStorage.setItem('classCatcher_preferences', JSON.stringify(preferences));
+    
+    // Also save individual theme and accent color for immediate application
+    localStorage.setItem('classCatcher_theme', isDarkMode ? 'dark' : 'light');
+    localStorage.setItem('classCatcher_accentColor', accentColor);
+    
+    console.log('Preferences saved:', preferences);
+  }, [wakeUpTimes, bedtimes, studyTimes, emailNotifications, shareDataAnonymously, isDarkMode, accentColor]);
+
+  // Function to load all preferences
+  const loadAllPreferences = useCallback(() => {
+    const savedPreferences = localStorage.getItem('classCatcher_preferences');
+    
+    if (savedPreferences) {
+      try {
+        const preferences: Preferences = JSON.parse(savedPreferences);
+        
+        // Load wake up times and bedtimes
+        if (preferences.wakeUpTimes) {
+          setWakeUpTimes(preferences.wakeUpTimes);
+        }
+        if (preferences.bedtimes) {
+          setBedtimes(preferences.bedtimes);
+        }
+        
+        // Load study times
+        if (preferences.studyTimes) {
+          setStudyTimes(preferences.studyTimes);
+        }
+        
+        // Load email notifications
+        if (preferences.studyReminders !== undefined) {
+          setEmailNotifications({
+            studyReminders: preferences.studyReminders,
+            assignmentDeadlines: preferences.assignmentDeadlines,
+            weeklyDigest: preferences.weeklyDigest,
+            courseUpdates: preferences.courseUpdates,
+            systemAlerts: preferences.systemAlerts
+          });
+        }
+        
+        // Load privacy settings
+        if (preferences.shareDataAnonymously !== undefined) {
+          setShareDataAnonymously(preferences.shareDataAnonymously);
+        }
+        
+        // Load appearance settings
+        if (preferences.isDarkMode !== undefined) {
+          setIsDarkMode(preferences.isDarkMode);
+        }
+        if (preferences.accentColor) {
+          setAccentColor(preferences.accentColor);
+        }
+        
+        console.log('Preferences loaded:', preferences);
+      } catch (error) {
+        console.error('Error loading preferences:', error);
+      }
+    }
+  }, []);
+
+  // Load preferences on component mount
+  useEffect(() => {
+    loadAllPreferences();
+  }, [loadAllPreferences]);
+
+  // Function to sync wake up times from WeekCalendar
+  const handleWakeUpTimesChange = useCallback((newWakeUpTimes: { [day: number]: any | null }) => {
+    const wakeUpArray = [0, 0, 0, 0, 0, 0, 0];
+    Object.entries(newWakeUpTimes).forEach(([day, wakeTime]) => {
+      if (wakeTime && wakeTime.startTime !== undefined) {
+        wakeUpArray[parseInt(day)] = wakeTime.startTime;
+      }
+    });
+    setWakeUpTimes(wakeUpArray);
+    
+    // Auto-save preferences
+    setTimeout(() => saveAllPreferences(), 100);
+  }, [saveAllPreferences]);
+
+  // Function to sync bedtimes from WeekCalendar
+  const handleBedtimesChange = useCallback((newBedtimes: { [day: number]: any | null }) => {
+    const bedtimesArray = [0, 0, 0, 0, 0, 0, 0];
+    Object.entries(newBedtimes).forEach(([day, bedtime]) => {
+      if (bedtime && bedtime.startTime !== undefined) {
+        bedtimesArray[parseInt(day)] = bedtime.startTime;
+      }
+    });
+    setBedtimes(bedtimesArray);
+    
+    // Auto-save preferences
+    setTimeout(() => saveAllPreferences(), 100);
+  }, [saveAllPreferences]);
+
+  // Function to sync study times from WeekCalendar
+  const handleStudyTimesChange = useCallback((newStudyTimes: any[]) => {
+    // Convert study times array to StudyTimeList format
+    const studyTimesList: StudyTimeList[] = [
+      { head: null, size: 0 }, // Monday
+      { head: null, size: 0 }, // Tuesday
+      { head: null, size: 0 }, // Wednesday
+      { head: null, size: 0 }, // Thursday
+      { head: null, size: 0 }, // Friday
+      { head: null, size: 0 }, // Saturday
+      { head: null, size: 0 }  // Sunday
+    ];
+
+    // Group study times by day and convert to linked list format
+    newStudyTimes.forEach((timeBlock) => {
+      if (timeBlock.day !== undefined && timeBlock.startTime !== undefined && timeBlock.endTime !== undefined) {
+        const day = timeBlock.day;
+        const node: StudyTimeNode = {
+          data: [timeBlock.startTime, timeBlock.endTime],
+          next: null
+        };
+        
+        if (studyTimesList[day].head === null) {
+          studyTimesList[day].head = node;
+        } else {
+          // Add to end of linked list
+          let current = studyTimesList[day].head;
+          while (current.next !== null) {
+            current = current.next;
+          }
+          current.next = node;
+        }
+        studyTimesList[day].size++;
+      }
+    });
+
+    setStudyTimes(studyTimesList);
+    
+    // Auto-save preferences
+    setTimeout(() => saveAllPreferences(), 100);
+  }, [saveAllPreferences]);
+
   const handleNotificationToggle = (notificationType: keyof typeof emailNotifications) => {
     setEmailNotifications(prev => ({
       ...prev,
       [notificationType]: !prev[notificationType]
     }));
+    
+    // Auto-save preferences
+    setTimeout(() => saveAllPreferences(), 100);
   };
 
   const handleDataSharingToggle = () => {
     setShareDataAnonymously(prev => !prev);
+    
+    // Auto-save preferences
+    setTimeout(() => saveAllPreferences(), 100);
   };
 
   const handleThemeToggle = () => {
@@ -88,6 +248,9 @@ export function Preferences() {
       document.documentElement.classList.remove('dark-theme');
       document.documentElement.classList.add('light-theme');
     }
+    
+    // Auto-save preferences
+    setTimeout(() => saveAllPreferences(), 100);
   };
 
   const handleAccentColorChange = (color: string) => {
@@ -106,6 +269,9 @@ export function Preferences() {
     // Set gradient variables
     document.documentElement.style.setProperty('--accent-gradient', `linear-gradient(135deg, ${color} 0%, ${lightVariant} 100%)`);
     document.documentElement.style.setProperty('--accent-gradient-hover', `linear-gradient(135deg, ${lightVariant} 0%, ${color} 100%)`);
+    
+    // Auto-save preferences
+    setTimeout(() => saveAllPreferences(), 100);
   };
 
   // Apply initial theme and accent color on component mount
@@ -150,7 +316,12 @@ export function Preferences() {
               <h2>Study Preferences</h2>
               <div className="section-content">
                 <p>Customize your study schedule, learning style, and academic preferences to optimize your Class Catcher experience.</p>
-                <WeekCalendar onScheduleChange={handleScheduleChange} />
+                <WeekCalendar 
+                  onScheduleChange={handleScheduleChange}
+                  onWakeUpTimesChange={handleWakeUpTimesChange}
+                  onBedtimesChange={handleBedtimesChange}
+                  onStudyTimesChange={handleStudyTimesChange}
+                />
               </div>
             </div>
 
@@ -359,6 +530,19 @@ export function Preferences() {
               </div>
             </div>
           </div>
+        </div>
+        
+        {/* Save Preferences Button */}
+        <div className="preferences-save-section">
+          <button 
+            onClick={saveAllPreferences}
+            className="save-preferences-button"
+          >
+            💾 Save All Preferences
+          </button>
+          <p className="save-info">
+            Your preferences are automatically saved when you make changes, but you can also save manually here.
+          </p>
         </div>
       </div>
     </div>

@@ -11,9 +11,12 @@ interface TimeBlock {
 
 interface WeekCalendarProps {
   onScheduleChange: (schedule: TimeBlock[]) => void;
+  onWakeUpTimesChange?: (wakeUpTimes: { [day: number]: TimeBlock | null }) => void;
+  onBedtimesChange?: (bedtimes: { [day: number]: TimeBlock | null }) => void;
+  onStudyTimesChange?: (studyTimes: TimeBlock[]) => void;
 }
 
-export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
+export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimesChange, onStudyTimesChange }: WeekCalendarProps) {
   const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([]);
   const [wakeUpTimes, setWakeUpTimes] = useState<{ [day: number]: TimeBlock | null }>({});
   const [bedtimes, setBedtimes] = useState<{ [day: number]: TimeBlock | null }>({});
@@ -61,6 +64,28 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
       setBedtimes(JSON.parse(savedBedtimes));
     }
   }, [onScheduleChange]);
+
+  // Notify parent component when wake up times change
+  useEffect(() => {
+    if (onWakeUpTimesChange) {
+      onWakeUpTimesChange(wakeUpTimes);
+    }
+  }, [wakeUpTimes, onWakeUpTimesChange]);
+
+  // Notify parent component when bedtimes change
+  useEffect(() => {
+    if (onBedtimesChange) {
+      onBedtimesChange(bedtimes);
+    }
+  }, [bedtimes, onBedtimesChange]);
+
+  // Notify parent component when study times change
+  useEffect(() => {
+    if (onStudyTimesChange) {
+      const studyTimes = timeBlocks.filter(block => block.type === 'study');
+      onStudyTimesChange(studyTimes);
+    }
+  }, [timeBlocks, onStudyTimesChange]);
 
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const timeSlots = Array.from({ length: 48 }, (_, i) => i); // 48 slots for 30-minute intervals
