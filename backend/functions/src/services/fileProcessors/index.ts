@@ -1,6 +1,7 @@
 import {BaseFileProcessor} from "./baseProcessor";
 import {PDFProcessor} from "./pdfProcessor";
 import {TextProcessor} from "./textProcessor";
+import {JSONProcessor} from "./jsonProcessor";
 
 /**
  * Factory class for managing and selecting appropriate file processors.
@@ -12,6 +13,7 @@ export class FileProcessorFactory {
   private processors: BaseFileProcessor[] = [
     new PDFProcessor(),
     new TextProcessor(),
+    new JSONProcessor(),
   ];
 
   /**
@@ -37,3 +39,4 @@ export class FileProcessorFactory {
 export * from "./baseProcessor";
 export * from "./pdfProcessor";
 export * from "./textProcessor";
+export * from "./jsonProcessor";
