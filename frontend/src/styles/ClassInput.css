@@ -112,7 +112,7 @@
 }
 
 .form-group input::placeholder {
-  color: #666;
+  color: var(--text-muted);
 }
 
 /* Color Picker */
@@ -148,7 +148,7 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: #000;
+  color: var(--text-primary);
   font-weight: bold;
   font-size: 0.8rem;
 }
@@ -156,7 +156,7 @@
 /* Add Class Button */
 .add-class-button {
   background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
-  color: #000000;
+  color: var(--text-primary);
   border: none;
   padding: 1rem 2rem;
   border-radius: 50px;
@@ -462,7 +462,7 @@
 
 .form-group input::placeholder,
 .form-group textarea::placeholder {
-  color: #666;
+  color: var(--text-muted);
 }
 
 .form-group textarea {
@@ -515,7 +515,7 @@
 }
 
 .add-button {
-  background: linear-gradient(135deg, #4ecdc4 0%, #45b7d1 100%);
+  background: var(--accent-gradient);
   color: var(--text-primary);
   border: none;
   padding: 0.75rem 1.5rem;
@@ -642,7 +642,7 @@
 /* Button Styles */
 .primary-button {
   background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
-  color: #000000;
+  color: var(--text-primary);
   border: none;
   padding: 1rem 2rem;
   border-radius: 50px;

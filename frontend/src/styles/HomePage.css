@@ -53,6 +53,12 @@ body {
   padding: 1rem 0;
 }
 
+.light-theme .navbar {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
 .nav-container {
   max-width: 1200px;
   margin: 0 auto;
@@ -72,7 +78,7 @@ body {
 }
 
 .logo-button h2 {
-  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-color-light) 100%);
+  background: var(--accent-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -83,7 +89,7 @@ body {
 }
 
 .logo-button:hover h2 {
-  background: linear-gradient(135deg, var(--accent-color-light) 0%, var(--accent-color) 100%);
+  background: var(--accent-gradient-hover);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -123,7 +129,7 @@ body {
 }
 
 .nav-links a:hover {
-  color: #a0a0a0;
+  color: var(--text-secondary);
 }
 
 .nav-link-button {
@@ -150,7 +156,7 @@ body {
   left: 0;
   width: 0;
   height: 2px;
-  background: linear-gradient(90deg, var(--accent-color), var(--accent-color-light));
+  background: var(--accent-gradient);
   transition: width 0.3s ease;
 }
 
@@ -159,7 +165,7 @@ body {
 }
 
 .cta-button {
-  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-color-light) 100%);
+  background: var(--accent-gradient);
   color: var(--text-primary);
   border: none;
   padding: 0.75rem 1.5rem;
@@ -218,7 +224,7 @@ body {
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-color-light) 50%, var(--accent-color) 100%);
+  background: var(--accent-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -232,7 +238,7 @@ body {
 
 .hero-subtitle {
   font-size: 1.25rem;
-  color: #a0a0a0;
+  color: var(--text-secondary);
   margin-bottom: 2rem;
   line-height: 1.6;
 }
@@ -405,7 +411,7 @@ body {
   font-size: 2.5rem;
   font-weight: 700;
   margin-bottom: 3rem;
-  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-color-light) 100%);
+  background: var(--accent-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -486,7 +492,7 @@ body {
 }
 
 .feature-card p {
-  color: #a0a0a0;
+  color: var(--text-secondary);
   line-height: 1.6;
 }
 
@@ -515,7 +521,7 @@ body {
 
 .cta-content p {
   font-size: 1.25rem;
-  color: #a0a0a0;
+  color: var(--text-secondary);
   margin-bottom: 2rem;
 }
 
@@ -539,14 +545,14 @@ body {
   font-size: 1.5rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
-  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-color-light) 100%);
+  background: var(--accent-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .footer-brand p {
-  color: #a0a0a0;
+  color: var(--text-secondary);
 }
 
 .footer-links {
@@ -562,7 +568,7 @@ body {
 }
 
 .footer-column a {
-  color: #a0a0a0;
+  color: var(--text-secondary);
   text-decoration: none;
   display: block;
   margin-bottom: 0.5rem;
@@ -577,7 +583,7 @@ body {
   text-align: center;
   padding-top: 2rem;
   border-top: 1px solid var(--border-color);
-  color: #a0a0a0;
+  color: var(--text-secondary);
 }
 
 /* Responsive Design */

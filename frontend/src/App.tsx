@@ -50,6 +50,10 @@ function App() {
       // Also set the light variant
       const lightVariant = getAccentColorLightVariant(savedAccentColor);
       document.documentElement.style.setProperty('--accent-color-light', lightVariant);
+      
+      // Set gradient variables
+      document.documentElement.style.setProperty('--accent-gradient', `linear-gradient(135deg, ${savedAccentColor} 0%, ${lightVariant} 100%)`);
+      document.documentElement.style.setProperty('--accent-gradient-hover', `linear-gradient(135deg, ${lightVariant} 0%, ${savedAccentColor} 100%)`);
     }
   }, []);
   return (

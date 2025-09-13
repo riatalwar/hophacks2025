@@ -223,7 +223,7 @@
 }
 
 .preferences-time-block.study {
-  background: linear-gradient(135deg, #4ecdc4 0%, #45b7d1 100%);
+  background: var(--accent-gradient);
   border: 1px solid rgba(78, 205, 196, 0.3);
 }
 
@@ -267,7 +267,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ff6b6b;
+  color: var(--accent-color);
   font-size: 0.7rem;
   font-weight: bold;
   cursor: pointer;

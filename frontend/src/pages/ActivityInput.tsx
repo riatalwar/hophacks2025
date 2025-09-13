@@ -8,7 +8,7 @@ export function ClassInput() {
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newActivity, setNewActivity] = useState({
     name: '',
-    color: '#4ecdc4',
+    color: 'var(--accent-color)',
     pdfFile: null as File | null,
     websiteLink: '',
     canvasContent: ''
@@ -32,7 +32,7 @@ export function ClassInput() {
       setActivities([...activities, activityToAdd]);
       setNewActivity({
         name: '',
-        color: '#4ecdc4',
+        color: 'var(--accent-color)',
         pdfFile: null,
         websiteLink: '',
         canvasContent: ''

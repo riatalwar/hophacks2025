@@ -9,12 +9,9 @@ export function Dashboard() {
       <h1>Welcome, {currentUser?.displayName || currentUser?.email}!</h1>
       <button 
         onClick={signOut}
+        className="primary-button"
         style={{
           padding: '0.5rem 1rem',
-          backgroundColor: '#dc3545',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
           cursor: 'pointer'
         }}
       >

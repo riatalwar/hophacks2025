@@ -1,12 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import '../styles/PreferencesWeekCalendar.css';
 
 interface TimeBlock {
   id: string;
-  day: number; // 0 = Sunday, 1 = Monday, etc.
+  day: number; // 0 = Monday, 1 = Tuesday, etc.
   startTime: number; // minutes from midnight
   endTime: number; // minutes from midnight
-  type: 'study' | 'wake' | 'sleep';
+  type: 'study';
 }
 
 interface WeekCalendarProps {
@@ -24,21 +24,38 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const timeSlots = Array.from({ length: 24 }, (_, i) => i);
 
-  // Convert time to grid position
-  const timeToPosition = (time: number) => (time / 60) * 40 + 60; // 40px per hour + 60px header offset
-  const positionToTime = (position: number) => Math.round(((position - 60) / 40) * 60); // Account for header offset
+  // Constants
+  const HOUR_HEIGHT = 40;
+  const HEADER_OFFSET = 60;
+  const DAYS_COUNT = 7;
 
-  // Convert day to grid position - now using percentage-based width
+  // Helper functions
+  const timeToPosition = (time: number) => (time / 60) * HOUR_HEIGHT + HEADER_OFFSET;
+  const positionToTime = (position: number) => Math.round(((position - HEADER_OFFSET) / HOUR_HEIGHT) * 60);
+  
   const dayToPosition = (day: number) => {
     if (!calendarRef.current) return 0;
-    const gridWidth = calendarRef.current.offsetWidth - 60; // Subtract time column width
-    const dayWidth = gridWidth / 7; // Divide by 7 days
-    return day * dayWidth;
+    const gridWidth = calendarRef.current.offsetWidth - 60;
+    return (day * gridWidth) / DAYS_COUNT;
   };
 
+  const formatTime = (minutes: number) => {
+    const hour = Math.floor(minutes / 60);
+    if (hour === 0) return '12 AM';
+    if (hour < 12) return `${hour} AM`;
+    if (hour === 12) return '12 PM';
+    return `${hour - 12} PM`;
+  };
+
+  const getGridDimensions = () => {
+    if (!calendarRef.current) return { dayWidth: 0, gridWidth: 0 };
+    const gridWidth = calendarRef.current.offsetWidth - 60;
+    return { dayWidth: gridWidth / DAYS_COUNT, gridWidth };
+  };
+
+  // Mouse event handlers
   const handleMouseDown = (e: React.MouseEvent, day: number, time: number) => {
-    if (e.target !== e.currentTarget) return; // Only start creating if clicking on empty space
-    
+    if (e.target !== e.currentTarget) return;
     setIsCreating(true);
     setCreateStart({ day, time });
     e.preventDefault();
@@ -50,15 +67,12 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
     const rect = calendarRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
+    const { dayWidth } = getGridDimensions();
 
-    // Calculate which day and time we're hovering over
-    const gridWidth = calendarRef.current.offsetWidth - 60; // Subtract time column width
-    const dayWidth = gridWidth / 7; // Divide by 7 days
     const day = Math.floor(x / dayWidth);
-    const time = Math.max(0, Math.min(23, Math.floor((y - 60) / 40))); // Account for header offset
+    const time = Math.max(0, Math.min(23, Math.floor((y - HEADER_OFFSET) / HOUR_HEIGHT)));
 
     if (day >= 0 && day <= 6 && time !== createStart.time) {
-      // Create a temporary study block
       const startTime = Math.min(createStart.time, time) * 60;
       const endTime = Math.max(createStart.time, time) * 60;
       
@@ -70,7 +84,6 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
         type: 'study'
       };
 
-      // Update the temporary block
       setTimeBlocks(prev => {
         const filtered = prev.filter(block => !block.id.startsWith('temp-'));
         return [...filtered, newBlock];
@@ -80,7 +93,6 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
 
   const handleMouseUp = () => {
     if (isCreating && createStart) {
-      // Finalize the block
       setTimeBlocks(prev => {
         const filtered = prev.filter(block => !block.id.startsWith('temp-'));
         const finalBlock = prev.find(block => block.id.startsWith('temp-'));
@@ -110,12 +122,10 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
 
     const deltaX = e.clientX - dragStart.x;
     const deltaY = e.clientY - dragStart.y;
+    const { dayWidth } = getGridDimensions();
 
-    // Update block position
     setTimeBlocks(prev => prev.map(block => {
       if (block.id === dragging) {
-        const gridWidth = calendarRef.current!.offsetWidth - 60; // Subtract time column width
-        const dayWidth = gridWidth / 7; // Divide by 7 days
         const newDay = Math.max(0, Math.min(6, Math.round((dayToPosition(block.day) + deltaX) / dayWidth)));
         const newStartTime = Math.max(0, Math.min(1380, positionToTime(timeToPosition(block.startTime) + deltaY)));
         const duration = block.endTime - block.startTime;
@@ -145,34 +155,7 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
     onScheduleChange(updatedBlocks);
   };
 
-  const addWakeTime = (day: number, time: number) => {
-    const wakeBlock: TimeBlock = {
-      id: `wake-${day}-${Date.now()}`,
-      day,
-      startTime: time * 60,
-      endTime: time * 60 + 30, // 30 minute block
-      type: 'wake'
-    };
-    
-    const updatedBlocks = [...timeBlocks.filter(block => !(block.day === day && block.type === 'wake')), wakeBlock];
-    setTimeBlocks(updatedBlocks);
-    onScheduleChange(updatedBlocks);
-  };
-
-  const addSleepTime = (day: number, time: number) => {
-    const sleepBlock: TimeBlock = {
-      id: `sleep-${day}-${Date.now()}`,
-      day,
-      startTime: time * 60,
-      endTime: time * 60 + 30, // 30 minute block
-      type: 'sleep'
-    };
-    
-    const updatedBlocks = [...timeBlocks.filter(block => !(block.day === day && block.type === 'sleep')), sleepBlock];
-    setTimeBlocks(updatedBlocks);
-    onScheduleChange(updatedBlocks);
-  };
-
+  // Global mouse up handler
   useEffect(() => {
     const handleGlobalMouseUp = () => {
       handleMouseUp();
@@ -187,7 +170,7 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
     <div className="preferences-week-calendar-container">
       <div className="preferences-calendar-header">
         <h3>Weekly Study Schedule</h3>
-        <p>Drag to create study blocks, click on wake/sleep times to set them</p>
+        <p>Drag to create study blocks</p>
       </div>
       
       <div 
@@ -200,7 +183,7 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
         <div className="preferences-time-column">
           {timeSlots.map(hour => (
             <div key={hour} className="preferences-time-slot">
-              {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+              {formatTime(hour * 60)}
             </div>
           ))}
         </div>
@@ -209,25 +192,9 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
         <div className="preferences-calendar-grid">
           {/* Days header */}
           <div className="preferences-days-header">
-            {days.map((day, index) => (
+            {days.map((day) => (
               <div key={day} className="preferences-day-header">
                 <div className="preferences-day-name">{day}</div>
-                <div className="preferences-day-controls">
-                  <button 
-                    className="preferences-time-button preferences-wake-button"
-                    onClick={() => addWakeTime(index, 7)} // Default 7 AM
-                    title="Set wake time"
-                  >
-                    ☀️
-                  </button>
-                  <button 
-                    className="preferences-time-button preferences-sleep-button"
-                    onClick={() => addSleepTime(index, 23)} // Default 11 PM
-                    title="Set bedtime"
-                  >
-                    🌙
-                  </button>
-                </div>
               </div>
             ))}
           </div>
@@ -263,10 +230,7 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
             >
               <div className="preferences-block-content">
                 <span className="preferences-block-time">
-                  {Math.floor(block.startTime / 60) === 0 ? '12 AM' : 
-                   Math.floor(block.startTime / 60) < 12 ? `${Math.floor(block.startTime / 60)} AM` :
-                   Math.floor(block.startTime / 60) === 12 ? '12 PM' : 
-                   `${Math.floor(block.startTime / 60) - 12} PM`}
+                  {formatTime(block.startTime)}
                 </span>
                 <button 
                   className="preferences-delete-block"

@@ -151,13 +151,10 @@ export function Signup() {
         <button
           type="submit"
           disabled={loading}
+          className="primary-button"
           style={{
             width: '100%',
             padding: '0.75rem',
-            backgroundColor: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
             cursor: loading ? 'not-allowed' : 'pointer'
           }}
         >

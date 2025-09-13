@@ -2,6 +2,8 @@
 :root {
   --accent-color: #4ecdc4;
   --accent-color-light: #45b7d1;
+  --accent-gradient: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-color-light) 100%);
+  --accent-gradient-hover: linear-gradient(135deg, var(--accent-color-light) 0%, var(--accent-color) 100%);
   
   /* Dark theme colors (default) */
   --bg-primary: #000000;
@@ -22,7 +24,7 @@
 /* Light theme colors */
 .light-theme {
   --bg-primary: #f8f6f2;
-  --bg-secondary: #f0ede7;
+  --bg-secondary: var(--accent-color);
   --bg-tertiary: rgba(255, 255, 255, 0.85);
   --bg-hover: rgba(255, 255, 255, 0.95);
   --text-primary: #2c2c2c;
@@ -56,7 +58,7 @@ p {
 
 /* Global button styles */
 .primary-button {
-  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-color-light) 100%);
+  background: var(--accent-gradient);
   color: var(--text-primary);
   border: none;
   padding: 1rem 2rem;
@@ -89,6 +91,7 @@ p {
 }
 
 .primary-button:hover {
+  background: var(--accent-gradient-hover);
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(78, 205, 196, 0.4);
 }
@@ -208,6 +211,12 @@ a:hover {
   backdrop-filter: blur(20px);
 }
 
+.light-theme .navbar {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
 .navbar a, .navbar button {
   color: var(--text-primary);
 }
@@ -305,7 +314,7 @@ hr {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--accent-color);
+  background: var(--accent-gradient);
   border-radius: 4px;
 }
 
@@ -315,11 +324,11 @@ hr {
 
 /* Global selection styles */
 ::selection {
-  background: var(--accent-color);
+  background: var(--accent-gradient);
   color: var(--text-primary);
 }
 
 ::-moz-selection {
-  background: var(--accent-color);
+  background: var(--accent-gradient);
   color: var(--text-primary);
 }

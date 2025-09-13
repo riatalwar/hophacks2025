@@ -201,12 +201,12 @@
   content: '';
   width: 4px;
   height: 20px;
-  background: linear-gradient(135deg, #4ecdc4 0%, #45b7d1 100%);
+  background: var(--accent-gradient);
   border-radius: 2px;
 }
 
 .section-content {
-  color: #a0a0a0;
+  color: var(--text-secondary);
   line-height: 1.6;
 }
 
@@ -235,7 +235,7 @@
 
 /* Button Styles */
 .primary-button {
-  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-color-light) 100%);
+  background: var(--accent-gradient);
   color: var(--text-primary);
   border: none;
   padding: 1rem 2rem;
@@ -346,7 +346,7 @@
 }
 
 .unlock-section p {
-  color: #a0a0a0;
+  color: var(--text-secondary);
   margin-bottom: 2rem;
   font-size: 1rem;
 }
@@ -376,11 +376,11 @@
 }
 
 .password-input::placeholder {
-  color: #666;
+  color: var(--text-muted);
 }
 
 .unlock-button {
-  background: linear-gradient(135deg, #4ecdc4 0%, #45b7d1 100%);
+  background: var(--accent-gradient);
   color: var(--text-primary);
   border: none;
   padding: 0.75rem 2rem;
@@ -438,7 +438,7 @@
 
 .lock-button {
   background: transparent;
-  color: #a0a0a0;
+  color: var(--text-secondary);
   border: 1px solid rgba(160, 160, 160, 0.3);
   padding: 0.5rem 1rem;
   border-radius: 8px;
@@ -472,7 +472,7 @@
 }
 
 .settings-description {
-  color: #a0a0a0;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   margin-bottom: 1.5rem;
 }
@@ -512,7 +512,7 @@
 }
 
 .notification-info p {
-  color: #a0a0a0;
+  color: var(--text-secondary);
   font-size: 0.85rem;
   margin: 0;
   line-height: 1.4;
@@ -560,7 +560,7 @@
 }
 
 .toggle-switch input:checked + .toggle-slider {
-  background: linear-gradient(135deg, #4ecdc4 0%, #45b7d1 100%);
+  background: var(--accent-gradient);
   border-color: rgba(78, 205, 196, 0.5);
 }
 
@@ -638,7 +638,7 @@
 }
 
 .privacy-info p {
-  color: #a0a0a0;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   margin-bottom: 1rem;
   line-height: 1.5;
@@ -701,7 +701,7 @@
 }
 
 .study-buddies-info p {
-  color: #a0a0a0;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   margin-bottom: 1rem;
   line-height: 1.5;
@@ -724,7 +724,7 @@
 }
 
 .study-buddies-button {
-  background: linear-gradient(135deg, #4ecdc4 0%, #45b7d1 100%);
+  background: var(--accent-gradient);
   color: var(--text-primary);
   border: none;
   padding: 0.75rem 1.5rem;
@@ -812,7 +812,7 @@
 }
 
 .appearance-info p {
-  color: #a0a0a0;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   margin-bottom: 1rem;
   line-height: 1.5;
@@ -942,7 +942,7 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: #000;
+  color: var(--text-primary);
   font-weight: bold;
   font-size: 0.8rem;
   text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);

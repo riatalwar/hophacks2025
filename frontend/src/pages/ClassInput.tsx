@@ -8,7 +8,7 @@ export function ClassInput() {
   const [newActivity, setNewActivity] = useState({
     name: '',
     credits: 3,
-    color: '#ffffff'
+    color: 'var(--text-primary)'
   });
 
   const colors = [
@@ -26,7 +26,7 @@ export function ClassInput() {
       setNewActivity({
         name: '',
         credits: 3,
-        color: '#ffffff'
+        color: 'var(--text-primary)'
       });
     }
   };

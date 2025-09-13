@@ -87,6 +87,10 @@ export function Preferences() {
     // Also set the light variant (slightly different shade)
     const lightVariant = getAccentColorLightVariant(color);
     document.documentElement.style.setProperty('--accent-color-light', lightVariant);
+    
+    // Set gradient variables
+    document.documentElement.style.setProperty('--accent-gradient', `linear-gradient(135deg, ${color} 0%, ${lightVariant} 100%)`);
+    document.documentElement.style.setProperty('--accent-gradient-hover', `linear-gradient(135deg, ${lightVariant} 0%, ${color} 100%)`);
   };
 
   // Apply initial theme and accent color on component mount
@@ -97,6 +101,10 @@ export function Preferences() {
     // Apply initial accent color light variant
     const lightVariant = getAccentColorLightVariant(accentColor);
     document.documentElement.style.setProperty('--accent-color-light', lightVariant);
+    
+    // Set gradient variables
+    document.documentElement.style.setProperty('--accent-gradient', `linear-gradient(135deg, ${accentColor} 0%, ${lightVariant} 100%)`);
+    document.documentElement.style.setProperty('--accent-gradient-hover', `linear-gradient(135deg, ${lightVariant} 0%, ${accentColor} 100%)`);
 
     // Apply initial theme
     if (isDarkMode) {
