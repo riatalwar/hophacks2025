@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Navigation } from '../components/Navigation';
-import './Dashboard.css';
+import '../styles/Dashboard.css';
 
 interface TodoItem {
   id: string;
@@ -11,7 +11,7 @@ interface TodoItem {
 }
 
 export function Dashboard() {
-  const { currentUser, signOut } = useAuth();
+  const { currentUser } = useAuth();
   const [todos, setTodos] = useState<TodoItem[]>([
     { id: '1', text: 'Complete Math homework', completed: false, priority: 'high' },
     { id: '2', text: 'Review Biology notes', completed: true, priority: 'medium' },
@@ -191,7 +191,7 @@ export function Dashboard() {
                   </div>
                 </div>
                 <div className="bar-chart">
-                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => (
+                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
                     <div key={day} className="bar-group">
                       <div className="bar-label">{day}</div>
                       <div className="bar-container">
@@ -215,19 +215,19 @@ export function Dashboard() {
                   <h3>Subject Distribution</h3>
                 </div>
                 <div className="pie-chart">
-                  <div className="pie-slice math" style={{ '--percentage': '35%' }}>
+                  <div className="pie-slice math" style={{ '--percentage': '35%' } as React.CSSProperties}>
                     <span className="pie-label">Math</span>
                     <span className="pie-percentage">35%</span>
                   </div>
-                  <div className="pie-slice biology" style={{ '--percentage': '25%' }}>
+                  <div className="pie-slice biology" style={{ '--percentage': '25%' } as React.CSSProperties}>
                     <span className="pie-label">Biology</span>
                     <span className="pie-percentage">25%</span>
                   </div>
-                  <div className="pie-slice chemistry" style={{ '--percentage': '20%' }}>
+                  <div className="pie-slice chemistry" style={{ '--percentage': '20%' } as React.CSSProperties}>
                     <span className="pie-label">Chemistry</span>
                     <span className="pie-percentage">20%</span>
                   </div>
-                  <div className="pie-slice literature" style={{ '--percentage': '20%' }}>
+                  <div className="pie-slice literature" style={{ '--percentage': '20%' } as React.CSSProperties}>
                     <span className="pie-label">Literature</span>
                     <span className="pie-percentage">20%</span>
                   </div>
