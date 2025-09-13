@@ -14,7 +14,7 @@
     "test:coverage": "jest --coverage"
   },
   "engines": {
-    "node": "24"
+    "node": "22"
   },
   "main": "lib/index.js",
   "dependencies": {
