@@ -3,7 +3,7 @@ import { Navigation } from '../components/Navigation';
 import '../styles/ClassInput.css';
 import type { Activity } from '../types/ClassTypes';
 
-export function ClassInput() {
+export function ActivityInput() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newActivity, setNewActivity] = useState({

@@ -4,7 +4,7 @@ import { Login } from './pages/Login'
 import { Signup } from './pages/Signup'
 import { Dashboard } from './pages/Dashboard'
 import { HomePage } from './pages/HomePage'
-import { ClassInput } from './pages/ActivityInput'
+import { ActivityInput } from './pages/ActivityInput'
 import { Preferences } from './pages/Preferences'
 import { AboutUs } from './pages/AboutUs'
 import { ProtectedRoute } from './components/ProtectedRoute'
@@ -67,7 +67,7 @@ function App() {
         path="/activities" 
         element={
           <ProtectedRoute>
-            <ClassInput />
+            <ActivityInput />
           </ProtectedRoute>
         } 
       />
