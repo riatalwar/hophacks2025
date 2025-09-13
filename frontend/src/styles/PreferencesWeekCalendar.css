@@ -154,6 +154,30 @@
     inset 0 -1px 0 rgba(0, 0, 0, 0.08);
 }
 
+.preferences-error-message {
+  background: rgba(244, 67, 54, 0.1);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 16px 0;
+  color: #f44336;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: center;
+  animation: errorSlideIn 0.3s ease-out;
+}
+
+@keyframes errorSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .preferences-week-calendar {
   position: relative;
   background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-hover) 100%);
@@ -343,6 +367,13 @@
 .preferences-time-block.wake {
   background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
   border: 1px solid rgba(255, 193, 7, 0.3);
+  height: 6.67px !important; /* 10 minutes in 30-minute grid (10/30 * 20px) */
+  min-height: 6.67px;
+}
+
+.preferences-time-block.bedtime {
+  background: linear-gradient(135deg, #9c27b0 0%, #673ab7 100%);
+  border: 1px solid rgba(156, 39, 176, 0.3);
   height: 6.67px !important; /* 10 minutes in 30-minute grid (10/30 * 20px) */
   min-height: 6.67px;
 }

@@ -16,6 +16,8 @@ interface WeekCalendarProps {
 export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
   const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([]);
   const [wakeUpTimes, setWakeUpTimes] = useState<{ [day: number]: TimeBlock | null }>({});
+  const [bedtimes, setBedtimes] = useState<{ [day: number]: TimeBlock | null }>({});
+  const [errorMessage, setErrorMessage] = useState<string>('');
   const [dragging, setDragging] = useState<string | null>(null);
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -59,6 +61,7 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
   // Button selection handlers
   const handleButtonSelect = (buttonType: 'wake' | 'bedtime' | 'study') => {
     setSelectedButton(selectedButton === buttonType ? null : buttonType);
+    setErrorMessage(''); // Clear any existing error when switching buttons
   };
 
   const getGridDimensions = () => {
@@ -69,11 +72,15 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
 
   // Mouse event handlers
   const handleCellHover = (e: React.MouseEvent, _day: number, _slot: number) => {
-    if (!selectedButton || selectedButton !== 'wake') return;
+    if (!selectedButton || (selectedButton !== 'wake' && selectedButton !== 'bedtime')) return;
     
     // Add visual feedback for hover
     const cell = e.currentTarget as HTMLElement;
-    cell.style.backgroundColor = 'rgba(255, 165, 0, 0.1)';
+    if (selectedButton === 'wake') {
+      cell.style.backgroundColor = 'rgba(255, 193, 7, 0.1)'; // Orange for wake up
+    } else if (selectedButton === 'bedtime') {
+      cell.style.backgroundColor = 'rgba(156, 39, 176, 0.1)'; // Purple for bedtime
+    }
     
     // Remove hover effect after a short delay
     setTimeout(() => {
@@ -97,10 +104,43 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
         type: 'wake'
       };
 
+      // Validate wake up time
+      const error = validateWakeUpBedtime(day, newWakeTime);
+      if (error) {
+        setErrorMessage(error);
+        return;
+      }
+
       setWakeUpTimes(prev => ({
         ...prev,
         [day]: newWakeTime
       }));
+      setErrorMessage(''); // Clear error on successful placement
+    } else if (selectedButton === 'bedtime') {
+      // Convert slot to minutes (30-minute intervals)
+      const startTime = slot * 30; // Convert slot to minutes
+      const endTime = startTime + 10; // 10 minutes
+      
+      const newBedtime: TimeBlock = {
+        id: `bedtime-${day}-${Date.now()}`,
+        day,
+        startTime,
+        endTime,
+        type: 'bedtime'
+      };
+
+      // Validate bedtime
+      const error = validateWakeUpBedtime(day, undefined, newBedtime);
+      if (error) {
+        setErrorMessage(error);
+        return;
+      }
+
+      setBedtimes(prev => ({
+        ...prev,
+        [day]: newBedtime
+      }));
+      setErrorMessage(''); // Clear error on successful placement
     } else if (selectedButton === 'study') {
       // For study times, use the original drag behavior
       setIsCreating(true);
@@ -217,6 +257,26 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
     }));
   };
 
+  const deleteBedtime = (day: number) => {
+    setBedtimes(prev => ({
+      ...prev,
+      [day]: null
+    }));
+  };
+
+  // Validation function to check if wake up is before bedtime
+  const validateWakeUpBedtime = (day: number, newWakeUp?: TimeBlock, newBedtime?: TimeBlock) => {
+    const currentWakeUp = newWakeUp || wakeUpTimes[day];
+    const currentBedtime = newBedtime || bedtimes[day];
+    
+    if (currentWakeUp && currentBedtime) {
+      if (currentWakeUp.startTime >= currentBedtime.startTime) {
+        return `Wake up time must be before bedtime on ${days[day]}`;
+      }
+    }
+    return null;
+  };
+
   // Global mouse up handler
   useEffect(() => {
     const handleGlobalMouseUp = () => {
@@ -256,6 +316,13 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
           Valid Study Times
         </button>
       </div>
+
+      {/* Error message */}
+      {errorMessage && (
+        <div className="preferences-error-message">
+          {errorMessage}
+        </div>
+      )}
       
       <div 
         className={`preferences-week-calendar ${!selectedButton ? 'disabled' : ''}`}
@@ -349,6 +416,36 @@ export function WeekCalendar({ onScheduleChange }: WeekCalendarProps) {
                   <button 
                     className="preferences-delete-block"
                     onClick={() => deleteWakeTime(parseInt(day))}
+                    title="Delete"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Bedtime blocks */}
+          {Object.entries(bedtimes).map(([day, bedtime]) => {
+            if (!bedtime) return null;
+            return (
+              <div
+                key={bedtime.id}
+                className={`preferences-time-block ${bedtime.type}`}
+                style={{
+                  left: dayToPosition(parseInt(day)), // No additional offset needed - grid already accounts for time column
+                  top: timeToPosition(bedtime.startTime), // No additional offset - grid cells have margin-top
+                  height: timeToPosition(bedtime.endTime - bedtime.startTime),
+                  width: getGridDimensions().dayWidth
+                }}
+              >
+                <div className="preferences-block-content">
+                  <span className="preferences-block-time">
+                    Bedtime
+                  </span>
+                  <button 
+                    className="preferences-delete-block"
+                    onClick={() => deleteBedtime(parseInt(day))}
                     title="Delete"
                   >
                     ×
