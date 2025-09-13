@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Navigation } from '../components/Navigation';
 import { WeekCalendar } from '../components/WeekCalendar';
+import type { StudyTimeList } from '../types/ClassTypes';
 import '../styles/Preferences.css';
 
 export function Preferences() {
@@ -21,6 +22,20 @@ export function Preferences() {
     const saved = localStorage.getItem('classCatcher_accentColor');
     return saved || '#4ecdc4';
   });
+
+  // Array of size 7 initialized with all values set to 0
+  const [preferencesArray, setPreferencesArray] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
+
+  // Array called studyTimes storing linked lists (of 2-value tuples) in each index
+  const [studyTimes, setStudyTimes] = useState<StudyTimeList[]>([
+    { head: null, size: 0 }, // Monday
+    { head: null, size: 0 }, // Tuesday
+    { head: null, size: 0 }, // Wednesday
+    { head: null, size: 0 }, // Thursday
+    { head: null, size: 0 }, // Friday
+    { head: null, size: 0 }, // Saturday
+    { head: null, size: 0 }  // Sunday
+  ]);
 
   const accentColors = [
     '#4ecdc4', '#ff6b6b', '#45b7d1', '#96ceb4',

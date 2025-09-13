@@ -1,14 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Navigation } from '../components/Navigation';
+import type { TodoItem } from '../types/ClassTypes';
 import '../styles/Dashboard.css';
-
-interface TodoItem {
-  id: string;
-  text: string;
-  completed: boolean;
-  priority: 'high' | 'medium' | 'low';
-}
 
 export function Dashboard() {
   const { currentUser } = useAuth();
