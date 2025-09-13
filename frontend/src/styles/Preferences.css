@@ -1,49 +1,18 @@
-/* CSS Variables for theming */
-:root {
-  --accent-color: #4ecdc4;
-  --accent-color-light: #45b7d1;
-  
-  /* Dark theme colors (default) */
-  --bg-primary: #000000;
-  --bg-secondary: #0a0a0a;
-  --bg-tertiary: rgba(255, 255, 255, 0.03);
-  --bg-hover: rgba(255, 255, 255, 0.05);
-  --text-primary: #ffffff;
-  --text-secondary: #a0a0a0;
-  --text-muted: #666666;
-  --border-color: rgba(255, 255, 255, 0.1);
-  --border-hover: rgba(255, 255, 255, 0.2);
-  --border-light: rgba(255, 255, 255, 0.05);
-  --border-medium: rgba(255, 255, 255, 0.2);
-  --border-strong: rgba(255, 255, 255, 0.3);
-  --shadow-color: rgba(0, 0, 0, 0.3);
-}
-
-/* Light theme colors */
-.light-theme {
-  --bg-primary: #f5f3f0;
-  --bg-secondary: #ede9e3;
-  --bg-tertiary: rgba(255, 255, 255, 0.6);
-  --bg-hover: rgba(255, 255, 255, 0.8);
-  --text-primary: #3a3a3a;
-  --text-secondary: #6b6b6b;
-  --text-muted: #9a9a9a;
-  --border-color: rgba(0, 0, 0, 0.12);
-  --border-hover: rgba(0, 0, 0, 0.2);
-  --border-light: rgba(0, 0, 0, 0.08);
-  --border-medium: rgba(0, 0, 0, 0.15);
-  --border-strong: rgba(0, 0, 0, 0.25);
-  --shadow-color: rgba(0, 0, 0, 0.12);
-  --shadow-light: rgba(0, 0, 0, 0.06);
-  --shadow-strong: rgba(0, 0, 0, 0.18);
-}
+/* Preferences-specific CSS variables (if any needed) */
 
 /* Preferences Page Styles */
 .preferences-page {
   min-height: 100vh;
   background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-primary) 100%);
-  position: relative;
+  position: static;
   transition: all 0.3s ease;
+  z-index: 0;
+  pointer-events: auto;
+}
+
+/* Content elements styling - exclude navbar */
+.preferences-page > * {
+  pointer-events: auto;
 }
 
 .light-theme .preferences-page::before {
@@ -63,17 +32,20 @@
               radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.1) 0%, transparent 50%),
               radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.05) 0%, transparent 50%);
   pointer-events: none;
-  z-index: 0;
+  z-index: -1;
 }
 
 .preferences-container {
   max-width: 1000px;
   margin: 0 auto;
   padding: 2rem;
-  position: relative;
-  z-index: 1;
+  position: static;
   padding-top: 6rem; /* Account for fixed navbar */
+  margin-top: 0;
+  z-index: 1;
 }
+
+/* Navbar styles removed - handled by global navigation component */
 
 .preferences-header {
   text-align: center;
@@ -96,12 +68,12 @@
 
 .preferences-content {
   background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-hover) 100%);
-  backdrop-filter: blur(20px);
   border: 1px solid var(--border-color);
   border-radius: 20px;
   padding: 2rem;
-  position: relative;
+  position: static;
   overflow: hidden;
+  z-index: 1;
   box-shadow: 
     0 4px 20px var(--shadow-color),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);

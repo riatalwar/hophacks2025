@@ -143,7 +143,7 @@ export function Preferences() {
 
   // Load preferences on component mount
   useEffect(() => {
-    loadAllPreferences();
+    //loadAllPreferences();
   }, [loadAllPreferences]);
 
   // Function to sync wake up times from WeekCalendar
@@ -274,36 +274,17 @@ export function Preferences() {
     setTimeout(() => saveAllPreferences(), 100);
   };
 
-  // Apply initial theme and accent color on component mount
-  useEffect(() => {
-    // Apply initial accent color
-    document.documentElement.style.setProperty('--accent-color', accentColor);
-
-    // Apply initial accent color light variant
-    const lightVariant = getAccentColorLightVariant(accentColor);
-    document.documentElement.style.setProperty('--accent-color-light', lightVariant);
-    
-    // Set gradient variables
-    document.documentElement.style.setProperty('--accent-gradient', `linear-gradient(135deg, ${accentColor} 0%, ${lightVariant} 100%)`);
-    document.documentElement.style.setProperty('--accent-gradient-hover', `linear-gradient(135deg, ${lightVariant} 0%, ${accentColor} 100%)`);
-
-    // Apply initial theme
-    if (isDarkMode) {
-      document.documentElement.classList.remove('light-theme');
-      document.documentElement.classList.add('dark-theme');
-    } else {
-      document.documentElement.classList.remove('dark-theme');
-      document.documentElement.classList.add('light-theme');
-    }
-  }, []);
+  // Theme and accent color are handled globally by App.tsx
+  // No need to apply them here to avoid conflicts that can freeze the navbar
 
   return (
-    <div className="preferences-page">
+    <>
       {/* Navigation */}
       <Navigation />
 
       {/* Main Content */}
-      <div className="preferences-container">
+      <div className="preferences-page">
+        <div className="preferences-container">
         <div className="preferences-header">
           <h1>Preferences & Settings</h1>
           <p>Customize your Class Catcher experience to match your study preferences and academic needs.</p>
@@ -545,6 +526,7 @@ export function Preferences() {
           </p>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

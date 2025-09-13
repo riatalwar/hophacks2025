@@ -40,129 +40,8 @@ body {
               radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.01) 0%, transparent 50%);
 }
 
-/* Navigation */
-.navbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  background: var(--bg-tertiary);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border-color);
-  padding: 1rem 0;
-}
+/* Navigation styles removed - handled by GlobalTheme.css */
 
-.light-theme .navbar {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.nav-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.logo-button {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  text-decoration: none;
-  color: inherit;
-}
-
-.logo-button h2 {
-  background: var(--accent-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  font-size: 1.5rem;
-  font-weight: 700;
-  transition: all 0.3s ease;
-  margin: 0;
-}
-
-.logo-button:hover h2 {
-  background: var(--accent-gradient-hover);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  transform: scale(1.05);
-}
-
-.nav-links {
-  display: flex;
-  align-items: center;
-  gap: 2rem;
-}
-
-.nav-links a {
-  color: var(--text-primary);
-  text-decoration: none;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  position: relative;
-}
-
-.logout-button {
-  background: none;
-  border: 1px solid var(--border-strong);
-  color: var(--text-primary);
-  padding: 0.5rem 1rem;
-  border-radius: 25px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.9rem;
-}
-
-.logout-button:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: var(--border-hover);
-  transform: translateY(-2px);
-}
-
-.nav-links a:hover {
-  color: var(--text-secondary);
-}
-
-.nav-link-button {
-  background: none;
-  border: none;
-  color: var(--text-primary);
-  text-decoration: none;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  position: relative;
-  cursor: pointer;
-  font-size: inherit;
-  font-family: inherit;
-}
-
-.nav-link-button:hover {
-  color: var(--accent-color);
-}
-
-.nav-links a::after {
-  content: '';
-  position: absolute;
-  bottom: -5px;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: var(--accent-gradient);
-  transition: width 0.3s ease;
-}
-
-.nav-links a:hover::after {
-  width: 100%;
-}
 
 .cta-button {
   background: var(--accent-gradient);
@@ -184,17 +63,6 @@ body {
   box-shadow: 0 4px 12px var(--accent-color);
 }
 
-/* Dashboard button specific styling for better visibility */
-.nav-links .cta-button {
-  color: var(--text-primary) !important;
-  font-weight: 700;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.nav-links .cta-button:hover {
-  color: var(--text-primary) !important;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
 
 /* Hero Section */
 .hero {
@@ -597,13 +465,6 @@ body {
     font-size: 2.5rem;
   }
   
-  .nav-links {
-    gap: 1rem;
-  }
-  
-  .nav-links a {
-    display: none;
-  }
   
   .features-grid {
     grid-template-columns: 1fr;
