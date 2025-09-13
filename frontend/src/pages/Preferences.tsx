@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Navigation } from '../components/Navigation';
 import { WeekCalendar } from '../components/WeekCalendar';
 import type { StudyTimeList, StudyTimeNode, Preferences } from '../types/ClassTypes';
@@ -65,7 +65,8 @@ export function Preferences() {
 
   // Comprehensive function to save all preferences
   const saveAllPreferences = useCallback(() => {
-    const preferences: Preferences = {
+    // Get current values from state at the time of saving
+    const currentPreferences = {
       wakeUpTimes,
       bedtimes,
       studyTimes,
@@ -80,14 +81,18 @@ export function Preferences() {
     };
 
     // Save to localStorage
-    localStorage.setItem('classCatcher_preferences', JSON.stringify(preferences));
+    localStorage.setItem('classCatcher_preferences', JSON.stringify(currentPreferences));
     
     // Also save individual theme and accent color for immediate application
     localStorage.setItem('classCatcher_theme', isDarkMode ? 'dark' : 'light');
     localStorage.setItem('classCatcher_accentColor', accentColor);
     
-    console.log('Preferences saved:', preferences);
+    console.log('Preferences saved:', currentPreferences);
   }, [wakeUpTimes, bedtimes, studyTimes, emailNotifications, shareDataAnonymously, isDarkMode, accentColor]);
+
+  // Create a stable reference to saveAllPreferences using useRef
+  const saveAllPreferencesRef = useRef(saveAllPreferences);
+  saveAllPreferencesRef.current = saveAllPreferences;
 
   // Function to load all preferences
   const loadAllPreferences = useCallback(() => {
@@ -139,12 +144,12 @@ export function Preferences() {
         console.error('Error loading preferences:', error);
       }
     }
-  }, []);
+  }, []); // Empty dependency array since this should only run once on mount
 
   // Load preferences on component mount
   useEffect(() => {
     loadAllPreferences();
-  }, [loadAllPreferences]);
+  }, []); // Only run once on mount
 
   // Function to sync wake up times from WeekCalendar
   const handleWakeUpTimesChange = useCallback((newWakeUpTimes: { [day: number]: any | null }) => {
@@ -156,9 +161,9 @@ export function Preferences() {
     });
     setWakeUpTimes(wakeUpArray);
     
-    // Auto-save preferences
-    setTimeout(() => saveAllPreferences(), 100);
-  }, [saveAllPreferences]);
+    // Auto-save preferences using stable reference
+    setTimeout(() => saveAllPreferencesRef.current(), 100);
+  }, []); // Stable callback
 
   // Function to sync bedtimes from WeekCalendar
   const handleBedtimesChange = useCallback((newBedtimes: { [day: number]: any | null }) => {
@@ -170,9 +175,9 @@ export function Preferences() {
     });
     setBedtimes(bedtimesArray);
     
-    // Auto-save preferences
-    setTimeout(() => saveAllPreferences(), 100);
-  }, [saveAllPreferences]);
+    // Auto-save preferences using stable reference
+    setTimeout(() => saveAllPreferencesRef.current(), 100);
+  }, []); // Stable callback
 
   // Function to sync study times from WeekCalendar
   const handleStudyTimesChange = useCallback((newStudyTimes: any[]) => {
@@ -212,9 +217,9 @@ export function Preferences() {
 
     setStudyTimes(studyTimesList);
     
-    // Auto-save preferences
-    setTimeout(() => saveAllPreferences(), 100);
-  }, [saveAllPreferences]);
+    // Auto-save preferences using stable reference
+    setTimeout(() => saveAllPreferencesRef.current(), 100);
+  }, []); // Stable callback
 
   const handleNotificationToggle = (notificationType: keyof typeof emailNotifications) => {
     setEmailNotifications(prev => ({
@@ -222,15 +227,15 @@ export function Preferences() {
       [notificationType]: !prev[notificationType]
     }));
     
-    // Auto-save preferences
-    setTimeout(() => saveAllPreferences(), 100);
+    // Auto-save preferences using stable reference
+    setTimeout(() => saveAllPreferencesRef.current(), 100);
   };
 
   const handleDataSharingToggle = () => {
     setShareDataAnonymously(prev => !prev);
     
-    // Auto-save preferences
-    setTimeout(() => saveAllPreferences(), 100);
+    // Auto-save preferences using stable reference
+    setTimeout(() => saveAllPreferencesRef.current(), 100);
   };
 
   const handleThemeToggle = () => {
@@ -249,8 +254,8 @@ export function Preferences() {
       document.documentElement.classList.add('light-theme');
     }
     
-    // Auto-save preferences
-    setTimeout(() => saveAllPreferences(), 100);
+    // Auto-save preferences using stable reference
+    setTimeout(() => saveAllPreferencesRef.current(), 100);
   };
 
   const handleAccentColorChange = (color: string) => {
@@ -270,8 +275,8 @@ export function Preferences() {
     document.documentElement.style.setProperty('--accent-gradient', `linear-gradient(135deg, ${color} 0%, ${lightVariant} 100%)`);
     document.documentElement.style.setProperty('--accent-gradient-hover', `linear-gradient(135deg, ${lightVariant} 0%, ${color} 100%)`);
     
-    // Auto-save preferences
-    setTimeout(() => saveAllPreferences(), 100);
+    // Auto-save preferences using stable reference
+    setTimeout(() => saveAllPreferencesRef.current(), 100);
   };
 
   // Apply initial theme and accent color on component mount
@@ -295,7 +300,7 @@ export function Preferences() {
       document.documentElement.classList.remove('dark-theme');
       document.documentElement.classList.add('light-theme');
     }
-  }, []);
+  }, [accentColor, isDarkMode]); // Include dependencies that are used in the effect
 
   return (
     <div className="preferences-page">

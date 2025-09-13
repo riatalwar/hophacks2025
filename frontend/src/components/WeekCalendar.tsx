@@ -63,21 +63,21 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
     if (savedBedtimes) {
       setBedtimes(JSON.parse(savedBedtimes));
     }
-  }, [onScheduleChange]);
+  }, []); // Only run once on mount, callbacks are stable
 
   // Notify parent component when wake up times change
   useEffect(() => {
     if (onWakeUpTimesChange) {
       onWakeUpTimesChange(wakeUpTimes);
     }
-  }, [wakeUpTimes, onWakeUpTimesChange]);
+  }, [wakeUpTimes]); // Remove callback from dependencies to prevent infinite re-renders
 
   // Notify parent component when bedtimes change
   useEffect(() => {
     if (onBedtimesChange) {
       onBedtimesChange(bedtimes);
     }
-  }, [bedtimes, onBedtimesChange]);
+  }, [bedtimes]); // Remove callback from dependencies to prevent infinite re-renders
 
   // Notify parent component when study times change
   useEffect(() => {
@@ -85,7 +85,7 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
       const studyTimes = timeBlocks.filter(block => block.type === 'study');
       onStudyTimesChange(studyTimes);
     }
-  }, [timeBlocks, onStudyTimesChange]);
+  }, [timeBlocks]); // Remove callback from dependencies to prevent infinite re-renders
 
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const timeSlots = Array.from({ length: 48 }, (_, i) => i); // 48 slots for 30-minute intervals
