@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
 import { Login } from './pages/Login'
 import { Signup } from './pages/Signup'
 import { Dashboard } from './pages/Dashboard'
@@ -11,6 +12,46 @@ import './App.css'
 import './styles/GlobalTheme.css'
 
 function App() {
+  // Helper function to generate a light variant of the accent color
+  const getAccentColorLightVariant = (color: string): string => {
+    // Simple mapping for the predefined colors
+    const colorMap: { [key: string]: string } = {
+      '#4ecdc4': '#45b7d1',
+      '#ff6b6b': '#ff8e8e',
+      '#45b7d1': '#5bc0de',
+      '#96ceb4': '#a8d5ba',
+      '#feca57': '#ffd93d',
+      '#ff9ff3': '#ffb3f3',
+      '#54a0ff': '#74b9ff',
+      '#a55eea': '#c44569'
+    };
+    return colorMap[color] || color;
+  };
+
+  // Apply saved theme and accent color preferences on app load
+  useEffect(() => {
+    // Load saved theme
+    const savedTheme = localStorage.getItem('classCatcher_theme');
+    if (savedTheme) {
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.remove('light-theme');
+        document.documentElement.classList.add('dark-theme');
+      } else {
+        document.documentElement.classList.remove('dark-theme');
+        document.documentElement.classList.add('light-theme');
+      }
+    }
+
+    // Load saved accent color
+    const savedAccentColor = localStorage.getItem('classCatcher_accentColor');
+    if (savedAccentColor) {
+      document.documentElement.style.setProperty('--accent-color', savedAccentColor);
+
+      // Also set the light variant
+      const lightVariant = getAccentColorLightVariant(savedAccentColor);
+      document.documentElement.style.setProperty('--accent-color-light', lightVariant);
+    }
+  }, []);
   return (
     <Routes>
       <Route path="/login" element={<Login />} />

@@ -72,7 +72,7 @@ body {
 }
 
 .logo-button h2 {
-  background: linear-gradient(135deg, #ffffff 0%, #a0a0a0 100%);
+  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-color-light) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -83,7 +83,7 @@ body {
 }
 
 .logo-button:hover h2 {
-  background: linear-gradient(135deg, #ffffff 0%, #7877c6 100%);
+  background: linear-gradient(135deg, var(--accent-color-light) 0%, var(--accent-color) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -140,7 +140,7 @@ body {
 }
 
 .nav-link-button:hover {
-  color: #a0a0a0;
+  color: var(--accent-color);
 }
 
 .nav-links a::after {
@@ -150,7 +150,7 @@ body {
   left: 0;
   width: 0;
   height: 2px;
-  background: linear-gradient(90deg, #ffffff, #a0a0a0);
+  background: linear-gradient(90deg, var(--accent-color), var(--accent-color-light));
   transition: width 0.3s ease;
 }
 
@@ -159,15 +159,15 @@ body {
 }
 
 .cta-button {
-  background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
-  color: #000000;
+  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-color-light) 100%);
+  color: var(--text-primary);
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: 50px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 8px var(--accent-color);
   text-decoration: none;
   display: inline-block;
   text-align: center;
@@ -175,18 +175,18 @@ body {
 
 .cta-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 12px var(--accent-color);
 }
 
 /* Dashboard button specific styling for better visibility */
 .nav-links .cta-button {
-  color: #000000 !important;
+  color: var(--text-primary) !important;
   font-weight: 700;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .nav-links .cta-button:hover {
-  color: #000000 !important;
+  color: var(--text-primary) !important;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
@@ -218,7 +218,7 @@ body {
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #ffffff 0%, #a0a0a0 50%, #ffffff 100%);
+  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-color-light) 50%, var(--accent-color) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -243,43 +243,7 @@ body {
   flex-wrap: wrap;
 }
 
-.primary-button {
-  background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
-  color: #000000;
-  border: none;
-  padding: 1rem 2rem;
-  border-radius: 50px;
-  font-weight: 600;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
-  position: relative;
-  overflow: hidden;
-  text-decoration: none;
-  display: inline-block;
-  text-align: center;
-}
-
-.primary-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s ease;
-}
-
-.primary-button:hover::before {
-  left: 100%;
-}
-
-.primary-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(255, 255, 255, 0.2);
-}
+/* Primary button styles are defined in GlobalTheme.css */
 
 .secondary-button {
   background: transparent;
@@ -320,81 +284,107 @@ body {
 }
 
 .floating-card {
-  position: absolute;
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(20px);
   border: 1px solid var(--border-color);
-  border-radius: 20px;
+  border-radius: 50%;
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  animation: float 6s ease-in-out infinite;
-  min-width: 120px;
+  width: 140px;
+  height: 140px;
   z-index: 10;
+  transition: all 0.3s ease;
 }
 
+.floating-card:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* Circular positioning for cards - spaced circle formation */
 .card-1 {
-  top: 10%;
-  left: 15%;
-  animation-delay: 0s;
+  position: absolute;
+  top: 35%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-100px);
 }
 
 .card-2 {
+  position: absolute;
   top: 35%;
-  right: 15%;
-  animation-delay: 2s;
+  left: 50%;
+  transform: translateX(-50%) translateX(-90px) translateY(50px);
 }
 
 .card-3 {
-  bottom: 10%;
+  position: absolute;
+  top: 35%;
   left: 50%;
-  transform: translateX(-50%);
-  animation: float-center 6s ease-in-out infinite;
-  animation-delay: 4s;
+  transform: translateX(-50%) translateX(90px) translateY(50px);
 }
 
-@keyframes float {
-  0%, 100% { 
-    transform: translateY(0px) translateX(0px); 
+/* Responsive positioning for smaller screens */
+@media (max-width: 768px) {
+  .card-1 {
+    top: 30%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-75px);
   }
-  25% { 
-    transform: translateY(-15px) translateX(5px); 
+
+  .card-2 {
+    top: 30%;
+    left: 50%;
+    transform: translateX(-50%) translateX(-65px) translateY(40px);
   }
-  50% { 
-    transform: translateY(-25px) translateX(0px); 
-  }
-  75% { 
-    transform: translateY(-10px) translateX(-3px); 
+
+  .card-3 {
+    top: 30%;
+    left: 50%;
+    transform: translateX(-50%) translateX(65px) translateY(40px);
   }
 }
 
-@keyframes float-center {
-  0%, 100% { 
-    transform: translateX(-50%) translateY(0px); 
+@media (max-width: 480px) {
+  .floating-card {
+    width: 100px;
+    height: 100px;
+    padding: 0.8rem;
   }
-  25% { 
-    transform: translateX(-50%) translateY(-15px) translateX(5px); 
+
+  .card-1 {
+    top: 25%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-55px);
   }
-  50% { 
-    transform: translateX(-50%) translateY(-25px) translateX(0px); 
+
+  .card-2 {
+    top: 25%;
+    left: 50%;
+    transform: translateX(-50%) translateX(-50px) translateY(30px);
   }
-  75% { 
-    transform: translateX(-50%) translateY(-10px) translateX(-3px); 
+
+  .card-3 {
+    top: 25%;
+    left: 50%;
+    transform: translateX(-50%) translateX(50px) translateY(30px);
   }
 }
 
 .card-icon {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
+  font-size: 2.5rem;
+  margin-bottom: 0.25rem;
 }
 
 .floating-card span {
   color: var(--text-primary);
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
+  text-align: center;
+  line-height: 1.2;
 }
 
 /* Features Section */
@@ -415,7 +405,7 @@ body {
   font-size: 2.5rem;
   font-weight: 700;
   margin-bottom: 3rem;
-  background: linear-gradient(135deg, #ffffff 0%, #a0a0a0 100%);
+  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-color-light) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -549,7 +539,7 @@ body {
   font-size: 1.5rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
-  background: linear-gradient(135deg, #ffffff 0%, #a0a0a0 100%);
+  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-color-light) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
