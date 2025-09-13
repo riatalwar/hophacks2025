@@ -1,62 +1,31 @@
 import {GoogleGenerativeAI} from "@google/generative-ai";
-import {FileProcessorFactory} from "./fileProcessors";
 import {ProcessedSyllabus} from "@shared/types/syllabus";
 
 /**
- * Processor for analyzing course syllabi and extracting structured task
- * information. Uses Google Gemini AI to parse syllabus text and extract
- * assignments, exams, projects, and important dates.
+ * Processor for analyzing course syllabi text with Gemini AI.
+ * Takes raw text input and returns structured syllabus data.
  */
 export class SyllabusProcessor {
   /** Google Generative AI instance for text analysis */
   private genAI: GoogleGenerativeAI;
-  /** Factory for managing file processors */
-  private fileProcessorFactory: FileProcessorFactory;
 
   /**
-   * Creates a new SyllabusProcessor instance.
+   * Creates a new SimpleSyllabusProcessor instance.
    * @param {string} apiKey - Google Generative AI API key
    */
   constructor(apiKey: string) {
     this.genAI = new GoogleGenerativeAI(apiKey);
-    this.fileProcessorFactory = new FileProcessorFactory();
-  }
-
-  /**
-   * Extracts text content from a file using the appropriate processor.
-   * @param {Buffer} buffer - The file content as a Buffer
-   * @param {string} mimeType - The MIME type of the file
-   * @return {Promise<string>} Promise resolving to extracted text content
-   * @throws Error if file type is unsupported or extraction fails
-   */
-  async extractTextFromFile(buffer: Buffer, mimeType: string): Promise<string> {
-    const processor = this.fileProcessorFactory.getProcessor(mimeType);
-    if (!processor) {
-      const supportedTypes = this.fileProcessorFactory.getSupportedMimeTypes();
-      throw new Error(`Unsupported file type: ${mimeType}. ` +
-        `Supported types: ${supportedTypes.join(", ")}`);
-    }
-
-    return await processor.extractText(buffer);
-  }
-
-  /**
-   * Gets all supported file MIME types.
-   * @return {string[]} Array of supported MIME types
-   */
-  getSupportedFileTypes(): string[] {
-    return this.fileProcessorFactory.getSupportedMimeTypes();
   }
 
   /**
    * Analyzes syllabus text using Google Gemini AI to extract structured data.
    * @param {string} text - The syllabus text to analyze
-   * @return {Promise<ProcessedSyllabus>} Promise resolving to structured
-   * syllabus data
+   * @return {Promise<ProcessedSyllabus>} Promise resolving to
+   * structured syllabus data
    * @throws Error if AI analysis fails or response parsing fails
    */
-  async analyzeSyllabusText(text: string): Promise<ProcessedSyllabus> {
-    const model = this.genAI.getGenerativeModel({model: "gemini-2.5-pro"});
+  async processSyllabusText(text: string): Promise<ProcessedSyllabus> {
+    const model = this.genAI.getGenerativeModel({model: "gemini-2.5-flash"});
 
     const prompt = `
 You are an expert academic assistant. Analyze the following course syllabus
@@ -81,6 +50,12 @@ Please respond with a JSON object in the following exact format:
       "category": "assignment|exam|project|reading|quiz|discussion|lab",
       "priority": "low|medium|high",
       "estimatedHours": number (optional, your best estimate)
+    }
+  ],
+  "importantDates": [
+    {
+      "date": "YYYY-MM-DD",
+      "event": "Description of the event"
     }
   ]
 }
@@ -108,39 +83,19 @@ Respond with only the JSON object, no additional text.`;
     try {
       const result = await model.generateContent(prompt);
       const response = await result.response;
-      const text = response.text();
+      const responseText = response.text();
 
       // Clean up the response to ensure it is valid JSON
-      const jsonText = text.replace(/```json\n?|\n?```/g, "").trim();
+      const jsonText = responseText.replace(/```json\n?|\n?```/g, "").trim();
 
       try {
         return JSON.parse(jsonText) as ProcessedSyllabus;
       } catch (parseError) {
         throw new Error("Failed to parse Gemini response as JSON: " +
-          `${parseError}. Response was: ${text}`);
+          `${parseError}. Response was: ${responseText}`);
       }
     } catch (error) {
       throw new Error(`Failed to analyze syllabus with Gemini: ${error}`);
-    }
-  }
-
-  /**
-   * Processes a complete syllabus file from buffer to structured data.
-   * @param {Buffer} fileBuffer - The syllabus file content as a Buffer
-   * @param {string} mimeType - The MIME type of the file
-   * @return {Promise<ProcessedSyllabus>} Promise resolving to structured
-   * syllabus data
-   * @throws Error if file processing fails
-   */
-  async processFullSyllabus(fileBuffer: Buffer,
-    mimeType: string): Promise<ProcessedSyllabus> {
-    try {
-      const extractedText = await this.extractTextFromFile(fileBuffer,
-        mimeType);
-      const analysisResult = await this.analyzeSyllabusText(extractedText);
-      return analysisResult;
-    } catch (error) {
-      throw new Error(`Failed to process syllabus: ${error}`);
     }
   }
 }
