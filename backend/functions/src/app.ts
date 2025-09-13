@@ -43,7 +43,7 @@ app.get("/test-gemini", async (req, res) => {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({model: "gemini-pro"});
+    const model = genAI.getGenerativeModel({model: "gemini-2.5-pro"});
 
     const prompt = "Hello! Please respond with " +
       "'Gemini API is working correctly!'";
