@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Navigation } from '../components/Navigation';
 import { FloatingCard } from '../components/FloatingCard';
 import { FeatureCard } from '../components/FeatureCard';
-import './HomePage.css';
+import '../styles/HomePage.css';
 
 export function HomePage() {
   return (

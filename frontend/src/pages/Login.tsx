@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebase';
+import { useAuth } from '../hooks/useAuth';
 
 export function Login() {
   const [formData, setFormData] = useState({
@@ -11,6 +10,7 @@ export function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { signIn } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -40,21 +40,10 @@ export function Login() {
         ? formData.emailOrUsername
         : formData.emailOrUsername;
 
-      await signInWithEmailAndPassword(auth, email, formData.password);
+      await signIn(email, formData.password);
       navigate('/');
     } catch (error: unknown) {
-      if (error && typeof error === 'object' && 'code' in error) {
-        const firebaseError = error as { code: string; message: string };
-        if (firebaseError.code === 'auth/user-not-found' || firebaseError.code === 'auth/wrong-password') {
-          setError('Invalid email/username or password');
-        } else if (firebaseError.code === 'auth/invalid-email') {
-          setError('Invalid email format');
-        } else {
-          setError(firebaseError.message);
-        }
-      } else {
-        setError('An unexpected error occurred');
-      }
+      setError('Invalid email/username or password');
     } finally {
       setLoading(false);
     }

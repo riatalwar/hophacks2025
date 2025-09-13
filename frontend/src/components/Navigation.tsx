@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
 interface NavigationProps {
   showBackButton?: boolean;
@@ -13,10 +14,16 @@ export function Navigation({
   backText = '← Back to Home' 
 }: NavigationProps) {
   const navigate = useNavigate();
+  const { currentUser, signOut } = useAuth();
 
   const handleLogoClick = () => {
     navigate('/home');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/home');
   };
 
   return (
@@ -34,7 +41,17 @@ export function Navigation({
             <>
               <a href="#features">Features</a>
               <Link to="/about">About</Link>
-              <Link to="/classes" className="cta-button">Get Started</Link>
+              {currentUser ? (
+                <>
+                  <Link to="/dashboard" className="cta-button">Dashboard</Link>
+                  <button onClick={handleLogout} className="logout-button">Logout</button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" className="secondary-button">Login</Link>
+                  <Link to="/classes" className="cta-button">Get Started</Link>
+                </>
+              )}
             </>
           )}
         </div>
