@@ -51,12 +51,6 @@ Please respond with a JSON object in the following exact format:
       "priority": "low|medium|high",
       "estimatedHours": number (optional, your best estimate)
     }
-  ],
-  "importantDates": [
-    {
-      "date": "YYYY-MM-DD",
-      "event": "Description of the event"
-    }
   ]
 }
 
