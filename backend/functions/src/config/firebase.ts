@@ -14,11 +14,18 @@ const serviceAccount = {
 };
 
 if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
-    databaseURL: `https://${process.env.FIREBASE_PROJECT_ID}-default-rtdb.firebaseio.com`,
-  });
+  if (process.env.FUNCTIONS_EMULATOR === 'true') {
+    // Local emulator: No creds needed
+    admin.initializeApp();
+  } else {
+    // Prod: Use service account
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
+      databaseURL: `https://${process.env.FIREBASE_PROJECT_ID}-default-rtdb.firebaseio.com`
+    });
+  }
 }
+
 
 export const db = admin.firestore();
 export const auth = admin.auth();
