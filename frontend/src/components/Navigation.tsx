@@ -26,6 +26,17 @@ export function Navigation({
     navigate('/home');
   };
 
+  const handleFeaturesClick = () => {
+    navigate('/home');
+    // Small delay to ensure page loads before scrolling
+    setTimeout(() => {
+      const featuresSection = document.getElementById('features');
+      if (featuresSection) {
+        featuresSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
+  };
+
   return (
     <nav className="navbar">
       <div className="nav-container">
@@ -39,7 +50,7 @@ export function Navigation({
             <Link to={backTo}>{backText}</Link>
           ) : (
             <>
-              <a href="#features">Features</a>
+              <button onClick={handleFeaturesClick} className="nav-link-button">Features</button>
               <Link to="/about">About</Link>
               {currentUser ? (
                 <>
@@ -49,7 +60,7 @@ export function Navigation({
               ) : (
                 <>
                   <Link to="/login" className="secondary-button">Login</Link>
-                  <Link to="/classes" className="cta-button">Get Started</Link>
+                  <Link to="/activities" className="cta-button">Get Started</Link>
                 </>
               )}
             </>

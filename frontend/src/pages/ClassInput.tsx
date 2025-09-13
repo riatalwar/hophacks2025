@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { Navigation } from '../components/Navigation';
 import '../styles/ClassInput.css';
-import type { Class } from '../types/ClassTypes';
+import type { Activity } from '../types/ClassTypes';
 
 export function ClassInput() {
-  const [classes, setClasses] = useState<Class[]>([]);
-  const [newClass, setNewClass] = useState({
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [newActivity, setNewActivity] = useState({
     name: '',
-    professor: '',
     credits: 3,
     color: '#ffffff'
   });
@@ -17,29 +16,28 @@ export function ClassInput() {
     '#96ceb4', '#feca57', '#ff9ff3', '#54a0ff'
   ];
 
-  const addClass = () => {
-    if (newClass.name.trim()) {
-      const classToAdd: Class = {
+  const addActivity = () => {
+    if (newActivity.name.trim()) {
+      const activityToAdd: Activity = {
         id: Date.now().toString(),
-        ...newClass
+        ...newActivity
       };
-      setClasses([...classes, classToAdd]);
-      setNewClass({
+      setActivities([...activities, activityToAdd]);
+      setNewActivity({
         name: '',
-        professor: '',
         credits: 3,
         color: '#ffffff'
       });
     }
   };
 
-  const removeClass = (id: string) => {
-    setClasses(classes.filter(cls => cls.id !== id));
+  const removeActivity = (id: string) => {
+    setActivities(activities.filter(activity => activity.id !== id));
   };
-
+v e
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      addClass();
+      addActivity();
     }
   };
 
@@ -51,32 +49,21 @@ export function ClassInput() {
       {/* Main Content */}
       <div className="class-input-container">
         <div className="class-input-header">
-          <h1>Add Your Classes</h1>
-          <p>Enter all the classes you're taking this semester to get started with Class Catcher</p>
+          <h1>Add Your Activities</h1>
+          <p>Enter all the activities you're involved in this semester to get started with Class Catcher</p>
         </div>
 
-        {/* Add Class Form */}
+        {/* Add Activity Form */}
         <div className="add-class-form">
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="className">Class Name</label>
+              <label htmlFor="activityName">Activity Name</label>
               <input
-                id="className"
+                id="activityName"
                 type="text"
                 placeholder="e.g., Introduction to Computer Science"
-                value={newClass.name}
-                onChange={(e) => setNewClass({...newClass, name: e.target.value})}
-                onKeyPress={handleKeyPress}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="professor">Professor</label>
-              <input
-                id="professor"
-                type="text"
-                placeholder="e.g., Dr. Smith"
-                value={newClass.professor}
-                onChange={(e) => setNewClass({...newClass, professor: e.target.value})}
+                value={newActivity.name}
+                onChange={(e) => setNewActivity({...newActivity, name: e.target.value})}
                 onKeyPress={handleKeyPress}
               />
             </div>
@@ -87,8 +74,8 @@ export function ClassInput() {
               <label htmlFor="credits">Credits</label>
               <select
                 id="credits"
-                value={newClass.credits}
-                onChange={(e) => setNewClass({...newClass, credits: parseInt(e.target.value)})}
+                value={newActivity.credits}
+                onChange={(e) => setNewActivity({...newActivity, credits: parseInt(e.target.value)})}
               >
                 <option value={1}>1 Credit</option>
                 <option value={2}>2 Credits</option>
@@ -103,41 +90,40 @@ export function ClassInput() {
                 {colors.map((color) => (
                   <button
                     key={color}
-                    className={`color-option ${newClass.color === color ? 'selected' : ''}`}
+                    className={`color-option ${newActivity.color === color ? 'selected' : ''}`}
                     style={{ backgroundColor: color }}
-                    onClick={() => setNewClass({...newClass, color})}
+                    onClick={() => setNewActivity({...newActivity, color})}
                   />
                 ))}
               </div>
             </div>
           </div>
 
-          <button className="add-class-button" onClick={addClass}>
-            + Add Class
+          <button className="add-class-button" onClick={addActivity}>
+            + Add Activity
           </button>
         </div>
 
-        {/* Classes List */}
+        {/* Activities List */}
         <div className="classes-list">
-          <h2>Your Classes ({classes.length})</h2>
-          {classes.length === 0 ? (
+          <h2>Your Activities ({activities.length})</h2>
+          {activities.length === 0 ? (
             <div className="empty-state">
               <div className="empty-icon">📚</div>
-              <p>No classes added yet. Add your first class above!</p>
+              <p>No activities added yet. Add your first activity above!</p>
             </div>
           ) : (
             <div className="classes-grid">
-              {classes.map((cls) => (
-                <div key={cls.id} className="class-card" style={{ borderLeftColor: cls.color }}>
+              {activities.map((activity) => (
+                <div key={activity.id} className="class-card" style={{ borderLeftColor: activity.color }}>
                   <div className="class-info">
-                    <h3>{cls.name}</h3>
-                    <p className="professor">{cls.professor}</p>
-                    <span className="credits">{cls.credits} credit{cls.credits !== 1 ? 's' : ''}</span>
+                    <h3>{activity.name}</h3>
+                    <span className="credits">{activity.credits} credit{activity.credits !== 1 ? 's' : ''}</span>
                   </div>
                   <button 
                     className="remove-class"
-                    onClick={() => removeClass(cls.id)}
-                    title="Remove class"
+                    onClick={() => removeActivity(activity.id)}
+                    title="Remove activity"
                   >
                     ×
                   </button>
@@ -148,7 +134,7 @@ export function ClassInput() {
         </div>
 
         {/* Action Buttons */}
-        {classes.length > 0 && (
+        {activities.length > 0 && (
           <div className="action-buttons">
             <button className="secondary-button">
               Save & Continue

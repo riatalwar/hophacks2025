@@ -1,7 +1,8 @@
-export interface Class {
+export interface Activity {
   id: string;
   name: string;
-  professor: string;
-  credits: number;
   color: string;
+  pdfFile?: File | null;
+  websiteLink?: string;
+  canvasContent?: string;
 }
