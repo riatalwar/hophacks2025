@@ -2,12 +2,15 @@ import express from "express";
 import cors from "cors";
 import {db} from "./config/firebase";
 import {GoogleGenerativeAI} from "@google/generative-ai";
+import syllabusRoutes from "./routes/syllabusRoutes";
 
 import activityRoutes from "./activity";
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+app.use("/syllabus", syllabusRoutes);
 
 app.get("/health", (req, res) => {
   res.json({status: "OK", message: "Backend server is running!"});
