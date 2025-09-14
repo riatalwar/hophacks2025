@@ -9,7 +9,7 @@ export interface Activity {
 
 export interface TodoItem {
   id: string;
-  text: string;
+  todoName: string;
   completed: boolean;
   priority: 'high' | 'medium' | 'low';
 }
