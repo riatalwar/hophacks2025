@@ -193,3 +193,62 @@ export function chunkTask(task: TodoItem): TaskChunk[] {
   
   return chunks;
 }
+export function prepareSortedTaskChunks(tasks: TodoItem[]): TaskChunk[] {
+  // Create a map to store the calculated priority of each parent task
+  const taskPriorityMap = new Map<string, number>();
+  
+  // Calculate each task's priority and store it in the map
+  for (const task of tasks) {
+    const priority = calculateTaskPriority(task);
+    taskPriorityMap.set(task.id, priority);
+  }
+  
+  // Create a flat list of all TaskChunk objects
+  const allChunks: TaskChunk[] = [];
+  for (const task of tasks) {
+    const chunks = chunkTask(task);
+    allChunks.push(...chunks);
+  }
+  
+  // Sort the chunks based on the specified criteria
+  return allChunks.sort((a, b) => {
+    const taskAPriority = taskPriorityMap.get(a.taskId) || 0;
+    const taskBPriority = taskPriorityMap.get(b.taskId) || 0;
+    
+    // Primary sort: parent task priority (descending)
+    if (taskAPriority !== taskBPriority) {
+      return taskBPriority - taskAPriority;
+    }
+    
+    // Find the parent tasks for tie-breaking
+    const taskA = tasks.find(t => t.id === a.taskId);
+    const taskB = tasks.find(t => t.id === b.taskId);
+    
+    // Secondary sort: task priority field (high > medium > low)
+    const priorityOrder = { high: 3, medium: 2, low: 1 };
+    const taskAPriorityField = taskA ? priorityOrder[taskA.priority] : 0;
+    const taskBPriorityField = taskB ? priorityOrder[taskB.priority] : 0;
+    
+    if (taskAPriorityField !== taskBPriorityField) {
+      return taskBPriorityField - taskAPriorityField;
+    }
+    
+    // Tertiary sort: due date (earliest first)
+    if (taskA && taskB) {
+      // Handle TBD dates by treating them as far in the future
+      if (taskA.dueDate === 'TBD' && taskB.dueDate !== 'TBD') return 1;
+      if (taskA.dueDate !== 'TBD' && taskB.dueDate === 'TBD') return -1;
+      if (taskA.dueDate === 'TBD' && taskB.dueDate === 'TBD') return 0;
+      
+      // Compare actual dates
+      const dateA = new Date(taskA.dueDate);
+      const dateB = new Date(taskB.dueDate);
+      if (dateA.getTime() !== dateB.getTime()) {
+        return dateA.getTime() - dateB.getTime();
+      }
+    }
+    
+    // Final sort: by id
+    return a.taskId.localeCompare(b.taskId);
+  });
+}
