@@ -4,6 +4,7 @@ import '../styles/ClassInput.css';
 import type { Activity } from '../types/ClassTypes';
 import axios from 'axios';
 import { getAuth } from "firebase/auth";
+import { Link } from 'react-router-dom';
 
 export function ActivityInput() {
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -21,30 +22,55 @@ export function ActivityInput() {
     '#feca57', '#ff9ff3', '#54a0ff', '#a55eea'
   ];
 
-  const addActivity = () => {
+  const addActivity = async () => {
     if (newActivity.name.trim()) {
-      const activityToAdd: Activity = {
-        id: Date.now().toString(),
-        activityName: newActivity.name,
-        color: newActivity.color,
-        pdfFile: newActivity.pdfFile,
-        websiteLink: newActivity.websiteLink,
-        canvasContent: newActivity.canvasContent
-      };
-      setActivities([...activities, activityToAdd]);
-      setNewActivity({
-        name: '',
-        color: 'var(--accent-color)',
-        pdfFile: null,
-        websiteLink: '',
-        canvasContent: ''
-      });
-      setIsAddingNew(false);
+      try {
+        const auth = getAuth();
+        const user = auth.currentUser;
+        if (!user) {
+          console.error("No user logged in to add activity");
+          return;
+        }
+
+        const activityData = {
+          activityName: newActivity.name,
+          color: newActivity.color,
+          websiteLink: newActivity.websiteLink,
+          canvasContent: newActivity.canvasContent,
+          userId: user.uid,
+        };
+
+        const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/activities`, activityData);
+        const { success, activity } = response.data as { success: boolean; activity: Activity };
+
+        if (success) {
+          setActivities([...activities, activity]);
+          setNewActivity({
+            name: '',
+            color: 'var(--accent-color)',
+            pdfFile: null,
+            websiteLink: '',
+            canvasContent: ''
+          });
+          setIsAddingNew(false);
+        }
+      } catch (error) {
+        console.error("Failed to add activity:", error);
+      }
     }
   };
 
-  const removeActivity = (id: string) => {
-    setActivities(activities.filter(activity => activity.id !== id));
+  const removeActivity = async (id: string) => {
+    try {
+      const response = await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/activities/${id}`);
+      const { success } = response.data as { success: boolean };
+
+      if (success) {
+        setActivities(activities.filter(activity => activity.id !== id));
+      }
+    } catch (error) {
+      console.error("Failed to delete activity:", error);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -64,7 +90,7 @@ export function ActivityInput() {
         const auth = getAuth();
         const user = auth.currentUser;
         const userId = user?.uid;
-        const response = await axios.get(`/activities/${userId}`);
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/activities/${userId}`);
         const data = response.data as { success: boolean; activities: Activity[]; message: string };
         if (data.success) {
           setActivities(data.activities);
@@ -223,12 +249,7 @@ export function ActivityInput() {
         {/* Action Buttons */}
         {activities.length > 0 && (
           <div className="action-buttons">
-            <button className="secondary-button">
-              Save & Continue
-            </button>
-            <button className="primary-button">
-              Next: Add Course Links
-            </button>
+            <Link to="/dashboard" className="secondary-button">Save & Continue</Link>
           </div>
         )}
       </div>
