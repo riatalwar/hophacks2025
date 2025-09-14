@@ -1,5 +1,93 @@
 import { TimeBlock, BusyTimeList, BusyTimeNode } from '../types/scheduling';
 
+export interface AvailableTimeSlot {
+  start: number;
+  end: number;
+  duration: number;
+}
+
+export function calculateAvailableTimeSlots(busyTimeLists: BusyTimeList[]): AvailableTimeSlot[][] {
+  // Initialize result array with 7 empty arrays for each day of the week
+  const availableSlots: AvailableTimeSlot[][] = Array(7).fill(null).map(() => []);
+  
+  // Process each day's busy time list
+  for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+    const busyList = busyTimeLists[dayIndex];
+    const daySlots: AvailableTimeSlot[] = [];
+    
+    // If there are no busy times, the entire day is available
+    if (!busyList.head) {
+      daySlots.push({
+        start: 0,
+        end: 1440, // 24 hours * 60 minutes
+        duration: 1440
+      });
+      availableSlots[dayIndex] = daySlots;
+      continue;
+    }
+    
+    // Add available time from start of day to first busy period (with buffer)
+    const firstBusyNode = busyList.head;
+    const firstBusyStart = firstBusyNode.data[0];
+    // Apply 5-minute buffer before first busy period
+    const firstAvailableEnd = Math.max(0, firstBusyStart - 5);
+    
+    if (firstAvailableEnd > 0 && firstAvailableEnd >= 5) { // Minimum 5 minutes
+      daySlots.push({
+        start: 0,
+        end: firstAvailableEnd,
+        duration: firstAvailableEnd
+      });
+    }
+    
+    // Process gaps between busy periods
+    let currentNode = busyList.head;
+    while (currentNode && currentNode.next) {
+      const currentEnd = currentNode.data[1];
+      const nextStart = currentNode.next.data[0];
+      
+      // Apply 5-minute buffer after current busy period and before next busy period
+      const gapStart = currentEnd + 5;
+      const gapEnd = nextStart - 5;
+      const gapDuration = gapEnd - gapStart;
+      
+      // Only consider gaps that are at least 5 minutes long
+      if (gapDuration >= 5) {
+        daySlots.push({
+          start: gapStart,
+          end: gapEnd,
+          duration: gapDuration
+        });
+      }
+      
+      currentNode = currentNode.next;
+    }
+    
+    // Add available time from last busy period to end of day (with buffer)
+    // Find the last node
+    let lastNode = busyList.head;
+    while (lastNode.next) {
+      lastNode = lastNode.next;
+    }
+    
+    const lastBusyEnd = lastNode.data[1];
+    // Apply 5-minute buffer after last busy period
+    const lastAvailableStart = Math.min(1440, lastBusyEnd + 5);
+    
+    if (lastAvailableStart < 1440 && (1440 - lastAvailableStart) >= 5) { // Minimum 5 minutes
+      daySlots.push({
+        start: lastAvailableStart,
+        end: 1440, // 24 hours * 60 minutes
+        duration: 1440 - lastAvailableStart
+      });
+    }
+    
+    availableSlots[dayIndex] = daySlots;
+  }
+  
+  return availableSlots;
+}
+
 export function convertTimeBlocksToBusyTimeLists(timeBlocks: TimeBlock[]): BusyTimeList[] {
   // Initialize 7 BusyTimeList objects, one for each day of the week
   const busyTimeLists: BusyTimeList[] = Array(7).fill(null).map(() => ({
