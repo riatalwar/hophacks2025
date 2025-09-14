@@ -1,10 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Navigation } from '../components/Navigation';
 import { InputCalendar } from '../components/InputCalendar';
+import { processICSFile } from '../utils/icsProcessor';
+import { updateSleepSchedule } from '../utils/sleepScheduleUtils';
+import { useAuth } from '../hooks/useAuth';
 import type { BusyTimeList, BusyTimeNode, Preferences, TimeBlock } from '@shared/types/activities';
+import axios from 'axios';
 import '../styles/Preferences.css';
 
 export function Preferences() {
+  const { currentUser } = useAuth();
   const [, setBusySchedule] = useState<TimeBlock[]>([]);
   const [emailNotifications, setEmailNotifications] = useState({
     studyReminders: true,
@@ -71,9 +76,6 @@ export function Preferences() {
     return colorMap[color] || color;
   };
 
-  const handleScheduleChange = useCallback((schedule: TimeBlock[]) => {
-    setBusySchedule(schedule);
-  }, []);
 
   // Comprehensive function to save all preferences
   const saveAllPreferences = useCallback(() => {
@@ -163,75 +165,6 @@ export function Preferences() {
     loadAllPreferences();
   }, [loadAllPreferences]); // Include loadAllPreferences dependency
 
-  // Function to sync wake up times from InputCalendar
-  const handleWakeUpTimesChange = useCallback((newWakeUpTimes: { [day: number]: TimeBlock | null }) => {
-    const wakeUpArray = [0, 0, 0, 0, 0, 0, 0];
-    Object.entries(newWakeUpTimes).forEach(([day, wakeTime]) => {
-      if (wakeTime && wakeTime.startTime !== undefined) {
-        wakeUpArray[parseInt(day)] = wakeTime.startTime;
-      }
-    });
-    setWakeUpTimes(wakeUpArray);
-    
-    // Auto-save preferences using stable reference
-    setTimeout(() => saveAllPreferencesRef.current(), 100);
-  }, []); // Stable callback
-
-  // Function to sync bedtimes from InputCalendar
-  const handleBedtimesChange = useCallback((newBedtimes: { [day: number]: TimeBlock | null }) => {
-    const bedtimesArray = [0, 0, 0, 0, 0, 0, 0];
-    Object.entries(newBedtimes).forEach(([day, bedtime]) => {
-      if (bedtime && bedtime.startTime !== undefined) {
-        bedtimesArray[parseInt(day)] = bedtime.startTime;
-      }
-    });
-    setBedtimes(bedtimesArray);
-    
-    // Auto-save preferences using stable reference
-    setTimeout(() => saveAllPreferencesRef.current(), 100);
-  }, []); // Stable callback
-
-  // Function to sync study times from InputCalendar
-  const handleBusyTimesChange = useCallback((newBusyTimes: TimeBlock[]) => {
-    // Convert study times array to StudyTimeList format
-    const busyTimesList: BusyTimeList[] = [
-      { head: null, size: 0 }, // Monday
-      { head: null, size: 0 }, // Tuesday
-      { head: null, size: 0 }, // Wednesday
-      { head: null, size: 0 }, // Thursday
-      { head: null, size: 0 }, // Friday
-      { head: null, size: 0 }, // Saturday
-      { head: null, size: 0 }  // Sunday
-    ];
-
-    // Group busy times by day and convert to linked list format
-    newBusyTimes.forEach((timeBlock) => {
-      if (timeBlock.day !== undefined && timeBlock.startTime !== undefined && timeBlock.endTime !== undefined) {
-        const day = timeBlock.day;
-        const node: BusyTimeNode = {
-          data: [timeBlock.startTime, timeBlock.endTime],
-          next: null
-        };
-        
-        if (busyTimesList[day].head === null) {
-          busyTimesList[day].head = node;
-        } else {
-          // Add to end of linked list
-          let current = busyTimesList[day].head;
-          while (current.next !== null) {
-            current = current.next;
-          }
-          current.next = node;
-        }
-        busyTimesList[day].size++;
-      }
-    });
-
-    setBusyTimes(busyTimesList);
-    
-    // Auto-save preferences using stable reference
-    setTimeout(() => saveAllPreferencesRef.current(), 100);
-  }, []); // Stable callback
 
   const handleNotificationToggle = (notificationType: keyof typeof emailNotifications) => {
     setEmailNotifications(prev => ({
@@ -240,14 +173,14 @@ export function Preferences() {
     }));
     
     // Auto-save preferences using stable reference
-    setTimeout(() => saveAllPreferencesRef.current(), 100);
+    setTimeout(() => saveAllPreferencesRef.current(), 1000);
   };
 
   const handleDataSharingToggle = () => {
     setShareDataAnonymously(prev => !prev);
     
     // Auto-save preferences using stable reference
-    setTimeout(() => saveAllPreferencesRef.current(), 100);
+    setTimeout(() => saveAllPreferencesRef.current(), 1000);
   };
 
   const handleThemeToggle = () => {
@@ -267,7 +200,7 @@ export function Preferences() {
     }
     
     // Auto-save preferences using stable reference
-    setTimeout(() => saveAllPreferencesRef.current(), 100);
+    setTimeout(() => saveAllPreferencesRef.current(), 1000);
   };
 
   const handleAccentColorChange = (color: string) => {
@@ -288,7 +221,7 @@ export function Preferences() {
     document.documentElement.style.setProperty('--accent-gradient-hover', `linear-gradient(135deg, ${lightVariant} 0%, ${color} 100%)`);
     
     // Auto-save preferences using stable reference
-    setTimeout(() => saveAllPreferencesRef.current(), 100);
+    setTimeout(() => saveAllPreferencesRef.current(), 1000);
   };
 
   // Calendar import handlers
@@ -314,6 +247,119 @@ export function Preferences() {
     setImportedCalendars(prev => prev.filter(cal => cal.id !== calendarId));
   };
 
+  // Schedule change handlers for InputCalendar
+  const handleScheduleChange = useCallback(async (newTimeBlocks: TimeBlock[]) => {
+    if (!currentUser) return;
+
+    setBusySchedule(newTimeBlocks);
+
+    try {
+      const scheduleData = {
+        userId: currentUser.uid,
+        timeBlocks: newTimeBlocks
+      };
+
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/schedule`, scheduleData);
+    } catch (error) {
+      console.error('Failed to save schedule changes:', error);
+    }
+  }, [currentUser]);
+
+  const handleWakeUpTimesChange = useCallback(async (wakeUpTimesData: { [day: number]: TimeBlock | null }) => {
+    if (!currentUser) return;
+
+    const wakeUpTimesArray = new Array(7).fill(0);
+    Object.entries(wakeUpTimesData).forEach(([day, timeBlock]) => {
+      if (timeBlock) {
+        wakeUpTimesArray[parseInt(day)] = timeBlock.startTime;
+      }
+    });
+
+    setWakeUpTimes(wakeUpTimesArray);
+
+    // Update sleep schedule in backend
+    try {
+      await updateSleepSchedule(
+        bedtimes,
+        wakeUpTimesArray,
+        currentUser.uid,
+        import.meta.env.VITE_API_BASE_URL
+      );
+    } catch (error) {
+      console.error('Failed to update sleep schedule:', error);
+    }
+
+    setTimeout(() => saveAllPreferencesRef.current(), 1000);
+  }, [currentUser, bedtimes]);
+
+  const handleBedtimesChange = useCallback(async (bedtimesData: { [day: number]: TimeBlock | null }) => {
+    if (!currentUser) return;
+
+    const bedtimesArray = new Array(7).fill(0);
+    Object.entries(bedtimesData).forEach(([day, timeBlock]) => {
+      if (timeBlock) {
+        bedtimesArray[parseInt(day)] = timeBlock.startTime;
+      }
+    });
+
+    setBedtimes(bedtimesArray);
+
+    // Update sleep schedule in backend
+    try {
+      await updateSleepSchedule(
+        bedtimesArray,
+        wakeUpTimes,
+        currentUser.uid,
+        import.meta.env.VITE_API_BASE_URL
+      );
+    } catch (error) {
+      console.error('Failed to update sleep schedule:', error);
+    }
+
+    setTimeout(() => saveAllPreferencesRef.current(), 1000);
+  }, [currentUser, wakeUpTimes]);
+
+  const handleBusyTimesChange = useCallback(async (busyTimeBlocks: TimeBlock[]) => {
+    if (!currentUser) return;
+
+    // Convert TimeBlocks to BusyTimeList format
+    const busyTimesList: BusyTimeList[] = [
+      { head: null, size: 0 }, // Monday
+      { head: null, size: 0 }, // Tuesday
+      { head: null, size: 0 }, // Wednesday
+      { head: null, size: 0 }, // Thursday
+      { head: null, size: 0 }, // Friday
+      { head: null, size: 0 }, // Saturday
+      { head: null, size: 0 }  // Sunday
+    ];
+
+    busyTimeBlocks.forEach((timeBlock) => {
+      if (timeBlock.day !== undefined && timeBlock.startTime !== undefined && timeBlock.endTime !== undefined) {
+        const day = timeBlock.day;
+        const node: BusyTimeNode = {
+          data: [timeBlock.startTime, timeBlock.endTime],
+          next: null
+        };
+
+        if (busyTimesList[day].head === null) {
+          busyTimesList[day].head = node;
+        } else {
+          let current = busyTimesList[day].head;
+          while (current?.next !== null) {
+            current = current.next;
+          }
+          if (current) {
+            current.next = node;
+          }
+        }
+        busyTimesList[day].size++;
+      }
+    });
+
+    setBusyTimes(busyTimesList);
+    setTimeout(() => saveAllPreferencesRef.current(), 1000);
+  }, [currentUser]);
+
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -323,42 +369,58 @@ export function Preferences() {
   };
 
   const handleImportIcs = async () => {
-    if (!selectedIcsFile) return;
+    if (!selectedIcsFile || !currentUser) return;
 
     setIsImporting(true);
     setImportResult(null);
 
     try {
-      // Simulate file processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Mock successful import
-      const newCalendar = {
-        id: Date.now().toString(),
-        name: selectedIcsFile.name.replace('.ics', ''),
-        fileName: selectedIcsFile.name,
-        importDate: new Date().toLocaleDateString(),
-        eventCount: Math.floor(Math.random() * 20) + 5 // Mock event count
+      // Process ICS file
+      const icsResult = await processICSFile(selectedIcsFile);
+
+      if (!icsResult.success) {
+        throw new Error(icsResult.message);
+      }
+
+      // Send time blocks to backend
+      const scheduleData = {
+        userId: currentUser.uid,
+        timeBlocks: icsResult.timeBlocks
       };
 
-      setImportedCalendars(prev => [...prev, newCalendar]);
-      
-      setImportResult({
-        success: true,
-        message: `Successfully imported ${selectedIcsFile.name} with ${newCalendar.eventCount} events`
-      });
+      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/schedule`, scheduleData);
 
-      // Clear the file after successful import
-      setTimeout(() => {
-        setSelectedIcsFile(null);
-        setImportResult(null);
-      }, 3000);
+      if ((response.data as { success: boolean }).success) {
+        // Add to imported calendars list
+        const newCalendar = {
+          id: Date.now().toString(),
+          name: selectedIcsFile.name.replace('.ics', ''),
+          fileName: selectedIcsFile.name,
+          importDate: new Date().toLocaleDateString(),
+          eventCount: icsResult.totalEvents
+        };
+
+        setImportedCalendars(prev => [...prev, newCalendar]);
+
+        setImportResult({
+          success: true,
+          message: `Successfully imported ${selectedIcsFile.name} with ${icsResult.totalEvents} events`
+        });
+
+        // Clear the file after successful import
+        setTimeout(() => {
+          setSelectedIcsFile(null);
+          setImportResult(null);
+        }, 3000);
+      } else {
+        throw new Error((response.data as { message?: string }).message || 'Failed to save schedule to server');
+      }
 
     } catch (error: unknown) {
       console.error('Error importing calendar file:', error);
       setImportResult({
         success: false,
-        message: 'Failed to import calendar file. Please try again.'
+        message: error instanceof Error ? error.message : 'Failed to import calendar file. Please try again.'
       });
     } finally {
       setIsImporting(false);
@@ -644,6 +706,118 @@ export function Preferences() {
                     <button className="study-buddies-button">
                       Add Study Buddies
                     </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Schedule Management Section */}
+            <div className="preferences-section">
+              <h2>Schedule Management</h2>
+              <div className="section-content">
+                <p>Import your calendar events and manage your schedule to optimize study time planning.</p>
+
+                <div className="schedule-group">
+                  <h3>Calendar Import</h3>
+
+                  <div className="calendar-import-section">
+                    <div className="calendar-import-info">
+                      <h4>Upload ICS Calendar File</h4>
+                      <p>Import events from Google Calendar, Outlook, or any other calendar app that supports .ics export.</p>
+                      <ul className="import-benefits">
+                        <li>📅 Automatic schedule integration</li>
+                        <li>🔄 Import recurring events</li>
+                        <li>⏰ Smart conflict detection</li>
+                        <li>🎯 Optimized study planning</li>
+                      </ul>
+                    </div>
+
+                    <div className="calendar-import-controls">
+                      {!selectedIcsFile ? (
+                        <>
+                          <input
+                            type="file"
+                            accept=".ics"
+                            onChange={handleIcsFileUpload}
+                            style={{ display: 'none' }}
+                            id="ics-upload"
+                          />
+                          <label htmlFor="ics-upload" className="upload-button">
+                            📁 Choose ICS File
+                          </label>
+                        </>
+                      ) : (
+                        <div className="file-selected-info">
+                          <div className="file-info">
+                            <span className="file-icon">📄</span>
+                            <div className="file-details">
+                              <span className="file-name">{selectedIcsFile.name}</span>
+                              <span className="file-size">{formatFileSize(selectedIcsFile.size)}</span>
+                            </div>
+                            <button
+                              onClick={handleRemoveIcsFile}
+                              className="remove-file-button"
+                              title="Remove file"
+                            >
+                              ×
+                            </button>
+                          </div>
+                          <button
+                            onClick={handleImportIcs}
+                            disabled={isImporting}
+                            className="import-button"
+                          >
+                            {isImporting ? '⏳ Importing...' : '📥 Import Calendar'}
+                          </button>
+                        </div>
+                      )}
+
+                      {importResult && (
+                        <div className={`import-result ${importResult.success ? 'success' : 'error'}`}>
+                          <span className="result-icon">{importResult.success ? '✅' : '❌'}</span>
+                          <span className="result-message">{importResult.message}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {importedCalendars.length > 0 && (
+                    <div className="imported-calendars">
+                      <h4>Imported Calendars</h4>
+                      <div className="calendar-list">
+                        {importedCalendars.map((calendar) => (
+                          <div key={calendar.id} className="calendar-item">
+                            <div className="calendar-info">
+                              <span className="calendar-name">{calendar.name}</span>
+                              <span className="calendar-details">
+                                {calendar.eventCount} events • Imported {calendar.importDate}
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => handleRemoveImportedCalendar(calendar.id)}
+                              className="remove-calendar-button"
+                              title="Remove calendar"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="schedule-group">
+                  <h3>Manual Schedule Input</h3>
+                  <div className="manual-schedule-section">
+                    <p>Use the calendar below to manually add your recurring schedule items like classes, work, and personal commitments.</p>
+
+                    <InputCalendar
+                      onScheduleChange={handleScheduleChange}
+                      onWakeUpTimesChange={handleWakeUpTimesChange}
+                      onBedtimesChange={handleBedtimesChange}
+                      onBusyTimesChange={handleBusyTimesChange}
+                    />
                   </div>
                 </div>
               </div>
