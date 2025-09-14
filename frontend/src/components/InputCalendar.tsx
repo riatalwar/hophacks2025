@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import '../styles/PreferencesWeekCalendar.css';
+import { useCalendarData } from '../hooks/useCalendarData';
 import type { TimeBlock } from '@shared/types/activities';
 
 interface InputCalendarProps {
@@ -10,6 +11,18 @@ interface InputCalendarProps {
 }
 
 export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimesChange, onBusyTimesChange }: InputCalendarProps) {
+  // Use Firestore-backed calendar data
+  const { 
+    calendarData, 
+    loading: calendarLoading, 
+    error: calendarError,
+    saveWakeUpTimes: saveWakeUpTimesToFirestore,
+    saveBedtimes: saveBedtimesToFirestore,
+    saveBusyTimes: saveBusyTimesToFirestore,
+    clearError
+  } = useCalendarData();
+
+  // Local state for UI interactions
   const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([]);
   const [wakeUpTimes, setWakeUpTimes] = useState<{ [day: number]: TimeBlock | null }>({});
   const [bedtimes, setBedtimes] = useState<{ [day: number]: TimeBlock | null }>({});
@@ -24,39 +37,41 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
   const [isMinimized, setIsMinimized] = useState(false);
   const calendarRef = useRef<HTMLDivElement>(null);
 
-  // Helper functions for localStorage persistence
-  const saveTimeBlocks = (blocks: TimeBlock[]) => {
-    localStorage.setItem('studySchedule_busyBlocks', JSON.stringify(blocks));
-  };
-
-  const saveWakeUpTimes = (wakeTimes: { [day: number]: TimeBlock | null }) => {
-    localStorage.setItem('studySchedule_wakeUpTimes', JSON.stringify(wakeTimes));
-  };
-
-  const saveBedtimes = (bedTimes: { [day: number]: TimeBlock | null }) => {
-    localStorage.setItem('studySchedule_bedtimes', JSON.stringify(bedTimes));
-  };
-
-  // Load data from localStorage on component mount
+  // Sync data from Firestore to local state
   useEffect(() => {
-    const savedTimeBlocks = localStorage.getItem('studySchedule_busyBlocks');
-    const savedWakeUpTimes = localStorage.getItem('studySchedule_wakeUpTimes');
-    const savedBedtimes = localStorage.getItem('studySchedule_bedtimes');
-    
-    if (savedTimeBlocks) {
-      const parsedBlocks = JSON.parse(savedTimeBlocks);
-      setTimeBlocks(parsedBlocks);
-      onScheduleChange(parsedBlocks);
+    if (!calendarLoading) {
+      setTimeBlocks(calendarData.busyTimes);
+      setWakeUpTimes(calendarData.wakeUpTimes);
+      setBedtimes(calendarData.bedtimes);
+      
+      // Notify parent components of the loaded data
+      onScheduleChange(calendarData.busyTimes);
+      if (onWakeUpTimesChange) {
+        onWakeUpTimesChange(calendarData.wakeUpTimes);
+      }
+      if (onBedtimesChange) {
+        onBedtimesChange(calendarData.bedtimes);
+      }
+      if (onBusyTimesChange) {
+        onBusyTimesChange(calendarData.busyTimes);
+      }
     }
-    
-    if (savedWakeUpTimes) {
-      setWakeUpTimes(JSON.parse(savedWakeUpTimes));
+  }, [calendarData, calendarLoading, onScheduleChange, onWakeUpTimesChange, onBedtimesChange, onBusyTimesChange]);
+
+  // Handle Firestore errors
+  useEffect(() => {
+    if (calendarError) {
+      setErrorMessage(calendarError);
+      // Auto-clear error after 5 seconds
+      const timer = setTimeout(() => {
+        clearError();
+        setErrorMessage('');
+      }, 5000);
+      return () => clearTimeout(timer);
     }
-    
-    if (savedBedtimes) {
-      setBedtimes(JSON.parse(savedBedtimes));
-    }
-  }, [onScheduleChange]); // Add onScheduleChange dependency
+  }, [calendarError, clearError]);
+
+  // Data is now loaded via useCalendarData hook - no localStorage loading needed
 
   // Notify parent component when wake up times change
   useEffect(() => {
@@ -231,7 +246,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
         [day]: newWakeTime
       };
       setWakeUpTimes(updatedWakeUpTimes);
-      saveWakeUpTimes(updatedWakeUpTimes);
+      saveWakeUpTimesToFirestore(updatedWakeUpTimes);
       setErrorMessage(''); // Clear error on successful placement
     } else if (selectedButton === 'bedtime') {
       // Convert slot to minutes (30-minute intervals)
@@ -258,7 +273,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
         [day]: newBedtime
       };
       setBedtimes(updatedBedtimes);
-      saveBedtimes(updatedBedtimes);
+      saveBedtimesToFirestore(updatedBedtimes);
       setErrorMessage(''); // Clear error on successful placement
     } else if (selectedButton === 'busy') {
       // Two-click busy time creation pattern
@@ -311,7 +326,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
         
         const updatedBlocks = [...timeBlocks, newBusyTime];
         setTimeBlocks(updatedBlocks);
-        saveTimeBlocks(updatedBlocks);
+        saveBusyTimesToFirestore(updatedBlocks);
         onScheduleChange(updatedBlocks);
         
         // Reset creation state
@@ -384,7 +399,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
         return block;
       });
       setTimeBlocks(updatedBlocks);
-      saveTimeBlocks(updatedBlocks);
+      saveBusyTimesToFirestore(updatedBlocks);
       onScheduleChange(updatedBlocks);
     }
   };
@@ -436,7 +451,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
       return block;
     });
     setTimeBlocks(updatedBlocks);
-    saveTimeBlocks(updatedBlocks);
+    saveBusyTimesToFirestore(updatedBlocks);
     onScheduleChange(updatedBlocks);
   };
 
@@ -451,7 +466,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
   const deleteBlock = (blockId: string) => {
     const updatedBlocks = timeBlocks.filter(block => block.id !== blockId);
     setTimeBlocks(updatedBlocks);
-    saveTimeBlocks(updatedBlocks);
+    saveBusyTimesToFirestore(updatedBlocks);
     onScheduleChange(updatedBlocks);
   };
 
@@ -461,7 +476,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
       [day]: null
     };
     setWakeUpTimes(updatedWakeUpTimes);
-    saveWakeUpTimes(updatedWakeUpTimes);
+    saveWakeUpTimesToFirestore(updatedWakeUpTimes);
   };
 
   const deleteBedtime = (day: number) => {
@@ -470,7 +485,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
       [day]: null
     };
     setBedtimes(updatedBedtimes);
-    saveBedtimes(updatedBedtimes);
+    saveBedtimesToFirestore(updatedBedtimes);
   };
 
   // Helper function to check if time A is before time B in a 24-hour cycle
@@ -558,6 +573,22 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isCreating, selectedButton]);
+
+  // Show loading state while data is being fetched
+  if (calendarLoading) {
+    return (
+      <div className={`preferences-week-calendar-container ${isMinimized ? 'minimized' : ''}`}>
+        <div className="preferences-calendar-header">
+          <div className="preferences-header-content">
+            <div className="preferences-header-text">
+              <h3>Weekly Schedule</h3>
+              <p>Loading your calendar data...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`preferences-week-calendar-container ${isMinimized ? 'minimized' : ''}`}>
