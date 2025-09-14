@@ -45,11 +45,11 @@ Please respond with a JSON object in the following exact format:
     {
       "id": "unique-task-id",
       "title": "Task title",
-      "description": "Detailed description of the task",
+      "notes": "Detailed description of the task",
       "dueDate": "YYYY-MM-DD format or 'TBD' if not specified",
-      "category": "assignment|exam|project|reading|quiz|discussion|lab",
       "priority": "low|medium|high",
       "estimatedHours": number (optional, your best estimate)
+      "completed": boolean (optional, default false)
     }
   ]
 }
