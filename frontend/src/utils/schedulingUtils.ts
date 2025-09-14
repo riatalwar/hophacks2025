@@ -1,3 +1,4 @@
+import { TodoItem } from '../../shared/types/tasks';
 import { TimeBlock, BusyTimeList, BusyTimeNode } from '../types/scheduling';
 
 export interface AvailableTimeSlot {
@@ -123,4 +124,55 @@ export function convertTimeBlocksToBusyTimeLists(timeBlocks: TimeBlock[]): BusyT
   }
 
   return busyTimeLists;
+}
+export function calculateTaskPriority(task: TodoItem): number {
+  // Handle TBD due dates as very far in the future (365 days)
+  if (task.dueDate === 'TBD') {
+    const daysUntilDue = 365;
+    const estimatedHours = task.estimatedHours ?? 1;
+    const basePriority = estimatedHours / daysUntilDue;
+    
+    // No urgency multipliers apply to TBD tasks
+    return basePriority;
+  }
+  
+  // Parse the due date
+  const dueDate = new Date(task.dueDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Reset time part for comparison
+  
+  // Calculate days until due
+  const timeDiff = dueDate.getTime() - today.getTime();
+  const daysUntilDue = Math.max(0, Math.ceil(timeDiff / (1000 * 60 * 60 * 24)));
+  
+  // Handle overdue tasks
+  const isOverdue = timeDiff < 0;
+  
+  // Default estimated hours to 1 if not provided
+  const estimatedHours = task.estimatedHours ?? 1;
+  
+  // Calculate base priority
+  const averageHoursPerDay = estimatedHours / (daysUntilDue > 0 ? daysUntilDue : 1);
+  let priority = averageHoursPerDay;
+  
+  // Apply overdue multiplier
+  if (isOverdue) {
+    priority *= 100;
+    return priority;
+  }
+  
+  // Apply urgency multipliers
+  if (estimatedHours < 3 && daysUntilDue <= 1) {
+    priority *= 10;
+  } else if (estimatedHours < 6 && daysUntilDue <= 2) {
+    priority *= 8;
+  } else if (estimatedHours < 12 && daysUntilDue <= 3) {
+    priority *= 6;
+  } else if (estimatedHours < 18 && daysUntilDue <= 4) {
+    priority *= 4;
+  } else if (daysUntilDue <= 5) {
+    priority *= 2;
+  }
+  
+  return priority;
 }
