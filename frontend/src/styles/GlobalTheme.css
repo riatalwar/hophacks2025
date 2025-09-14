@@ -272,6 +272,7 @@ a:hover {
   font-weight: 500;
   transition: all 0.3s ease;
   position: relative;
+  padding: 0.75rem 1.5rem;
 }
 
 .nav-links a:hover {
@@ -288,6 +289,7 @@ a:hover {
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
+  padding: 0.75rem 1.5rem;
 }
 
 .nav-link-button:hover {
@@ -376,6 +378,7 @@ a:hover {
   cursor: pointer;
   font-weight: 500;
   transition: all 0.3s ease;
+  padding: 0.75rem 1.5rem;
 }
 
 .logout-button:hover {
@@ -390,6 +393,7 @@ a:hover {
   font-weight: 500;
   transition: all 0.3s ease;
   text-decoration: none;
+  padding: 0.75rem 1.5rem;
 }
 
 .back-button:hover {
