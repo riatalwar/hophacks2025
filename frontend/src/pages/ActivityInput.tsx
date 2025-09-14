@@ -5,10 +5,13 @@ import type { Activity } from '@shared/types/activities';
 import axios from 'axios';
 import { getAuth } from "firebase/auth";
 import { Link } from 'react-router-dom';
+import { processFile, processWebpage } from '../utils/fileProcessor';
 
 export function ActivityInput() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isAddingNew, setIsAddingNew] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingMessage, setProcessingMessage] = useState('');
   const [newActivity, setNewActivity] = useState({
     name: '',
     color: 'var(--accent-color)',
@@ -33,6 +36,9 @@ export function ActivityInput() {
           return;
         }
 
+        setIsProcessing(true);
+        setProcessingMessage('Creating activity...');
+
         const activityData = {
           activityName: newActivity.name,
           color: newActivity.color,
@@ -45,7 +51,84 @@ export function ActivityInput() {
         const { success, activity } = response.data as { success: boolean; activity: Activity };
 
         if (success) {
+          let tasksCreated = 0;
+
+          // Process file if uploaded
+          if (newActivity.pdfFile) {
+            try {
+              setProcessingMessage('Extracting text from file...');
+
+              // Process file on frontend to extract text
+              const fileResult = await processFile(newActivity.pdfFile);
+              const extractedText = fileResult.text;
+
+              if (extractedText && extractedText.trim()) {
+                setProcessingMessage('Analyzing syllabus content...');
+
+                // Send extracted text to backend for syllabus processing
+                const syllabusResponse = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/activities/process-syllabus`, {
+                  text: extractedText,
+                  activityId: activity.id,
+                  userId: user.uid,
+                });
+
+                const syllabusData = syllabusResponse.data as { success: boolean; tasksCreated?: number };
+                if (syllabusData.success) {
+                  tasksCreated = syllabusData.tasksCreated || 0;
+                  setProcessingMessage(`File processed successfully! ${tasksCreated} tasks created.`);
+                } else {
+                  setProcessingMessage('Syllabus processing failed, but activity was saved.');
+                }
+              } else {
+                setProcessingMessage('No text could be extracted from the file, but activity was saved.');
+              }
+            } catch (fileError) {
+              console.error('File processing error:', fileError);
+              setProcessingMessage('File processing failed, but activity was saved.');
+            }
+          }
+
+          // Process website link if provided
+          if (newActivity.websiteLink && newActivity.websiteLink.trim()) {
+            try {
+              setProcessingMessage('Extracting content from website...');
+
+              // Process website on frontend to extract text
+              const websiteResult = await processWebpage(newActivity.websiteLink);
+              const extractedText = websiteResult.text;
+
+              if (extractedText && extractedText.trim()) {
+                setProcessingMessage('Analyzing syllabus content from website...');
+
+                // Send extracted text to backend for syllabus processing
+                const syllabusResponse = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/activities/process-syllabus`, {
+                  text: extractedText,
+                  activityId: activity.id,
+                  userId: user.uid,
+                });
+
+                const syllabusData = syllabusResponse.data as { success: boolean; tasksCreated?: number };
+                if (syllabusData.success) {
+                  tasksCreated += syllabusData.tasksCreated || 0;
+                  setProcessingMessage(`Website processed successfully! ${tasksCreated} total tasks created.`);
+                } else {
+                  setProcessingMessage('Website syllabus processing failed, but activity was saved.');
+                }
+              } else {
+                setProcessingMessage('No text could be extracted from the website, but activity was saved.');
+              }
+            } catch (websiteError) {
+              console.error('Website processing error:', websiteError);
+              setProcessingMessage('Website processing failed, but activity was saved.');
+            }
+          } else if (!newActivity.pdfFile) {
+            setProcessingMessage('Activity created successfully!');
+          }
+
+          // Update activities list
           setActivities([...activities, activity]);
+
+          // Reset form
           setNewActivity({
             name: '',
             color: 'var(--accent-color)',
@@ -53,10 +136,22 @@ export function ActivityInput() {
             websiteLink: '',
             canvasContent: ''
           });
+
+          // Auto-hide processing message after 3 seconds
+          setTimeout(() => {
+            setProcessingMessage('');
+            setIsProcessing(false);
+          }, 3000);
+
           setIsAddingNew(false);
         }
       } catch (error) {
         console.error("Failed to add activity:", error);
+        setProcessingMessage('Failed to create activity. Please try again.');
+        setTimeout(() => {
+          setProcessingMessage('');
+          setIsProcessing(false);
+        }, 3000);
       }
     }
   };
@@ -102,7 +197,7 @@ export function ActivityInput() {
     };
 
     fetchActivities();
-  }, []);
+  }, [user]);
 
   return (
     <div className="class-input-page">
@@ -181,10 +276,10 @@ export function ActivityInput() {
 
               <div className="form-section">
                 <div className="form-group">
-                  <label>Upload PDF Syllabus or Document</label>
+                  <label>Upload Syllabus</label>
                   <input
                     type="file"
-                    accept=".pdf"
+                    accept=".pdf,.doc,.docx,.txt,.html"
                     onChange={handleFileChange}
                     className="file-input"
                   />
@@ -194,10 +289,10 @@ export function ActivityInput() {
                 </div>
 
                 <div className="form-group">
-                  <label>Course Website Link</label>
+                  <label>Course Syllabus Link</label>
                   <input
                     type="url"
-                    placeholder="Paste course website, Canvas, or other learning platform URL"
+                    placeholder="Paste course website, Canvas, or syllabus URL for automatic task extraction"
                     value={newActivity.websiteLink}
                     onChange={(e) => setNewActivity({...newActivity, websiteLink: e.target.value})}
                   />
@@ -215,13 +310,19 @@ export function ActivityInput() {
               </div>
 
               <div className="form-actions">
-                <button className="cancel-button" onClick={() => setIsAddingNew(false)}>
+                <button className="cancel-button" onClick={() => setIsAddingNew(false)} disabled={isProcessing}>
                   Cancel
                 </button>
-                <button className="add-button" onClick={addActivity}>
-                  Add Activity
+                <button className="add-button" onClick={addActivity} disabled={isProcessing}>
+                  {isProcessing ? 'Processing...' : 'Add Activity'}
                 </button>
               </div>
+
+              {processingMessage && (
+                <div className={`processing-message ${isProcessing ? 'processing' : 'success'}`}>
+                  {processingMessage}
+                </div>
+              )}
             </div>
           ) : (
             <button className="add-activity-button" onClick={() => setIsAddingNew(true)}>

@@ -149,9 +149,8 @@ router.post("/process-syllabus", async (req, res) => {
         const todoData: TodoItem = {
           id: "", // Will be set by Firestore when document is created
           title: task.title,
-          description: task.description,
+          notes: task.notes,
           dueDate: task.dueDate !== "TBD" ? task.dueDate : "TBD",
-          category: task.category,
           priority: task.priority,
           estimatedHours: task.estimatedHours,
           completed: false,
