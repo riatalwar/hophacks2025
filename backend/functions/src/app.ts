@@ -6,6 +6,7 @@ import syllabusRoutes from "./routes/syllabusRoutes";
 import scheduleRoutes from "./services/scheduleService";
 
 import activityRoutes from "./activity";
+import todoRoutes from "./todo";
 const app = express();
 
 app.use(cors());
@@ -73,5 +74,6 @@ app.get("/test-gemini", async (req, res) => {
 });
 
 app.use(activityRoutes);
+app.use(todoRoutes);
 
 export default app;

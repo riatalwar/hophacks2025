@@ -22,11 +22,12 @@ export function ActivityInput() {
     '#feca57', '#ff9ff3', '#54a0ff', '#a55eea'
   ];
 
+  const auth = getAuth();
+  const user = auth.currentUser;
+
   const addActivity = async () => {
     if (newActivity.name.trim()) {
       try {
-        const auth = getAuth();
-        const user = auth.currentUser;
         if (!user) {
           console.error("No user logged in to add activity");
           return;
@@ -87,8 +88,6 @@ export function ActivityInput() {
   useEffect(() => {
     const fetchActivities = async () => {
       try {
-        const auth = getAuth();
-        const user = auth.currentUser;
         const userId = user?.uid;
         const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/activities/${userId}`);
         const data = response.data as { success: boolean; activities: Activity[]; message: string };
