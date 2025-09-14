@@ -2,17 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Navigation } from '../components/Navigation';
 import type { TodoItem } from '@shared/types/tasks';
+import type { Activity } from '@shared/types/activities';
 import '../styles/Dashboard.css';
 import axios from 'axios';
 
 export function Dashboard() {
   const { currentUser } = useAuth();
   const [todos, setTodos] = useState<TodoItem[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
   const [newTodo, setNewTodo] = useState({
     title: '',
     notes: '',
     dueDate: '',
-    category: 'General',
+    associatedActivity: '',
     priority: 'medium' as 'high' | 'medium' | 'low',
     estimatedHours: ''
   });
@@ -21,29 +23,40 @@ export function Dashboard() {
     title: '',
     notes: '',
     dueDate: '',
-    category: 'General',
+    associatedActivity: '',
     priority: 'medium' as 'high' | 'medium' | 'low',
     estimatedHours: ''
   });
   const [showAddForm, setShowAddForm] = useState(false);
 
   useEffect(() => {
-    const fetchTodos = async () => {
+    const fetchData = async () => {
       try {
         const userId = currentUser?.uid;
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/todos/${userId}`);
-        const data = response.data as { success: boolean; todos: TodoItem[]; message: string };
-        if (data.success) {
-          setTodos(data.todos);
+        
+        // Fetch todos
+        const todosResponse = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/todos/${userId}`);
+        const todosData = todosResponse.data as { success: boolean; todos: TodoItem[]; message: string };
+        if (todosData.success) {
+          setTodos(todosData.todos);
         } else {
-          console.error(data.message);
+          console.error(todosData.message);
+        }
+
+        // Fetch activities
+        const activitiesResponse = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/activities/${userId}`);
+        const activitiesData = activitiesResponse.data as { success: boolean; activities: Activity[]; message: string };
+        if (activitiesData.success) {
+          setActivities(activitiesData.activities);
+        } else {
+          console.error(activitiesData.message);
         }
       } catch (error) {
-        console.error("Failed to fetch todos:", error);
+        console.error("Failed to fetch data:", error);
       }
     };
 
-    fetchTodos();
+    fetchData();
   }, [currentUser]);
 
   const addTodo = async () => {
@@ -58,7 +71,7 @@ export function Dashboard() {
         title: newTodo.title.trim(),
         notes: newTodo.notes.trim(),
         dueDate: newTodo.dueDate || 'TBD',
-        category: newTodo.category,
+        associatedActivity: newTodo.associatedActivity.trim() || undefined,
         priority: newTodo.priority,
         estimatedHours: newTodo.estimatedHours ? parseInt(newTodo.estimatedHours) : undefined,
         completed: false,
@@ -73,10 +86,21 @@ export function Dashboard() {
             title: '',
             notes: '',
             dueDate: '',
-            category: 'General',
+            associatedActivity: '',
             priority: 'medium',
             estimatedHours: ''
           });
+          
+          // Refresh activities list in case a new one was created
+          try {
+            const activitiesResponse = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/activities/${currentUser?.uid}`);
+            const activitiesData = activitiesResponse.data as { success: boolean; activities: Activity[] };
+            if (activitiesData.success) {
+              setActivities(activitiesData.activities);
+            }
+          } catch (error) {
+            console.error("Failed to refresh activities:", error);
+          }
           setShowAddForm(false);
         }
       } catch (error) {
@@ -114,11 +138,13 @@ export function Dashboard() {
 
   const startEdit = (todo: TodoItem) => {
     setEditingId(todo.id);
+    // Find the activity name by ID
+    const activity = activities.find(a => a.id === todo.associatedActivity);
     setEditTodo({
       title: todo.title,
       notes: todo.notes,
       dueDate: todo.dueDate === 'TBD' ? '' : todo.dueDate,
-      category: todo.category,
+      associatedActivity: activity?.activityName || '',
       priority: todo.priority,
       estimatedHours: todo.estimatedHours?.toString() || ''
     });
@@ -130,15 +156,28 @@ export function Dashboard() {
         title: editTodo.title.trim(),
         notes: editTodo.notes.trim(),
         dueDate: editTodo.dueDate || 'TBD',
-        category: editTodo.category,
+        associatedActivity: editTodo.associatedActivity.trim() || undefined,
         priority: editTodo.priority,
-        estimatedHours: editTodo.estimatedHours ? parseInt(editTodo.estimatedHours) : undefined
+        estimatedHours: editTodo.estimatedHours ? parseInt(editTodo.estimatedHours) : undefined,
+        userId: currentUser?.uid
       };
       try {
         await axios.put(`${import.meta.env.VITE_API_BASE_URL}/todos/${editingId}`, updatedData);
         setTodos(todos.map(todo =>
           todo.id === editingId ? { ...todo, ...updatedData } : todo
         ));
+        
+        // Refresh activities list in case a new one was created
+        try {
+          const activitiesResponse = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/activities/${currentUser?.uid}`);
+          const activitiesData = activitiesResponse.data as { success: boolean; activities: Activity[] };
+          if (activitiesData.success) {
+            setActivities(activitiesData.activities);
+          }
+        } catch (error) {
+          console.error("Failed to refresh activities:", error);
+        }
+        
         cancelEdit();
       } catch (error) {
         console.error("Failed to save edit:", error);
@@ -152,7 +191,7 @@ export function Dashboard() {
       title: '',
       notes: '',
       dueDate: '',
-      category: 'General',
+      associatedActivity: '',
       priority: 'medium',
       estimatedHours: ''
     });
@@ -214,11 +253,17 @@ export function Dashboard() {
                 <div className="form-row">
                   <input
                     type="text"
-                    value={newTodo.category}
-                    onChange={(e) => setNewTodo({...newTodo, category: e.target.value})}
-                    placeholder="Category (e.g., Math, Biology)..."
+                    value={newTodo.associatedActivity}
+                    onChange={(e) => setNewTodo({...newTodo, associatedActivity: e.target.value})}
+                    placeholder="Activity (e.g., Math, Biology)..."
                     className="todo-input-field"
+                    list="activities-list"
                   />
+                  <datalist id="activities-list">
+                    {activities.map((activity) => (
+                      <option key={activity.id} value={activity.activityName} />
+                    ))}
+                  </datalist>
                   <input
                     type="date"
                     value={newTodo.dueDate}
@@ -284,11 +329,17 @@ export function Dashboard() {
                     <div className="form-row">
                       <input
                         type="text"
-                        value={editTodo.category}
-                        onChange={(e) => setEditTodo({...editTodo, category: e.target.value})}
+                        value={editTodo.associatedActivity}
+                        onChange={(e) => setEditTodo({...editTodo, associatedActivity: e.target.value})}
                         className="edit-text-input"
-                        placeholder="Category..."
+                        placeholder="Activity..."
+                        list="edit-activities-list"
                       />
+                      <datalist id="edit-activities-list">
+                        {activities.map((activity) => (
+                          <option key={activity.id} value={activity.activityName} />
+                        ))}
+                      </datalist>
                       <input
                         type="date"
                         value={editTodo.dueDate}
@@ -343,7 +394,11 @@ export function Dashboard() {
                             >
                               {todo.priority}
                             </div>
-                            <div className="todo-category">{todo.category}</div>
+                            {todo.associatedActivity && (
+                              <div className="todo-activity">
+                                {activities.find(a => a.id === todo.associatedActivity)?.activityName || 'Unknown Activity'}
+                              </div>
+                            )}
                           </div>
                         </div>
                         <div className="todo-details">

@@ -42,7 +42,7 @@ router.post("/todos", async (req, res) => {
       title,
       notes,
       dueDate,
-      category,
+      associatedActivity,
       priority,
       estimatedHours,
       userId,
@@ -55,11 +55,36 @@ router.post("/todos", async (req, res) => {
       });
     }
 
+    // If associatedActivity is provided, check if it exists or create it
+    let activityId = associatedActivity;
+    if (associatedActivity && associatedActivity.trim()) {
+      const activitiesCollection = db.collection("activities");
+      const activityQuery = await activitiesCollection
+        .where("userId", "==", userId)
+        .where("name", "==", associatedActivity.trim())
+        .get();
+
+      if (activityQuery.empty) {
+        // Create new activity if it doesn't exist
+        const newActivityData = {
+          name: associatedActivity.trim(),
+          color: "#4ecdc4", // Default color
+          userId,
+          createdAt: new Date().toISOString(),
+        };
+        const newActivityRef = await activitiesCollection.add(newActivityData);
+        activityId = newActivityRef.id;
+      } else {
+        // Use existing activity ID
+        activityId = activityQuery.docs[0].id;
+      }
+    }
+
     const newTodoData = {
       title,
       notes: notes || "",
       dueDate: dueDate || "TBD",
-      category: category || "General",
+      associatedActivity: activityId || undefined,
       priority,
       estimatedHours: estimatedHours || undefined,
       userId,
@@ -90,10 +115,11 @@ router.put("/todos/:todoId", async (req, res) => {
       title,
       notes,
       dueDate,
-      category,
+      associatedActivity,
       priority,
       estimatedHours,
       completed,
+      userId,
     } = req.body;
 
     if (!todoId) {
@@ -109,12 +135,40 @@ router.put("/todos/:todoId", async (req, res) => {
     if (title !== undefined) updateData.title = title;
     if (notes !== undefined) updateData.notes = notes;
     if (dueDate !== undefined) updateData.dueDate = dueDate;
-    if (category !== undefined) updateData.category = category;
     if (priority !== undefined) updateData.priority = priority;
     if (estimatedHours !== undefined) {
       updateData.estimatedHours = estimatedHours;
     }
     if (completed !== undefined) updateData.completed = completed;
+
+    // Handle associatedActivity update
+    if (associatedActivity !== undefined) {
+      if (associatedActivity && associatedActivity.trim() && userId) {
+        const activitiesCollection = db.collection("activities");
+        const activityQuery = await activitiesCollection
+          .where("userId", "==", userId)
+          .where("name", "==", associatedActivity.trim())
+          .get();
+
+        if (activityQuery.empty) {
+          // Create new activity if it doesn't exist
+          const newActivityData = {
+            name: associatedActivity.trim(),
+            color: "#4ecdc4", // Default color
+            userId,
+            createdAt: new Date().toISOString(),
+          };
+          const newActivityRef = await activitiesCollection
+            .add(newActivityData);
+          updateData.associatedActivity = newActivityRef.id;
+        } else {
+          // Use existing activity ID
+          updateData.associatedActivity = activityQuery.docs[0].id;
+        }
+      } else {
+        updateData.associatedActivity = undefined;
+      }
+    }
 
     await todoRef.update(updateData);
 
