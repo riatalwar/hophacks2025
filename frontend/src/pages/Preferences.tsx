@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Navigation } from '../components/Navigation';
 import { WeekCalendar } from '../components/WeekCalendar';
 import type { StudyTimeList, StudyTimeNode, Preferences } from '../types/ClassTypes';
+import { PreferencesService } from '../services/preferencesService';
 import '../styles/Preferences.css';
 
 export function Preferences() {
@@ -76,7 +77,7 @@ export function Preferences() {
   }, []);
 
   // Comprehensive function to save all preferences
-  const saveAllPreferences = useCallback(() => {
+  const saveAllPreferences = useCallback(async () => {
     // Get current values from state at the time of saving
     const currentPreferences = {
       wakeUpTimes,
@@ -92,14 +93,24 @@ export function Preferences() {
       accentColor
     };
 
-    // Save to localStorage
+    // Save to localStorage (for offline support)
     localStorage.setItem('scheduleSort_preferences', JSON.stringify(currentPreferences));
     
     // Also save individual theme and accent color for immediate application
     localStorage.setItem('scheduleSort_theme', isDarkMode ? 'dark' : 'light');
     localStorage.setItem('scheduleSort_accentColor', accentColor);
     
-    console.log('Preferences saved:', currentPreferences);
+    // Save to backend
+    try {
+      const success = await PreferencesService.savePreferences(currentPreferences);
+      if (success) {
+        console.log('Preferences saved to backend:', currentPreferences);
+      } else {
+        console.warn('Failed to save preferences to backend, but saved locally');
+      }
+    } catch (error) {
+      console.error('Error saving preferences to backend:', error);
+    }
   }, [wakeUpTimes, bedtimes, busyTimes, emailNotifications, shareDataAnonymously, isDarkMode, accentColor]);
 
   // Create a stable reference to saveAllPreferences using useRef
@@ -107,61 +118,77 @@ export function Preferences() {
   saveAllPreferencesRef.current = saveAllPreferences;
 
   // Function to load all preferences
-  const loadAllPreferences = useCallback(() => {
+  const loadAllPreferences = useCallback(async () => {
+    // Try to load from backend first
+    try {
+      const backendPreferences = await PreferencesService.getPreferences();
+      if (backendPreferences) {
+        console.log('Loading preferences from backend:', backendPreferences);
+        loadPreferencesFromData(backendPreferences);
+        return;
+      }
+    } catch (error) {
+      console.warn('Failed to load preferences from backend, trying localStorage:', error);
+    }
+
+    // Fallback to localStorage
     const savedPreferences = localStorage.getItem('scheduleSort_preferences');
-    
     if (savedPreferences) {
       try {
         const preferences: Preferences = JSON.parse(savedPreferences);
-        
-        // Load wake up times and bedtimes
-        if (preferences.wakeUpTimes) {
-          setWakeUpTimes(preferences.wakeUpTimes);
-        }
-        if (preferences.bedtimes) {
-          setBedtimes(preferences.bedtimes);
-        }
-        
-        // Load busy times
-        if (preferences.busyTimes) {
-          setBusyTimes(preferences.busyTimes);
-        }
-        
-        // Load email notifications
-        if (preferences.studyReminders !== undefined) {
-          setEmailNotifications({
-            studyReminders: preferences.studyReminders,
-            assignmentDeadlines: preferences.assignmentDeadlines,
-            weeklyDigest: preferences.weeklyDigest,
-            courseUpdates: preferences.courseUpdates,
-            systemAlerts: preferences.systemAlerts
-          });
-        }
-        
-        // Load privacy settings
-        if (preferences.shareDataAnonymously !== undefined) {
-          setShareDataAnonymously(preferences.shareDataAnonymously);
-        }
-        
-        // Load appearance settings
-        if (preferences.isDarkMode !== undefined) {
-          setIsDarkMode(preferences.isDarkMode);
-        }
-        if (preferences.accentColor) {
-          setAccentColor(preferences.accentColor);
-        }
-        
-        console.log('Preferences loaded:', preferences);
+        loadPreferencesFromData(preferences);
       } catch (error) {
-        console.error('Error loading preferences:', error);
+        console.error('Error loading preferences from localStorage:', error);
       }
     }
-  }, []); // Empty dependency array since this should only run once on mount
+  }, []);
+
+  // Helper function to load preferences from data object
+  const loadPreferencesFromData = (preferences: Preferences) => {
+    // Load wake up times and bedtimes
+    if (preferences.wakeUpTimes) {
+      setWakeUpTimes(preferences.wakeUpTimes);
+    }
+    if (preferences.bedtimes) {
+      setBedtimes(preferences.bedtimes);
+    }
+    
+    // Load busy times
+    if (preferences.busyTimes) {
+      setBusyTimes(preferences.busyTimes);
+    }
+    
+    // Load email notifications
+    if (preferences.studyReminders !== undefined) {
+      setEmailNotifications({
+        studyReminders: preferences.studyReminders,
+        assignmentDeadlines: preferences.assignmentDeadlines,
+        weeklyDigest: preferences.weeklyDigest,
+        courseUpdates: preferences.courseUpdates,
+        systemAlerts: preferences.systemAlerts
+      });
+    }
+    
+    // Load privacy settings
+    if (preferences.shareDataAnonymously !== undefined) {
+      setShareDataAnonymously(preferences.shareDataAnonymously);
+    }
+    
+    // Load appearance settings
+    if (preferences.isDarkMode !== undefined) {
+      setIsDarkMode(preferences.isDarkMode);
+    }
+    if (preferences.accentColor) {
+      setAccentColor(preferences.accentColor);
+    }
+    
+    console.log('Preferences loaded:', preferences);
+  };
 
   // Load preferences on component mount
   useEffect(() => {
     loadAllPreferences();
-  }, []); // Only run once on mount
+  }, [loadAllPreferences]); // Only run once on mount
 
   // Function to sync wake up times from WeekCalendar
   const handleWakeUpTimesChange = useCallback((newWakeUpTimes: { [day: number]: any | null }) => {
