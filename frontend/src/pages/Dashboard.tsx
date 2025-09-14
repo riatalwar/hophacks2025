@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Navigation } from '../components/Navigation';
-import type { TodoItem } from '@shared/types/activities';
+import type { TodoItem } from '@shared/types/tasks';
 import '../styles/Dashboard.css';
 import axios from 'axios';
 
@@ -90,7 +90,7 @@ export function Dashboard() {
 
   const startEdit = (todo: TodoItem) => {
     setEditingId(todo.id);
-    setEditTodoName(todo.todoName);
+    setEditTodoName(todo.title);
     setEditPriority(todo.priority);
   };
 
@@ -201,7 +201,7 @@ export function Dashboard() {
                         onChange={() => toggleTodo(todo.id)}
                         className="todo-checkbox"
                       />
-                      <span className="todo-text">{todo.todoName}</span>
+                      <span className="todo-text">{todo.title}</span>
                       <div 
                         className="todo-priority"
                         style={{ backgroundColor: getPriorityColor(todo.priority) }}
