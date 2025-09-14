@@ -59,6 +59,20 @@
   margin-bottom: 0.5rem;
 }
 
+.preferences-week-info {
+  margin: 0.25rem 0 0.5rem 0;
+}
+
+.preferences-week-dates {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--accent-primary);
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 .preferences-calendar-header p {
   color: var(--text-secondary);
   font-size: 0.9rem;
@@ -304,12 +318,18 @@
 }
 
 .preferences-day-name {
-  color: var(--text-primary);
   font-weight: 600;
-  font-size: 0.8rem;
+  color: var(--text-primary);
+  font-size: 0.9rem;
   margin-bottom: 0.25rem;
-  line-height: 1;
 }
+
+.preferences-day-date {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
 
 .preferences-day-controls {
   display: flex;

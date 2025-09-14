@@ -1,22 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
+import type { TimeBlock } from '../types/ClassTypes';
 import '../styles/PreferencesWeekCalendar.css';
-
-interface TimeBlock {
-  id: string;
-  day: number; // 0 = Monday, 1 = Tuesday, etc.
-  startTime: number; // minutes from midnight
-  endTime: number; // minutes from midnight
-  type: 'study' | 'wake' | 'bedtime';
-}
 
 interface WeekCalendarProps {
   onScheduleChange: (schedule: TimeBlock[]) => void;
   onWakeUpTimesChange?: (wakeUpTimes: { [day: number]: TimeBlock | null }) => void;
   onBedtimesChange?: (bedtimes: { [day: number]: TimeBlock | null }) => void;
   onStudyTimesChange?: (studyTimes: TimeBlock[]) => void;
+  externalTimeBlocks?: TimeBlock[]; // New prop to receive external time blocks
 }
 
-export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimesChange, onStudyTimesChange }: WeekCalendarProps) {
+export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimesChange, onStudyTimesChange, externalTimeBlocks }: WeekCalendarProps) {
   const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([]);
   const [wakeUpTimes, setWakeUpTimes] = useState<{ [day: number]: TimeBlock | null }>({});
   const [bedtimes, setBedtimes] = useState<{ [day: number]: TimeBlock | null }>({});
@@ -29,6 +23,7 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
   const [hoverEnd, setHoverEnd] = useState<{ day: number; time: number } | null>(null);
   const [selectedButton, setSelectedButton] = useState<'wake' | 'bedtime' | 'study' | null>(null);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [currentWeek, setCurrentWeek] = useState<Date[]>([]);
   const calendarRef = useRef<HTMLDivElement>(null);
 
   // Helper functions for localStorage persistence
@@ -79,6 +74,29 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
     }
   }, [bedtimes]); // Remove callback from dependencies to prevent infinite re-renders
 
+  // Handle external time blocks (e.g., from ICS import)
+  useEffect(() => {
+    if (externalTimeBlocks && externalTimeBlocks.length > 0) {
+      console.log('WeekCalendar: Received external time blocks:', externalTimeBlocks);
+      
+      // Merge external time blocks with existing ones
+      setTimeBlocks(prevBlocks => {
+        // Remove any previously imported blocks (those with 'imported-' prefix)
+        const filteredBlocks = prevBlocks.filter(block => !block.id.startsWith('imported-'));
+        
+        // Add new external blocks
+        const mergedBlocks = [...filteredBlocks, ...externalTimeBlocks];
+        
+        console.log('WeekCalendar: Merged time blocks:', mergedBlocks);
+        
+        // Save to localStorage
+        saveTimeBlocks(mergedBlocks);
+        
+        return mergedBlocks;
+      });
+    }
+  }, [externalTimeBlocks]);
+
   // Notify parent component when study times change
   useEffect(() => {
     if (onStudyTimesChange) {
@@ -89,6 +107,28 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
 
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const timeSlots = Array.from({ length: 48 }, (_, i) => i); // 48 slots for 30-minute intervals
+
+  // Function to get the week starting with Monday, September 15th
+  const getWeekStartingSeptember15 = () => {
+    // Monday, September 15th, 2024
+    const mondaySept15 = new Date(2024, 8, 15); // Month is 0-indexed, so 8 = September
+    
+    // Generate the week (Monday to Sunday) starting with September 15th
+    const week = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(mondaySept15);
+      date.setDate(mondaySept15.getDate() + i);
+      week.push(date);
+    }
+    
+    return week;
+  };
+
+  // Initialize current week on component mount
+  useEffect(() => {
+    const week = getWeekStartingSeptember15();
+    setCurrentWeek(week);
+  }, []);
 
   // Constants
   const HALF_HOUR_HEIGHT = 20; // Half of hour height for 30-minute intervals
@@ -117,6 +157,20 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
     
     // Always show minutes with zero-padding
     return `${displayHour}:${minute.toString().padStart(2, '0')} ${period}`;
+  };
+
+  // Function to format date for display
+  const formatDate = (date: Date) => {
+    const month = date.getMonth() + 1; // getMonth() is 0-indexed
+    const day = date.getDate();
+    return `${month}/${day}`;
+  };
+
+  // Function to get month name
+  const getMonthName = (date: Date) => {
+    const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                   'July', 'August', 'September', 'October', 'November', 'December'];
+    return months[date.getMonth()];
   };
 
   // Helper function to format time with day indication for cross-midnight times
@@ -572,6 +626,13 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
         <div className="preferences-header-content">
           <div className="preferences-header-text">
             <h3>Weekly Schedule</h3>
+            {currentWeek.length > 0 && (
+              <div className="preferences-week-info">
+                <span className="preferences-week-dates">
+                  {getMonthName(currentWeek[0])} {currentWeek[0].getDate()} - {currentWeek[6].getDate()}, {currentWeek[0].getFullYear()}
+                </span>
+              </div>
+            )}
             <p>Click on the buttons below to set your wake up times, bedtimes, and busy times</p>
           </div>
           <button 
@@ -640,9 +701,12 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
         <div className="preferences-calendar-grid">
           {/* Days header */}
           <div className="preferences-days-header">
-            {days.map((day) => (
+            {days.map((day, index) => (
               <div key={day} className="preferences-day-header">
                 <div className="preferences-day-name">{day}</div>
+                {currentWeek.length > 0 && (
+                  <div className="preferences-day-date">{formatDate(currentWeek[index])}</div>
+                )}
               </div>
             ))}
           </div>

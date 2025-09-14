@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Navigation } from '../components/Navigation';
 import { WeekCalendar } from '../components/WeekCalendar';
-import type { StudyTimeList, StudyTimeNode, Preferences } from '../types/ClassTypes';
+import type { StudyTimeList, StudyTimeNode, Preferences, TimeBlock } from '../types/ClassTypes';
+import { parseICSFile, convertEventsToBusyTimes, validateICSContent, type ParsedCalendar } from '../utils/icsParser';
 import '../styles/Preferences.css';
 
 export function Preferences() {
@@ -49,6 +50,9 @@ export function Preferences() {
     { head: null, size: 0 }, // Saturday
     { head: null, size: 0 }  // Sunday
   ]);
+
+  // State for imported time blocks to pass to WeekCalendar
+  const [importedTimeBlocks, setImportedTimeBlocks] = useState<TimeBlock[]>([]);
 
   const accentColors = [
     '#4ecdc4', '#ff6b6b', '#45b7d1', '#96ceb4',
@@ -323,41 +327,153 @@ export function Preferences() {
   };
 
   const handleImportIcs = async () => {
-    if (!selectedIcsFile) return;
+    if (!selectedIcsFile) {
+      setImportResult({
+        success: false,
+        message: 'Please select a valid .ics file'
+      });
+      return;
+    }
 
     setIsImporting(true);
     setImportResult(null);
 
     try {
-      // Simulate file processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Read file content
+      const content = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const result = e.target?.result;
+          if (typeof result === 'string') {
+            resolve(result);
+          } else {
+            reject(new Error('Failed to read file'));
+          }
+        };
+        reader.onerror = () => reject(new Error('File read error'));
+        reader.readAsText(selectedIcsFile);
+      });
+
+      // Validate .ics content
+      const validation = validateICSContent(content);
+      if (!validation.isValid) {
+        setImportResult({
+          success: false,
+          message: `Invalid .ics file: ${validation.errors.join(', ')}`
+        });
+        return;
+      }
+
+      // Parse .ics file (allow past events for testing)
+      const parsedCalendar: ParsedCalendar = parseICSFile(content, { 
+        allowPastEvents: true,
+        maxPastYears: 10 
+      });
       
-      // Mock successful import
+      if (parsedCalendar.errors.length > 0) {
+        setImportResult({
+          success: false,
+          message: `Parse errors: ${parsedCalendar.errors.join(', ')}`
+        });
+        return;
+      }
+
+      if (parsedCalendar.events.length === 0) {
+        setImportResult({
+          success: false,
+          message: 'No valid events found in the calendar file'
+        });
+        return;
+      }
+
+      // Convert events to busy times and populate calendar
+      const busyTimeBlocks = convertEventsToBusyTimes(parsedCalendar.events);
+      console.log('Converted busy time blocks:', busyTimeBlocks);
+      
+      // Convert to the format expected by WeekCalendar
+      const timeBlocks = busyTimeBlocks.map(block => ({
+        id: `imported-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        day: block.day,
+        startTime: block.startTime,
+        endTime: block.endTime,
+        type: 'study' as const,
+        summary: block.summary
+      }));
+      console.log('Time blocks for calendar:', timeBlocks);
+
+      // Update busy times state
+      const newBusyTimes: StudyTimeList[] = [
+        { head: null, size: 0 }, // Monday
+        { head: null, size: 0 }, // Tuesday
+        { head: null, size: 0 }, // Wednesday
+        { head: null, size: 0 }, // Thursday
+        { head: null, size: 0 }, // Friday
+        { head: null, size: 0 }, // Saturday
+        { head: null, size: 0 }  // Sunday
+      ];
+
+      // Group events by day and convert to linked list format
+      timeBlocks.forEach(block => {
+        const day = block.day;
+        if (day >= 0 && day < 7) {
+          const node: StudyTimeNode = {
+            data: [block.startTime, block.endTime],
+            next: null
+          };
+          
+          if (newBusyTimes[day].head === null) {
+            newBusyTimes[day].head = node;
+          } else {
+            // Add to end of linked list
+            let current = newBusyTimes[day].head;
+            while (current.next !== null) {
+              current = current.next;
+            }
+            current.next = node;
+          }
+          newBusyTimes[day].size++;
+        }
+      });
+
+      // Update state
+      setBusyTimes(newBusyTimes);
+      console.log('Updated busy times state:', newBusyTimes);
+
+      // Update imported time blocks for WeekCalendar
+      setImportedTimeBlocks(timeBlocks);
+      console.log('Set imported time blocks for WeekCalendar:', timeBlocks);
+
+      // Add to imported calendars list
       const newCalendar = {
         id: Date.now().toString(),
         name: selectedIcsFile.name.replace('.ics', ''),
         fileName: selectedIcsFile.name,
         importDate: new Date().toLocaleDateString(),
-        eventCount: Math.floor(Math.random() * 20) + 5 // Mock event count
+        eventCount: parsedCalendar.events.length
       };
 
       setImportedCalendars(prev => [...prev, newCalendar]);
       
+      // Show success message with details
+      const warningText = parsedCalendar.warnings.length > 0 ? 
+        ` (${parsedCalendar.warnings.length} warnings)` : '';
+      
       setImportResult({
         success: true,
-        message: `Successfully imported ${selectedIcsFile.name} with ${newCalendar.eventCount} events`
+        message: `Successfully imported ${selectedIcsFile.name} with ${parsedCalendar.events.length} events${warningText}`
       });
 
       // Clear the file after successful import
       setTimeout(() => {
         setSelectedIcsFile(null);
         setImportResult(null);
-      }, 3000);
+      }, 5000);
 
     } catch (error) {
+      console.error('Import error:', error);
       setImportResult({
         success: false,
-        message: 'Failed to import calendar file. Please try again.'
+        message: `Failed to import calendar file: ${error instanceof Error ? error.message : 'Unknown error'}`
       });
     } finally {
       setIsImporting(false);
@@ -500,6 +616,7 @@ export function Preferences() {
                   onWakeUpTimesChange={handleWakeUpTimesChange}
                   onBedtimesChange={handleBedtimesChange}
                   onStudyTimesChange={handleBusyTimesChange}
+                  externalTimeBlocks={importedTimeBlocks}
                 />
               </div>
             </div>

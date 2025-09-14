@@ -14,6 +14,15 @@ export interface TodoItem {
   priority: 'high' | 'medium' | 'low';
 }
 
+export interface TimeBlock {
+  id: string;
+  day: number; // 0 = Monday, 1 = Tuesday, etc.
+  startTime: number; // minutes from midnight
+  endTime: number; // minutes from midnight
+  type: 'study' | 'wake' | 'bedtime';
+  summary?: string; // Optional summary for imported events
+}
+
 // Linked list node for study time tuples
 export interface StudyTimeNode {
   data: [number, number]; // 2-value tuple (e.g., [startTime, endTime])
