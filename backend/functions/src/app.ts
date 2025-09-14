@@ -3,7 +3,7 @@ import cors from "cors";
 import {db} from "./config/firebase";
 import {GoogleGenerativeAI} from "@google/generative-ai";
 import syllabusRoutes from "./routes/syllabusRoutes";
-import scheduleRoutes from "./services/scheduleService";
+import scheduleRoutes from "./routes/scheduleRoutes";
 
 import activityRoutes from "./activity";
 import todoRoutes from "./todo";
