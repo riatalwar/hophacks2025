@@ -1,0 +1,93 @@
+.output-calendar {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+  padding: 2rem;
+  margin: 2rem auto;
+  max-width: 950px;
+  overflow-x: auto;
+}
+
+.calendar-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-radius: 4px;
+  background: #f7f7fa;
+  border: 1px solid #e5e5ea;
+}
+
+.calendar-grid-header,
+.calendar-grid-row {
+  display: grid;
+  grid-template-columns: 80px repeat(7, 1fr);
+  align-items: stretch;
+  min-height: 34px;
+  border-bottom: 1px solid #e5e5ea;
+}
+
+.calendar-grid-header {
+  background: #eceff5;
+  border-bottom: 2px solid #b2b2c2;
+}
+
+.day-header {
+  font-weight: 600;
+  color: #3a406a;
+  background: #e9edf7;
+  border-left: 1px solid #dbe1f3;
+  text-align: center;
+  padding: 0.4em 0;
+}
+
+.time-label {
+  font-size: 0.98em;
+  color: #484858;
+  background: #f2f2fa;
+  text-align: center;
+  font-weight: 500;
+  border-right: 1px solid #dbe1f3;
+  padding: 0.3em 0;
+}
+
+.calendar-day-slot {
+  position: relative;
+  min-height: 34px;
+  border-left: 1px solid #e5e5ea;
+  padding: 0.2em 2px 0.2em 2px;
+  background: #fcfcfe;
+}
+
+.session-block {
+  background: #3a5dd7;
+  color: #fff;
+  border-radius: 5px;
+  margin: 1px 0 0 0;
+  padding: 3px 7px;
+  font-size: 0.98em;
+  box-shadow: 0 2px 8px rgba(58,93,215,0.07);
+  transition: box-shadow 0.12s;
+}
+
+.session-title {
+  font-weight: 700;
+  font-size: 1em;
+  margin-bottom: 2px;
+}
+
+.session-notes {
+  font-size: 0.95em;
+  font-style: italic;
+  opacity: 0.88;
+  margin-top: 1px;
+}
+
+.error-message {
+  color: #e22c2c;
+  background: #fbeee4;
+  border-radius: 4px;
+  padding: 0.5em 1em;
+  margin-top: 1.5em;
+  font-weight: 500;
+  border-left: 3px solid #e22c2c;
+}
