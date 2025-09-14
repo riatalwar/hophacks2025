@@ -29,7 +29,7 @@ export interface StudyTimeList {
 export interface Preferences {
   wakeUpTimes: number[];
   bedtimes: number[];
-  studyTimes: StudyTimeList[]; // Array of linked lists, one for each day (7 days)
+  busyTimes: StudyTimeList[]; // Array of linked lists, one for each day (7 days)
   
   // Email notification settings
   studyReminders: boolean;

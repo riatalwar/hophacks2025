@@ -136,7 +136,7 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
     setSelectedButton(selectedButton === buttonType ? null : buttonType);
     setErrorMessage(''); // Clear any existing error when switching buttons
     
-    // Cancel study time creation if switching away from study
+    // Cancel busy time creation if switching away from study
     if (isCreating && selectedButton === 'study' && buttonType !== 'study') {
       setIsCreating(false);
       setCreateStart(null);
@@ -297,11 +297,11 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
         
         // Only create if it's the same day
         if (createStart.day !== day) {
-          setErrorMessage('Study time blocks must be on the same day');
+          setErrorMessage('Busy time blocks must be on the same day');
           return;
         }
         
-        // Validate study time placement
+        // Validate busy time placement
         const validationError = validateStudyTime(day, startTime, endTime);
         if (validationError) {
           setErrorMessage(validationError);
@@ -333,7 +333,7 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    // Only handle study time creation preview, not block creation
+    // Only handle busy time creation preview, not block creation
     if (!isCreating || !createStart || !calendarRef.current || selectedButton !== 'study') return;
 
     const rect = calendarRef.current.getBoundingClientRect();
@@ -403,7 +403,7 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
       setDragStart(null);
     }
     
-    // Note: Study time creation is handled in handleMouseDown, not here
+    // Note: Busy time creation is handled in handleMouseDown, not here
     // This function only handles cleanup for other operations
   };
 
@@ -520,21 +520,21 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
     const bedtime = bedtimes[day];
     
     if (!wakeUp) {
-      return `Please set a wake up time for ${days[day]} before creating study blocks`;
+      return `Please set a wake up time for ${days[day]} before creating busy time blocks`;
     }
     
     if (!bedtime) {
-      return `Please set a bedtime for ${days[day]} before creating study blocks`;
+      return `Please set a bedtime for ${days[day]} before creating busy time blocks`;
     }
     
-    // Check if study time starts before wake up time
+    // Check if busy time starts before wake up time
     if (!isTimeBefore(wakeUp.startTime, startTime)) {
-      return `Study time cannot start before wake up time (${formatTimeWithDay(wakeUp.startTime)}) on ${days[day]}`;
+      return `Busy time cannot start before wake up time (${formatTimeWithDay(wakeUp.startTime)}) on ${days[day]}`;
     }
     
-    // Check if study time ends after bedtime
+    // Check if busy time ends after bedtime
     if (!isTimeBefore(endTime, bedtime.startTime)) {
-      return `Study time cannot end after bedtime (${formatTimeWithDay(bedtime.startTime, true)}) on ${days[day]}`;
+      return `Busy time cannot end after bedtime (${formatTimeWithDay(bedtime.startTime, true)}) on ${days[day]}`;
     }
     
     return null;
@@ -551,7 +551,7 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
     return () => document.removeEventListener('mouseup', handleGlobalMouseUp);
   }, [isCreating, dragging, resizing]);
 
-  // Escape key handler to cancel study time creation
+  // Escape key handler to cancel busy time creation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isCreating && selectedButton === 'study') {
@@ -571,8 +571,8 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
       <div className="preferences-calendar-header">
         <div className="preferences-header-content">
           <div className="preferences-header-text">
-            <h3>Weekly Study Schedule</h3>
-            <p>Click on the buttons below to set your wake up times, bedtimes, and valid study times</p>
+            <h3>Weekly Schedule</h3>
+            <p>Click on the buttons below to set your wake up times, bedtimes, and busy times</p>
           </div>
           <button 
             className="preferences-minimize-button"
@@ -604,7 +604,7 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
               className={`preferences-schedule-button ${selectedButton === 'study' ? 'selected' : ''}`}
               onClick={() => handleButtonSelect('study')}
             >
-              Valid Study Times
+              Busy Times
             </button>
           </div>
 
@@ -763,7 +763,7 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
             );
           })}
 
-          {/* Study time creation preview */}
+          {/* Busy time creation preview */}
           {isCreating && createStart && selectedButton === 'study' && (
             <div
               className="preferences-time-block study preview"
