@@ -26,11 +26,7 @@ export interface TodoItem {
 export interface Preferences {
   wakeUpTimes: number[];
   bedtimes: number[];
-<<<<<<< HEAD:shared/types/activities.ts
   busyTimes: BusyTimeList[]; // Array of linked lists, one for each day (7 days)
-=======
-  busyTimes: StudyTimeList[]; // Array of linked lists, one for each day (7 days)
->>>>>>> 2816590e2b91e490c6e6403ebedec3612db5f5c9:frontend/src/types/ClassTypes.ts
   
   // Email notification settings
   studyReminders: boolean;
