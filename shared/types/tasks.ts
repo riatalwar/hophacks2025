@@ -12,6 +12,8 @@ export interface TodoItem {
   dueDate: string;
   /** Activity identifier that links to an activity in the activities database */
   activityId?: string;
+  /** User identifier that links to a user in the users database */
+  userId: string;
   /** Priority level based on point value/weight */
   priority: "low" | "medium" | "high";
   /** Estimated hours to complete the task */
