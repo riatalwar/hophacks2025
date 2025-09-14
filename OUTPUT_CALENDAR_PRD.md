@@ -32,6 +32,7 @@ The Output Calendar system operates as a three-stage pipeline:
 
 **SchedulingEngine** (Backend/Frontend Service)
 - Primary responsibility for converting raw data into scheduled study sessions
+- **CRITICAL**: Must convert TimeBlock[] from backend to BusyTimeList format for algorithm
 - Implements priority calculation algorithms
 - Handles task chunking and time slot allocation
 - Manages schedule recalculation triggers
@@ -49,7 +50,35 @@ The Output Calendar system operates as a three-stage pipeline:
 
 ### 2. Data Models and Types
 
-#### 2.1 Input Data Structures
+#### 2.1 Critical Data Conversion Challenge
+
+**IMPORTANT**: The codebase currently has TWO different systems for representing user availability:
+
+1. **Backend/API**: Uses `TimeBlock[]` format (stored in `schedules` collection)
+2. **Algorithm**: Expects `BusyTimeList[]` format (linked lists)
+
+**Required Conversion**:
+```typescript
+// Backend TimeBlock format
+interface TimeBlock {
+  id: string;
+  day: number; // 0-6 for Mon-Sun  
+  startTime: number; // minutes from midnight
+  endTime: number; // minutes from midnight
+  type: 'busy' | 'wake' | 'bedtime';
+  notes?: string;
+}
+
+// Algorithm BusyTimeList format
+interface BusyTimeList {
+  head: BusyTimeNode | null;
+  size: number;
+}
+```
+
+The scheduling algorithm MUST include conversion logic to transform `TimeBlock[]` → `BusyTimeList[]`.
+
+#### 2.2 Input Data Structures
 
 **BusyTimeList Structure**
 ```typescript
@@ -74,9 +103,10 @@ interface BusyTimeList {
 interface TodoItem {
   id: string;
   title: string;
-  description: string;
-  dueDate: string; // YYYY-MM-DD format
-  category: string;
+  notes: string; // User notes about the task (NOT "description")
+  dueDate: string; // YYYY-MM-DD format or 'TBD'
+  activityId?: string; // Links to Activity in activities collection
+  userId: string; // Required for user association
   priority: "low" | "medium" | "high"; // Used only for tie-breaking
   estimatedHours?: number;
   completed: boolean;
@@ -91,7 +121,7 @@ interface ScheduledStudySession {
   id: string;
   taskId: string; // Reference to source TodoItem
   title: string; // e.g., "Study for Chemistry Exam"
-  description?: string; // From TodoItem notes field
+  notes?: string; // From TodoItem notes field (corrected field name)
   startTime: Date;
   endTime: Date;
   dayOfWeek: number; // 0-6 for Monday-Sunday
@@ -100,7 +130,7 @@ interface ScheduledStudySession {
   
   // Future ICS compatibility fields
   location?: string; // Always null for MVP
-  category?: string; // From source TodoItem
+  activityId?: string; // From source TodoItem (not "category")
 }
 ```
 
@@ -243,8 +273,9 @@ basePriority = averageHoursPerDay
 #### 4.2 Integration Points
 
 **Dashboard Integration:**
-- Replace lines 188-207 in Dashboard.tsx with new OutputCalendar component
-- Maintain existing section styling and layout
+- Replace lines 443-462 in Dashboard.tsx (Weekly Schedule Section) with new OutputCalendar component
+- Current hardcoded calendar shows: Mon/Tue/Wed with fake events like "7:00 AM - Wake Up", "9:00 AM - Math Study"
+- Maintain existing section styling: `.dashboard-section`, `.schedule-section`, `.section-header` classes
 - Ensure proper responsive behavior within dashboard grid
 
 **Data Synchronization:**
@@ -283,16 +314,21 @@ interface OutputCalendarState {
 #### 5.2 Backend Service Requirements (*Requires Database Integration Research*)
 
 **API Endpoints Needed:**
-- `GET /api/schedule/:userId`: Retrieve current generated schedule
-- `POST /api/schedule/:userId/generate`: Trigger schedule recalculation
-- `GET /api/users/:userId/availability`: Get user's BusyTimeList data
-- `GET /api/users/:userId/tasks`: Get user's TodoItems
+- `GET /schedules/:userId`: Get user's TimeBlock data (EXISTING - returns TimeBlock[])
+- `POST /schedules`: Save user's TimeBlock data (EXISTING)
+- `GET /todos/:userId`: Get user's TodoItems (EXISTING)
+- `GET /activities/:userId`: Get user's activities (EXISTING)
+- `POST /api/schedule/:userId/generate`: Trigger schedule recalculation (NEW - NEEDS IMPLEMENTATION)
+- `GET /api/schedule/:userId`: Retrieve current generated schedule (NEW - NEEDS IMPLEMENTATION)
 
 **Database Schema Considerations:**
-- Storage location for GeneratedSchedule objects
-- Indexing strategy for efficient schedule retrieval
-- Handling of schedule versioning and concurrent updates
-- Integration with existing user and task data models
+- NEW: Create `generatedSchedules` collection for GeneratedSchedule objects
+- EXISTING: `todos` collection (stores TodoItem objects)
+- EXISTING: `activities` collection (stores Activity objects)  
+- EXISTING: `schedules` collection (stores TimeBlock[] for user availability)
+- EXISTING: Firestore rules allow user access to own data
+- NEW: Indexing strategy for efficient schedule retrieval
+- NEW: Handling of schedule versioning and concurrent updates
 
 #### 5.3 Performance Considerations
 
@@ -435,17 +471,20 @@ interface OutputCalendarState {
 - Create task chunking logic
 - Build time slot allocation system
 
-### Phase 2: Data Integration (*Database Research Required*)
-- Design database schema for schedule storage
-- Implement API endpoints for schedule management
-- Create data synchronization mechanisms
+### Phase 2: Data Integration
+- **EXISTING**: `todos`, `activities`, `schedules` collections already implemented
+- **NEW**: Create `generatedSchedules` collection for storing generated schedules
+- **NEW**: Implement `POST /api/schedule/:userId/generate` endpoint
+- **NEW**: Implement `GET /api/schedule/:userId` endpoint  
+- **CRITICAL**: Build TimeBlock[] → BusyTimeList[] conversion logic
 - Set up automatic recalculation triggers
 
 ### Phase 3: User Interface Development
 - Build OutputCalendar React component
 - Implement weekly/daily view switching
 - Create loading and error state handling
-- Replace hardcoded calendar in Dashboard
+- Replace hardcoded calendar in Dashboard.tsx lines 443-462
+- **EXISTING**: Dashboard already imports todos/activities via existing APIs
 
 ### Phase 4: Testing and Polish
 - Comprehensive algorithm testing
