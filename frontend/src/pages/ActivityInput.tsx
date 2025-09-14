@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Navigation } from '../components/Navigation';
 import '../styles/ClassInput.css';
 import type { Activity } from '../types/ClassTypes';
-import axios from 'axios';
-import { getAuth } from "firebase/auth";
+import { collection, getDocs, addDoc, deleteDoc, doc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 export function ActivityInput() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isAddingNew, setIsAddingNew] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [newActivity, setNewActivity] = useState({
     name: '',
     color: 'var(--accent-color)',
@@ -21,30 +22,76 @@ export function ActivityInput() {
     '#feca57', '#ff9ff3', '#54a0ff', '#a55eea'
   ];
 
-  const addActivity = () => {
-    if (newActivity.name.trim()) {
-      const activityToAdd: Activity = {
-        id: Date.now().toString(),
-        activityName: newActivity.name,
-        color: newActivity.color,
-        pdfFile: newActivity.pdfFile,
-        websiteLink: newActivity.websiteLink,
-        canvasContent: newActivity.canvasContent
-      };
-      setActivities([...activities, activityToAdd]);
-      setNewActivity({
-        name: '',
-        color: 'var(--accent-color)',
-        pdfFile: null,
-        websiteLink: '',
-        canvasContent: ''
-      });
-      setIsAddingNew(false);
+  // Fetch activities from Firestore
+  const fetchActivities = async () => {
+    try {
+      setLoading(true);
+      const activitiesCollection = collection(db, 'activities');
+      const snapshot = await getDocs(activitiesCollection);
+      const activitiesData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        activityName: doc.data().activityName,
+        color: doc.data().color,
+        websiteLink: doc.data().websiteLink,
+        canvasContent: doc.data().canvasContent,
+        pdfFile: null // We'll handle file uploads separately
+      }));
+      setActivities(activitiesData);
+      console.log('Fetched activities:', activitiesData);
+    } catch (error) {
+      console.error('Error fetching activities:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const removeActivity = (id: string) => {
-    setActivities(activities.filter(activity => activity.id !== id));
+  // Load activities on component mount
+  useEffect(() => {
+    fetchActivities();
+  }, []);
+
+  const addActivity = async () => {
+    if (newActivity.name.trim()) {
+      try {
+        const activityData = {
+          activityName: newActivity.name,
+          color: newActivity.color,
+          websiteLink: newActivity.websiteLink,
+          canvasContent: newActivity.canvasContent,
+          userId: 'test-user-1', // For now, using a test user
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        const docRef = await addDoc(collection(db, 'activities'), activityData);
+        console.log('Activity added with ID:', docRef.id);
+        
+        // Refresh the activities list
+        await fetchActivities();
+        
+        setNewActivity({
+          name: '',
+          color: 'var(--accent-color)',
+          pdfFile: null,
+          websiteLink: '',
+          canvasContent: ''
+        });
+        setIsAddingNew(false);
+      } catch (error) {
+        console.error('Error adding activity:', error);
+      }
+    }
+  };
+
+  const removeActivity = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'activities', id));
+      console.log('Activity deleted:', id);
+      // Refresh the activities list
+      await fetchActivities();
+    } catch (error) {
+      console.error('Error deleting activity:', error);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -58,26 +105,6 @@ export function ActivityInput() {
     setNewActivity({...newActivity, pdfFile: file});
   };
 
-  useEffect(() => {
-    const fetchActivities = async () => {
-      try {
-        const auth = getAuth();
-        const user = auth.currentUser;
-        const userId = user?.uid;
-        const response = await axios.get(`/activities/${userId}`);
-        const data = response.data as { success: boolean; activities: Activity[]; message: string };
-        if (data.success) {
-          setActivities(data.activities);
-        } else {
-          console.error(data.message);
-        }
-      } catch (error) {
-        console.error("Failed to fetch activities", error);
-      }
-    };
-
-    fetchActivities();
-  }, []);
 
   return (
     <div className="class-input-page">
@@ -210,8 +237,17 @@ export function ActivityInput() {
             </button>
           )}
 
+          {/* Loading State */}
+          {loading && (
+            <div className="loading-state">
+              <div className="loading-spinner">⏳</div>
+              <h3>Loading activities...</h3>
+              <p>Fetching your activities from the database</p>
+            </div>
+          )}
+
           {/* Empty State */}
-          {activities.length === 0 && !isAddingNew && (
+          {!loading && activities.length === 0 && !isAddingNew && (
             <div className="empty-state">
               <div className="empty-icon">📚</div>
               <h3>No activities added yet</h3>
