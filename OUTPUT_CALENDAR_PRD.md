@@ -24,9 +24,10 @@ The system transforms raw input data (tasks with due dates and time estimates, p
 #### 1.1 Data Flow Overview
 The Output Calendar system operates as a three-stage pipeline:
 
-1. **Data Ingestion**: Collect user availability (BusyTimeList) and tasks (TodoItems) from database
-2. **Schedule Generation**: Process inputs through scheduling algorithm to create optimized study sessions
-3. **Presentation**: Display generated schedule in web interface with weekly/daily view options
+1. **Data Ingestion**: Collect user availability (TimeBlock[] from `/schedules/:userId`) and tasks (TodoItems from `/todos/:userId`) from database
+2. **Data Conversion**: Convert TimeBlock[] to BusyTimeList[] format for algorithm processing  
+3. **Schedule Generation**: Process inputs through scheduling algorithm to create optimized study sessions
+4. **Presentation**: Display generated schedule in web interface with weekly/daily view options
 
 #### 1.2 Component Responsibilities
 
@@ -313,11 +314,13 @@ interface OutputCalendarState {
 
 #### 5.2 Backend Service Requirements (*Requires Database Integration Research*)
 
-**API Endpoints Needed:**
-- `GET /schedules/:userId`: Get user's TimeBlock data (EXISTING - returns TimeBlock[])
-- `POST /schedules`: Save user's TimeBlock data (EXISTING)
+**API Endpoints Available:**
+- `GET /schedules/:userId`: Get user's availability as TimeBlock[] (EXISTING - provides busy time data)
+- `POST /schedules`: Save user's availability as TimeBlock[] (EXISTING - used by Preferences page)
 - `GET /todos/:userId`: Get user's TodoItems (EXISTING)
 - `GET /activities/:userId`: Get user's activities (EXISTING)
+
+**API Endpoints Needed:**
 - `POST /api/schedule/:userId/generate`: Trigger schedule recalculation (NEW - NEEDS IMPLEMENTATION)
 - `GET /api/schedule/:userId`: Retrieve current generated schedule (NEW - NEEDS IMPLEMENTATION)
 
