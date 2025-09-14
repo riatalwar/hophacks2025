@@ -40,7 +40,7 @@ export function ActivityInput() {
           userId: user.uid,
         };
 
-        const response = await axios.post('http://localhost:5001/hophacks2025/us-central1/api/activities', activityData);
+        const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/activities`, activityData);
         const { success, activity } = response.data as { success: boolean; activity: Activity };
 
         if (success) {
@@ -62,7 +62,7 @@ export function ActivityInput() {
 
   const removeActivity = async (id: string) => {
     try {
-      const response = await axios.delete(`http://localhost:5001/hophacks2025/us-central1/api/activities/${id}`);
+      const response = await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/activities/${id}`);
       const { success } = response.data as { success: boolean };
 
       if (success) {
@@ -90,7 +90,7 @@ export function ActivityInput() {
         const auth = getAuth();
         const user = auth.currentUser;
         const userId = user?.uid;
-        const response = await axios.get(`http://localhost:5001/hophacks2025/us-central1/api/activities/${userId}`);
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/activities/${userId}`);
         const data = response.data as { success: boolean; activities: Activity[]; message: string };
         if (data.success) {
           setActivities(data.activities);
