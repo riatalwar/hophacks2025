@@ -35,7 +35,7 @@ export interface Preferences {
 }
 
 /**
- * Linked list node for study time tuples
+ * Linked list node for busy time tuples
  */
 export interface BusyTimeNode {
   data: [number, number]; // 2-value tuple (e.g., [startTime, endTime])
@@ -43,7 +43,7 @@ export interface BusyTimeNode {
 }
 
 /**
- * Linked list for study times
+ * Linked list for busy times
  */
 export interface BusyTimeList {
   head: BusyTimeNode | null;
@@ -58,7 +58,7 @@ export interface TimeBlock {
   day: number; // 0 = Monday, 1 = Tuesday, etc.
   startTime: number; // minutes from midnight
   endTime: number; // minutes from midnight
-  type: 'study' | 'wake' | 'bedtime';
+  type: 'busy' | 'wake' | 'bedtime';
   notes?: string; // Optional notes for the time block
 }
 

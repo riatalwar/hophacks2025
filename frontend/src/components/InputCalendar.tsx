@@ -20,13 +20,13 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
   const [isCreating, setIsCreating] = useState(false);
   const [createStart, setCreateStart] = useState<{ day: number; time: number } | null>(null);
   const [hoverEnd, setHoverEnd] = useState<{ day: number; time: number } | null>(null);
-  const [selectedButton, setSelectedButton] = useState<'wake' | 'bedtime' | 'study' | null>(null);
+  const [selectedButton, setSelectedButton] = useState<'wake' | 'bedtime' | 'busy' | null>(null);
   const [isMinimized, setIsMinimized] = useState(false);
   const calendarRef = useRef<HTMLDivElement>(null);
 
   // Helper functions for localStorage persistence
   const saveTimeBlocks = (blocks: TimeBlock[]) => {
-    localStorage.setItem('studySchedule_timeBlocks', JSON.stringify(blocks));
+    localStorage.setItem('studySchedule_busyBlocks', JSON.stringify(blocks));
   };
 
   const saveWakeUpTimes = (wakeTimes: { [day: number]: TimeBlock | null }) => {
@@ -39,7 +39,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
 
   // Load data from localStorage on component mount
   useEffect(() => {
-    const savedTimeBlocks = localStorage.getItem('studySchedule_timeBlocks');
+    const savedTimeBlocks = localStorage.getItem('studySchedule_busyBlocks');
     const savedWakeUpTimes = localStorage.getItem('studySchedule_wakeUpTimes');
     const savedBedtimes = localStorage.getItem('studySchedule_bedtimes');
     
@@ -75,7 +75,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
   // Notify parent component when study times change
   useEffect(() => {
     if (onBusyTimesChange) {
-      const busyTimes = timeBlocks.filter(block => block.type === 'study');
+      const busyTimes = timeBlocks.filter(block => block.type === 'busy');
       onBusyTimesChange(busyTimes);
     }
   }, [timeBlocks, onBusyTimesChange]);
@@ -125,12 +125,12 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
   };
 
   // Button selection handlers
-  const handleButtonSelect = (buttonType: 'wake' | 'bedtime' | 'study') => {
+  const handleButtonSelect = (buttonType: 'wake' | 'bedtime' | 'busy') => {
     setSelectedButton(selectedButton === buttonType ? null : buttonType);
     setErrorMessage(''); // Clear any existing error when switching buttons
     
-    // Cancel busy time creation if switching away from study
-    if (isCreating && selectedButton === 'study' && buttonType !== 'study') {
+    // Cancel busy time creation if switching away from busy
+    if (isCreating && selectedButton === 'busy' && buttonType !== 'busy') {
       setIsCreating(false);
       setCreateStart(null);
       setHoverEnd(null);
@@ -166,13 +166,13 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
       cell.style.backgroundColor = 'rgba(255, 140, 0, 0.15)'; // Deeper orange for wake up
     } else if (selectedButton === 'bedtime') {
       cell.style.backgroundColor = 'rgba(156, 39, 176, 0.1)'; // Purple for bedtime
-    } else if (selectedButton === 'study') {
+    } else if (selectedButton === 'busy') {
       if (isCreating && createStart) {
         // Track hover position for dynamic preview
         if (day === createStart.day && slot > createStart.time) {
           const startTime = createStart.time * 30;
           const endTime = slot * 30;
-          const validationError = validateStudyTime(day, startTime, endTime);
+          const validationError = validateBusyTime(day, startTime, endTime);
           
           if (validationError) {
             cell.style.backgroundColor = 'rgba(244, 67, 54, 0.2)'; // Red for invalid
@@ -187,7 +187,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
       } else {
         // Show start time selection - check if valid
         const startTime = slot * 30;
-        const validationError = validateStudyTime(day, startTime, startTime + 30);
+        const validationError = validateBusyTime(day, startTime, startTime + 30);
         
         if (validationError) {
           cell.style.backgroundColor = 'rgba(244, 67, 54, 0.1)'; // Light red for invalid
@@ -260,14 +260,14 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
       setBedtimes(updatedBedtimes);
       saveBedtimes(updatedBedtimes);
       setErrorMessage(''); // Clear error on successful placement
-    } else if (selectedButton === 'study') {
-      // Two-click study time creation pattern
+    } else if (selectedButton === 'busy') {
+      // Two-click busy time creation pattern
       if (!isCreating || !createStart) {
         // First click: set start time
         const startTime = slot * 30; // Convert to minutes
         
         // Validate that wake up and bedtime exist
-        const validationError = validateStudyTime(day, startTime, startTime + 30); // Check with minimum duration
+        const validationError = validateBusyTime(day, startTime, startTime + 30); // Check with minimum duration
         if (validationError) {
           setErrorMessage(validationError);
           return;
@@ -295,21 +295,21 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
         }
         
         // Validate busy time placement
-        const validationError = validateStudyTime(day, startTime, endTime);
+        const validationError = validateBusyTime(day, startTime, endTime);
         if (validationError) {
           setErrorMessage(validationError);
           return;
         }
         
-        const newStudyTime: TimeBlock = {
-          id: `study-${day}-${Date.now()}`,
+        const newBusyTime: TimeBlock = {
+          id: `busy-${day}-${Date.now()}`,
           day,
           startTime,
           endTime,
-          type: 'study'
+          type: 'busy'
         };
         
-        const updatedBlocks = [...timeBlocks, newStudyTime];
+        const updatedBlocks = [...timeBlocks, newBusyTime];
         setTimeBlocks(updatedBlocks);
         saveTimeBlocks(updatedBlocks);
         onScheduleChange(updatedBlocks);
@@ -327,7 +327,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
 
   const handleMouseMove = (e: React.MouseEvent) => {
     // Only handle busy time creation preview, not block creation
-    if (!isCreating || !createStart || !calendarRef.current || selectedButton !== 'study') return;
+    if (!isCreating || !createStart || !calendarRef.current || selectedButton !== 'busy') return;
 
     const rect = calendarRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -347,8 +347,8 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
       const startTime = createStart.time * 30;
       const endTime = time * 30;
       
-      // Validate the preview study time
-      const validationError = validateStudyTime(day, startTime, endTime);
+      // Validate the preview busy time
+      const validationError = validateBusyTime(day, startTime, endTime);
       if (validationError) {
         setErrorMessage(validationError);
       } else {
@@ -507,8 +507,8 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
     return null;
   };
 
-  // Validation function to check if study time is valid (between wake up and bedtime)
-  const validateStudyTime = (day: number, startTime: number, endTime: number) => {
+  // Validation function to check if busy time is valid (between wake up and bedtime)
+  const validateBusyTime = (day: number, startTime: number, endTime: number) => {
     const wakeUp = wakeUpTimes[day];
     const bedtime = bedtimes[day];
     
@@ -547,7 +547,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
   // Escape key handler to cancel busy time creation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isCreating && selectedButton === 'study') {
+      if (e.key === 'Escape' && isCreating && selectedButton === 'busy') {
         setIsCreating(false);
         setCreateStart(null);
         setHoverEnd(null);
@@ -594,8 +594,8 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
               Bedtimes
             </button>
             <button 
-              className={`preferences-schedule-button ${selectedButton === 'study' ? 'selected' : ''}`}
-              onClick={() => handleButtonSelect('study')}
+              className={`preferences-schedule-button ${selectedButton === 'busy' ? 'selected' : ''}`}
+              onClick={() => handleButtonSelect('busy')}
             >
               Busy Times
             </button>
@@ -757,9 +757,9 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
           })}
 
           {/* Busy time creation preview */}
-          {isCreating && createStart && selectedButton === 'study' && (
+          {isCreating && createStart && selectedButton === 'busy' && (
             <div
-              className="preferences-time-block study preview"
+              className="preferences-time-block busy preview"
               style={{
                 left: dayToPosition(createStart.day),
                 top: timeToPosition(createStart.time * 30),

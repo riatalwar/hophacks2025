@@ -398,7 +398,7 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.preferences-time-block.study {
+.preferences-time-block.busy {
   background: var(--accent-gradient);
   border: 1px solid rgba(78, 205, 196, 0.3);
 }
