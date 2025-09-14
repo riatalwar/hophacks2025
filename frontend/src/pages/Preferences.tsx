@@ -16,11 +16,11 @@ export function Preferences() {
   });
   const [shareDataAnonymously, setShareDataAnonymously] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    const saved = localStorage.getItem('classCatcher_theme');
+    const saved = localStorage.getItem('scheduleSort_theme');
     return saved ? saved === 'dark' : true;
   });
   const [accentColor, setAccentColor] = useState(() => {
-    const saved = localStorage.getItem('classCatcher_accentColor');
+    const saved = localStorage.getItem('scheduleSort_accentColor');
     return saved || '#4ecdc4';
   });
 
@@ -97,11 +97,11 @@ export function Preferences() {
     };
 
     // Save to localStorage
-    localStorage.setItem('classCatcher_preferences', JSON.stringify(currentPreferences));
+    localStorage.setItem('scheduleSort_preferences', JSON.stringify(currentPreferences));
     
     // Also save individual theme and accent color for immediate application
-    localStorage.setItem('classCatcher_theme', isDarkMode ? 'dark' : 'light');
-    localStorage.setItem('classCatcher_accentColor', accentColor);
+    localStorage.setItem('scheduleSort_theme', isDarkMode ? 'dark' : 'light');
+    localStorage.setItem('scheduleSort_accentColor', accentColor);
     
     console.log('Preferences saved:', currentPreferences);
   }, [wakeUpTimes, bedtimes, busyTimes, emailNotifications, shareDataAnonymously, isDarkMode, accentColor]);
@@ -112,7 +112,7 @@ export function Preferences() {
 
   // Function to load all preferences
   const loadAllPreferences = useCallback(() => {
-    const savedPreferences = localStorage.getItem('classCatcher_preferences');
+    const savedPreferences = localStorage.getItem('scheduleSort_preferences');
     
     if (savedPreferences) {
       try {
@@ -259,7 +259,7 @@ export function Preferences() {
     setIsDarkMode(newTheme);
 
     // Save to localStorage
-    localStorage.setItem('classCatcher_theme', newTheme ? 'dark' : 'light');
+    localStorage.setItem('scheduleSort_theme', newTheme ? 'dark' : 'light');
 
     // Apply theme immediately
     if (newTheme) {
@@ -278,7 +278,7 @@ export function Preferences() {
     setAccentColor(color);
 
     // Save to localStorage
-    localStorage.setItem('classCatcher_accentColor', color);
+    localStorage.setItem('scheduleSort_accentColor', color);
 
     // Apply accent color immediately
     document.documentElement.style.setProperty('--accent-color', color);
@@ -513,7 +513,7 @@ export function Preferences() {
         <div className="preferences-container">
         <div className="preferences-header">
           <h1>Preferences & Settings</h1>
-          <p>Customize your Class Catcher experience to match your study preferences and academic needs.</p>
+          <p>Customize your Schedule Sort experience to match your study preferences and academic needs.</p>
         </div>
 
         <div className="preferences-content">
@@ -610,7 +610,7 @@ export function Preferences() {
             <div className="preferences-section study-preferences">
               <h2>Study Preferences</h2>
               <div className="section-content">
-                <p>Customize your study schedule, learning style, and academic preferences to optimize your Class Catcher experience.</p>
+                <p>Customize your study schedule, learning style, and academic preferences to optimize your Schedule Sort experience.</p>
                 <WeekCalendar 
                   onScheduleChange={handleScheduleChange}
                   onWakeUpTimesChange={handleWakeUpTimesChange}
@@ -695,7 +695,7 @@ export function Preferences() {
                     <div className="notification-item">
                       <div className="notification-info">
                         <h4>System Alerts</h4>
-                        <p>Important updates about Class Catcher features and maintenance</p>
+                        <p>Important updates about Schedule Sort features and maintenance</p>
                       </div>
                       <label className="toggle-switch">
                         <input
@@ -723,7 +723,7 @@ export function Preferences() {
                   <div className="privacy-item">
                     <div className="privacy-info">
                       <h4>Share Data Anonymously</h4>
-                      <p>Help improve Class Catcher for everyone by sharing anonymous usage data. This helps us understand how students study and optimize features for better academic success.</p>
+                      <p>Help improve Schedule Sort for everyone by sharing anonymous usage data. This helps us understand how students study and optimize features for better academic success.</p>
                       <div className="privacy-benefits">
                         <span className="benefit-tag">🔒 Completely Anonymous</span>
                         <span className="benefit-tag">📊 Helps Improve Features</span>
@@ -769,7 +769,7 @@ export function Preferences() {
             <div className="preferences-section">
               <h2>Appearance</h2>
               <div className="section-content">
-                <p>Customize the look and feel of your Class Catcher interface, themes, and visual preferences.</p>
+                <p>Customize the look and feel of your Schedule Sort interface, themes, and visual preferences.</p>
 
                 <div className="appearance-group">
                   <h3>Theme & Colors</h3>
