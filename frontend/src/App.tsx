@@ -31,7 +31,7 @@ function App() {
   // Apply saved theme and accent color preferences on app load
   useEffect(() => {
     // Load saved theme
-    const savedTheme = localStorage.getItem('classCatcher_theme');
+    const savedTheme = localStorage.getItem('scheduleSort_theme');
     if (savedTheme) {
       if (savedTheme === 'dark') {
         document.documentElement.classList.remove('light-theme');
@@ -43,7 +43,7 @@ function App() {
     }
 
     // Load saved accent color
-    const savedAccentColor = localStorage.getItem('classCatcher_accentColor');
+    const savedAccentColor = localStorage.getItem('scheduleSort_accentColor');
     if (savedAccentColor) {
       document.documentElement.style.setProperty('--accent-color', savedAccentColor);
 
