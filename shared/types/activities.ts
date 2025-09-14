@@ -68,4 +68,13 @@ export interface TimeBlock {
   startTime: number; // minutes from midnight
   endTime: number; // minutes from midnight
   type: 'study' | 'wake' | 'bedtime';
+  notes?: string; // Optional notes for the time block
+}
+
+/**
+ * User schedule containing all time blocks for a user
+ */
+export interface Schedule {
+  userId: string;
+  timeBlocks: { [timeBlockId: string]: TimeBlock }; // Map of time block ID to TimeBlock object
 }
