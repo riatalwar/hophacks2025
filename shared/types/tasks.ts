@@ -6,12 +6,12 @@ export interface TodoItem {
   id: string;
   /** Title or name of the task */
   title: string;
-  /** Detailed description of what the task involves */
-  description: string;
+  /** Notes the user can add about the task */
+  notes: string;
   /** Due date in YYYY-MM-DD format, or 'TBD' if not specified */
   dueDate: string;
-  /** Category of the task */
-  category: string;
+  /** Associated activity identifier that links to an activity in the activities database */
+  associatedActivity?: string;
   /** Priority level based on point value/weight */
   priority: "low" | "medium" | "high";
   /** Estimated hours to complete the task */
