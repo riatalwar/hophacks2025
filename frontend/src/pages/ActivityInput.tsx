@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Navigation } from '../components/Navigation';
 import '../styles/ClassInput.css';
-import type { Activity } from '@shared/types/activities';
+import type { Activity } from '../types/ClassTypes';
 import axios from 'axios';
 import { getAuth } from "firebase/auth";
 import { Link } from 'react-router-dom';
