@@ -1,6 +1,7 @@
 import express from "express";
 import {db} from "./config/firebase";
 
+// eslint-disable-next-line new-cap
 const router = express.Router();
 
 // GET all todos for a user
@@ -8,11 +9,16 @@ router.get("/todos/:userId", async (req, res) => {
   try {
     const {userId} = req.params;
     if (!userId) {
-      return res.status(400).json({success: false, message: "User ID is required"});
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required",
+      });
     }
 
     const todosCollection = db.collection("todos");
-    const snapshot = await todosCollection.where("userId", "==", userId).get();
+    const snapshot = await todosCollection
+      .where("userId", "==", userId)
+      .get();
 
     const todos = snapshot.docs.map((doc) => ({
       id: doc.id,
@@ -32,15 +38,55 @@ router.get("/todos/:userId", async (req, res) => {
 // POST a new todo
 router.post("/todos", async (req, res) => {
   try {
-    const {todoName, priority, userId} = req.body;
+    const {
+      title,
+      notes,
+      dueDate,
+      associatedActivity,
+      priority,
+      estimatedHours,
+      userId,
+    } = req.body;
 
-    if (!todoName || !priority || !userId) {
-      return res.status(400).json({success: false, message: "Missing required fields"});
+    if (!title || !priority || !userId) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields",
+      });
+    }
+
+    // If associatedActivity is provided, check if it exists or create it
+    let activityId = associatedActivity;
+    if (associatedActivity && associatedActivity.trim()) {
+      const activitiesCollection = db.collection("activities");
+      const activityQuery = await activitiesCollection
+        .where("userId", "==", userId)
+        .where("name", "==", associatedActivity.trim())
+        .get();
+
+      if (activityQuery.empty) {
+        // Create new activity if it doesn't exist
+        const newActivityData = {
+          name: associatedActivity.trim(),
+          color: "#4ecdc4", // Default color
+          userId,
+          createdAt: new Date().toISOString(),
+        };
+        const newActivityRef = await activitiesCollection.add(newActivityData);
+        activityId = newActivityRef.id;
+      } else {
+        // Use existing activity ID
+        activityId = activityQuery.docs[0].id;
+      }
     }
 
     const newTodoData = {
-      todoName,
+      title,
+      notes: notes || "",
+      dueDate: dueDate || "TBD",
+      associatedActivity: activityId || undefined,
       priority,
+      estimatedHours: estimatedHours || undefined,
       userId,
       completed: false,
     };
@@ -65,25 +111,71 @@ router.post("/todos", async (req, res) => {
 router.put("/todos/:todoId", async (req, res) => {
   try {
     const {todoId} = req.params;
-    const {todoName, notes, dueDate, priority, estimatedTime, completed} = req.body;
+    const {
+      title,
+      notes,
+      dueDate,
+      associatedActivity,
+      priority,
+      estimatedHours,
+      completed,
+      userId,
+    } = req.body;
 
     if (!todoId) {
-      return res.status(400).json({success: false, message: "Todo ID is required"});
+      return res.status(400).json({
+        success: false,
+        message: "Todo ID is required",
+      });
     }
 
     const todoRef = db.collection("todos").doc(todoId);
-    const updateData: {[key: string]: any} = {};
+    const updateData: Record<string, unknown> = {};
 
-    if (todoName !== undefined) updateData.todoName = todoName;
+    if (title !== undefined) updateData.title = title;
     if (notes !== undefined) updateData.notes = notes;
     if (dueDate !== undefined) updateData.dueDate = dueDate;
     if (priority !== undefined) updateData.priority = priority;
-    if (estimatedTime !== undefined) updateData.estimatedTime = estimatedTime;
+    if (estimatedHours !== undefined) {
+      updateData.estimatedHours = estimatedHours;
+    }
     if (completed !== undefined) updateData.completed = completed;
+
+    // Handle associatedActivity update
+    if (associatedActivity !== undefined) {
+      if (associatedActivity && associatedActivity.trim() && userId) {
+        const activitiesCollection = db.collection("activities");
+        const activityQuery = await activitiesCollection
+          .where("userId", "==", userId)
+          .where("name", "==", associatedActivity.trim())
+          .get();
+
+        if (activityQuery.empty) {
+          // Create new activity if it doesn't exist
+          const newActivityData = {
+            name: associatedActivity.trim(),
+            color: "#4ecdc4", // Default color
+            userId,
+            createdAt: new Date().toISOString(),
+          };
+          const newActivityRef = await activitiesCollection
+            .add(newActivityData);
+          updateData.associatedActivity = newActivityRef.id;
+        } else {
+          // Use existing activity ID
+          updateData.associatedActivity = activityQuery.docs[0].id;
+        }
+      } else {
+        updateData.associatedActivity = undefined;
+      }
+    }
 
     await todoRef.update(updateData);
 
-    return res.json({success: true, message: "Todo updated successfully"});
+    return res.json({
+      success: true,
+      message: "Todo updated successfully",
+    });
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -98,12 +190,18 @@ router.delete("/todos/:todoId", async (req, res) => {
   try {
     const {todoId} = req.params;
     if (!todoId) {
-      return res.status(400).json({success: false, message: "Todo ID is required"});
+      return res.status(400).json({
+        success: false,
+        message: "Todo ID is required",
+      });
     }
 
     await db.collection("todos").doc(todoId).delete();
 
-    return res.json({success: true, message: "Todo deleted successfully"});
+    return res.json({
+      success: true,
+      message: "Todo deleted successfully",
+    });
   } catch (error) {
     return res.status(500).json({
       success: false,
