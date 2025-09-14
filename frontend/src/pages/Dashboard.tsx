@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Navigation } from '../components/Navigation';
-import type { TodoItem } from '../types/ClassTypes';
+import type { TodoItem } from '@shared/types/activities';
 import '../styles/Dashboard.css';
 import axios from 'axios';
 

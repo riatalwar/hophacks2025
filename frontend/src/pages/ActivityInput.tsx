@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Navigation } from '../components/Navigation';
 import '../styles/ClassInput.css';
-import type { Activity } from '../types/ClassTypes';
+import type { Activity } from '@shared/types/activities';
 import axios from 'axios';
 import { getAuth } from "firebase/auth";
 import { Link } from 'react-router-dom';
@@ -113,7 +113,7 @@ export function ActivityInput() {
       <div className="class-input-container">
         <div className="class-input-header">
           <h1>Add Your Activities</h1>
-          <p>Enter all the activities you're involved in this semester to get started with Class Catcher</p>
+          <p>Enter all the activities you're involved in this semester to get started with Schedule Sort</p>
         </div>
 
         {/* Activities List */}

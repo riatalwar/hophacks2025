@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Navigation } from '../components/Navigation';
-import { WeekCalendar } from '../components/WeekCalendar';
-import type { StudyTimeList, StudyTimeNode, Preferences } from '../types/ClassTypes';
+import { InputCalendar } from '../components/InputCalendar';
+import type { BusyTimeList, BusyTimeNode, Preferences, TimeBlock } from '@shared/types/activities';
 import '../styles/Preferences.css';
 
 export function Preferences() {
-  const [, setStudySchedule] = useState<any[]>([]);
+  const [, setBusySchedule] = useState<TimeBlock[]>([]);
   const [emailNotifications, setEmailNotifications] = useState({
     studyReminders: true,
     assignmentDeadlines: true,
@@ -15,20 +15,32 @@ export function Preferences() {
   });
   const [shareDataAnonymously, setShareDataAnonymously] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    const saved = localStorage.getItem('classCatcher_theme');
+    const saved = localStorage.getItem('scheduleSort_theme');
     return saved ? saved === 'dark' : true;
   });
   const [accentColor, setAccentColor] = useState(() => {
-    const saved = localStorage.getItem('classCatcher_accentColor');
+    const saved = localStorage.getItem('scheduleSort_accentColor');
     return saved || '#4ecdc4';
   });
+
+  // Calendar import state
+  const [selectedIcsFile, setSelectedIcsFile] = useState<File | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importResult, setImportResult] = useState<{success: boolean; message: string} | null>(null);
+  const [importedCalendars, setImportedCalendars] = useState<Array<{
+    id: string;
+    name: string;
+    fileName: string;
+    importDate: string;
+    eventCount: number;
+  }>>([]);
 
   // Wake up times and bedtimes arrays (7 days)
   const [wakeUpTimes, setWakeUpTimes] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
   const [bedtimes, setBedtimes] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
 
   // Array called studyTimes storing linked lists (of 2-value tuples) in each index
-  const [studyTimes, setStudyTimes] = useState<StudyTimeList[]>([
+  const [busyTimes, setBusyTimes] = useState<BusyTimeList[]>([
     { head: null, size: 0 }, // Monday
     { head: null, size: 0 }, // Tuesday
     { head: null, size: 0 }, // Wednesday
@@ -59,8 +71,8 @@ export function Preferences() {
     return colorMap[color] || color;
   };
 
-  const handleScheduleChange = useCallback((schedule: any[]) => {
-    setStudySchedule(schedule);
+  const handleScheduleChange = useCallback((schedule: TimeBlock[]) => {
+    setBusySchedule(schedule);
   }, []);
 
   // Comprehensive function to save all preferences
@@ -69,7 +81,7 @@ export function Preferences() {
     const currentPreferences = {
       wakeUpTimes,
       bedtimes,
-      studyTimes,
+      busyTimes,
       studyReminders: emailNotifications.studyReminders,
       assignmentDeadlines: emailNotifications.assignmentDeadlines,
       weeklyDigest: emailNotifications.weeklyDigest,
@@ -81,14 +93,14 @@ export function Preferences() {
     };
 
     // Save to localStorage
-    localStorage.setItem('classCatcher_preferences', JSON.stringify(currentPreferences));
+    localStorage.setItem('scheduleSort_preferences', JSON.stringify(currentPreferences));
     
     // Also save individual theme and accent color for immediate application
-    localStorage.setItem('classCatcher_theme', isDarkMode ? 'dark' : 'light');
-    localStorage.setItem('classCatcher_accentColor', accentColor);
+    localStorage.setItem('scheduleSort_theme', isDarkMode ? 'dark' : 'light');
+    localStorage.setItem('scheduleSort_accentColor', accentColor);
     
     console.log('Preferences saved:', currentPreferences);
-  }, [wakeUpTimes, bedtimes, studyTimes, emailNotifications, shareDataAnonymously, isDarkMode, accentColor]);
+  }, [wakeUpTimes, bedtimes, busyTimes, emailNotifications, shareDataAnonymously, isDarkMode, accentColor]);
 
   // Create a stable reference to saveAllPreferences using useRef
   const saveAllPreferencesRef = useRef(saveAllPreferences);
@@ -96,7 +108,7 @@ export function Preferences() {
 
   // Function to load all preferences
   const loadAllPreferences = useCallback(() => {
-    const savedPreferences = localStorage.getItem('classCatcher_preferences');
+    const savedPreferences = localStorage.getItem('scheduleSort_preferences');
     
     if (savedPreferences) {
       try {
@@ -110,9 +122,9 @@ export function Preferences() {
           setBedtimes(preferences.bedtimes);
         }
         
-        // Load study times
-        if (preferences.studyTimes) {
-          setStudyTimes(preferences.studyTimes);
+        // Load busy times
+        if (preferences.busyTimes) {
+          setBusyTimes(preferences.busyTimes);
         }
         
         // Load email notifications
@@ -149,10 +161,10 @@ export function Preferences() {
   // Load preferences on component mount
   useEffect(() => {
     loadAllPreferences();
-  }, []); // Only run once on mount
+  }, [loadAllPreferences]); // Include loadAllPreferences dependency
 
-  // Function to sync wake up times from WeekCalendar
-  const handleWakeUpTimesChange = useCallback((newWakeUpTimes: { [day: number]: any | null }) => {
+  // Function to sync wake up times from InputCalendar
+  const handleWakeUpTimesChange = useCallback((newWakeUpTimes: { [day: number]: TimeBlock | null }) => {
     const wakeUpArray = [0, 0, 0, 0, 0, 0, 0];
     Object.entries(newWakeUpTimes).forEach(([day, wakeTime]) => {
       if (wakeTime && wakeTime.startTime !== undefined) {
@@ -165,8 +177,8 @@ export function Preferences() {
     setTimeout(() => saveAllPreferencesRef.current(), 100);
   }, []); // Stable callback
 
-  // Function to sync bedtimes from WeekCalendar
-  const handleBedtimesChange = useCallback((newBedtimes: { [day: number]: any | null }) => {
+  // Function to sync bedtimes from InputCalendar
+  const handleBedtimesChange = useCallback((newBedtimes: { [day: number]: TimeBlock | null }) => {
     const bedtimesArray = [0, 0, 0, 0, 0, 0, 0];
     Object.entries(newBedtimes).forEach(([day, bedtime]) => {
       if (bedtime && bedtime.startTime !== undefined) {
@@ -179,10 +191,10 @@ export function Preferences() {
     setTimeout(() => saveAllPreferencesRef.current(), 100);
   }, []); // Stable callback
 
-  // Function to sync study times from WeekCalendar
-  const handleStudyTimesChange = useCallback((newStudyTimes: any[]) => {
+  // Function to sync study times from InputCalendar
+  const handleBusyTimesChange = useCallback((newBusyTimes: TimeBlock[]) => {
     // Convert study times array to StudyTimeList format
-    const studyTimesList: StudyTimeList[] = [
+    const busyTimesList: BusyTimeList[] = [
       { head: null, size: 0 }, // Monday
       { head: null, size: 0 }, // Tuesday
       { head: null, size: 0 }, // Wednesday
@@ -192,30 +204,30 @@ export function Preferences() {
       { head: null, size: 0 }  // Sunday
     ];
 
-    // Group study times by day and convert to linked list format
-    newStudyTimes.forEach((timeBlock) => {
+    // Group busy times by day and convert to linked list format
+    newBusyTimes.forEach((timeBlock) => {
       if (timeBlock.day !== undefined && timeBlock.startTime !== undefined && timeBlock.endTime !== undefined) {
         const day = timeBlock.day;
-        const node: StudyTimeNode = {
+        const node: BusyTimeNode = {
           data: [timeBlock.startTime, timeBlock.endTime],
           next: null
         };
         
-        if (studyTimesList[day].head === null) {
-          studyTimesList[day].head = node;
+        if (busyTimesList[day].head === null) {
+          busyTimesList[day].head = node;
         } else {
           // Add to end of linked list
-          let current = studyTimesList[day].head;
+          let current = busyTimesList[day].head;
           while (current.next !== null) {
             current = current.next;
           }
           current.next = node;
         }
-        studyTimesList[day].size++;
+        busyTimesList[day].size++;
       }
     });
 
-    setStudyTimes(studyTimesList);
+    setBusyTimes(busyTimesList);
     
     // Auto-save preferences using stable reference
     setTimeout(() => saveAllPreferencesRef.current(), 100);
@@ -243,7 +255,7 @@ export function Preferences() {
     setIsDarkMode(newTheme);
 
     // Save to localStorage
-    localStorage.setItem('classCatcher_theme', newTheme ? 'dark' : 'light');
+    localStorage.setItem('scheduleSort_theme', newTheme ? 'dark' : 'light');
 
     // Apply theme immediately
     if (newTheme) {
@@ -262,7 +274,7 @@ export function Preferences() {
     setAccentColor(color);
 
     // Save to localStorage
-    localStorage.setItem('classCatcher_accentColor', color);
+    localStorage.setItem('scheduleSort_accentColor', color);
 
     // Apply accent color immediately
     document.documentElement.style.setProperty('--accent-color', color);
@@ -277,6 +289,80 @@ export function Preferences() {
     
     // Auto-save preferences using stable reference
     setTimeout(() => saveAllPreferencesRef.current(), 100);
+  };
+
+  // Calendar import handlers
+  const handleIcsFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.name.endsWith('.ics')) {
+      setSelectedIcsFile(file);
+      setImportResult(null);
+    } else {
+      setImportResult({
+        success: false,
+        message: 'Please select a valid .ics file'
+      });
+    }
+  };
+
+  const handleRemoveIcsFile = () => {
+    setSelectedIcsFile(null);
+    setImportResult(null);
+  };
+
+  const handleRemoveImportedCalendar = (calendarId: string) => {
+    setImportedCalendars(prev => prev.filter(cal => cal.id !== calendarId));
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const handleImportIcs = async () => {
+    if (!selectedIcsFile) return;
+
+    setIsImporting(true);
+    setImportResult(null);
+
+    try {
+      // Simulate file processing
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Mock successful import
+      const newCalendar = {
+        id: Date.now().toString(),
+        name: selectedIcsFile.name.replace('.ics', ''),
+        fileName: selectedIcsFile.name,
+        importDate: new Date().toLocaleDateString(),
+        eventCount: Math.floor(Math.random() * 20) + 5 // Mock event count
+      };
+
+      setImportedCalendars(prev => [...prev, newCalendar]);
+      
+      setImportResult({
+        success: true,
+        message: `Successfully imported ${selectedIcsFile.name} with ${newCalendar.eventCount} events`
+      });
+
+      // Clear the file after successful import
+      setTimeout(() => {
+        setSelectedIcsFile(null);
+        setImportResult(null);
+      }, 3000);
+
+    } catch (error: unknown) {
+      console.error('Error importing calendar file:', error);
+      setImportResult({
+        success: false,
+        message: 'Failed to import calendar file. Please try again.'
+      });
+    } finally {
+      setIsImporting(false);
+    }
   };
 
   // Apply initial theme and accent color on component mount
@@ -312,21 +398,109 @@ export function Preferences() {
         <div className="preferences-container">
         <div className="preferences-header">
           <h1>Preferences & Settings</h1>
-          <p>Customize your Class Catcher experience to match your study preferences and academic needs.</p>
+          <p>Customize your Schedule Sort experience to match your study preferences and academic needs.</p>
         </div>
 
         <div className="preferences-content">
           <div className="preferences-grid">
+            {/* Calendar Import Section */}
+            <div className="preferences-section calendar-import">
+              <h2>Calendar Import</h2>
+              <div className="section-content">
+                <p>Import your existing class schedule from a .ics calendar file to automatically populate your study preferences.</p>
+                
+                <div className="calendar-import-group">
+                  <div className="file-upload-area">
+                    <div className="file-upload-content">
+                      <div className="upload-icon">📅</div>
+                      <h3>Upload .ics File</h3>
+                      <p>Drag and drop your .ics file here, or click to browse</p>
+                      <input
+                        type="file"
+                        id="ics-file-input"
+                        accept=".ics"
+                        onChange={handleIcsFileUpload}
+                        style={{ display: 'none' }}
+                      />
+                      <label htmlFor="ics-file-input" className="file-upload-button">
+                        Choose File
+                      </label>
+                    </div>
+                    {selectedIcsFile && (
+                      <div className="file-selected">
+                        <div className="file-info">
+                          <span className="file-icon">📄</span>
+                          <span className="file-name">{selectedIcsFile.name}</span>
+                          <span className="file-size">({formatFileSize(selectedIcsFile.size)})</span>
+                        </div>
+                        <button 
+                          className="remove-file-button"
+                          onClick={handleRemoveIcsFile}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Imported Calendars List */}
+                  {importedCalendars.length > 0 && (
+                    <div className="imported-calendars">
+                      <h4>Imported Calendars</h4>
+                      <div className="calendars-list">
+                        {importedCalendars.map((calendar) => (
+                          <div key={calendar.id} className="calendar-item">
+                            <div className="calendar-info">
+                              <div className="calendar-icon">📅</div>
+                              <div className="calendar-details">
+                                <h5>{calendar.name}</h5>
+                                <p className="calendar-meta">
+                                  {calendar.eventCount} events • Imported {calendar.importDate}
+                                </p>
+                                <p className="calendar-filename">{calendar.fileName}</p>
+                              </div>
+                            </div>
+                            <button 
+                              className="remove-calendar-button"
+                              onClick={() => handleRemoveImportedCalendar(calendar.id)}
+                              title="Remove calendar"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="import-actions">
+                    <button 
+                      className="import-button"
+                      onClick={handleImportIcs}
+                      disabled={!selectedIcsFile || isImporting}
+                    >
+                      {isImporting ? 'Importing...' : 'Import Calendar'}
+                    </button>
+                    {importResult && (
+                      <div className={`import-result ${importResult.success ? 'success' : 'error'}`}>
+                        {importResult.success ? '✅' : '❌'} {importResult.message}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Study Preferences Section */}
             <div className="preferences-section study-preferences">
               <h2>Study Preferences</h2>
               <div className="section-content">
-                <p>Customize your study schedule, learning style, and academic preferences to optimize your Class Catcher experience.</p>
-                <WeekCalendar 
+                <p>Customize your study schedule, learning style, and academic preferences to optimize your Schedule Sort experience.</p>
+                <InputCalendar 
                   onScheduleChange={handleScheduleChange}
                   onWakeUpTimesChange={handleWakeUpTimesChange}
                   onBedtimesChange={handleBedtimesChange}
-                  onStudyTimesChange={handleStudyTimesChange}
+                  onBusyTimesChange={handleBusyTimesChange}
                 />
               </div>
             </div>
@@ -405,7 +579,7 @@ export function Preferences() {
                     <div className="notification-item">
                       <div className="notification-info">
                         <h4>System Alerts</h4>
-                        <p>Important updates about Class Catcher features and maintenance</p>
+                        <p>Important updates about Schedule Sort features and maintenance</p>
                       </div>
                       <label className="toggle-switch">
                         <input
@@ -433,7 +607,7 @@ export function Preferences() {
                   <div className="privacy-item">
                     <div className="privacy-info">
                       <h4>Share Data Anonymously</h4>
-                      <p>Help improve Class Catcher for everyone by sharing anonymous usage data. This helps us understand how students study and optimize features for better academic success.</p>
+                      <p>Help improve Schedule Sort for everyone by sharing anonymous usage data. This helps us understand how students study and optimize features for better academic success.</p>
                       <div className="privacy-benefits">
                         <span className="benefit-tag">🔒 Completely Anonymous</span>
                         <span className="benefit-tag">📊 Helps Improve Features</span>
@@ -479,7 +653,7 @@ export function Preferences() {
             <div className="preferences-section">
               <h2>Appearance</h2>
               <div className="section-content">
-                <p>Customize the look and feel of your Class Catcher interface, themes, and visual preferences.</p>
+                <p>Customize the look and feel of your Schedule Sort interface, themes, and visual preferences.</p>
 
                 <div className="appearance-group">
                   <h3>Theme & Colors</h3>

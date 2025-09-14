@@ -1,22 +1,15 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import '../styles/PreferencesWeekCalendar.css';
+import type { TimeBlock } from '@shared/types/activities';
 
-interface TimeBlock {
-  id: string;
-  day: number; // 0 = Monday, 1 = Tuesday, etc.
-  startTime: number; // minutes from midnight
-  endTime: number; // minutes from midnight
-  type: 'study' | 'wake' | 'bedtime';
-}
-
-interface WeekCalendarProps {
+interface InputCalendarProps {
   onScheduleChange: (schedule: TimeBlock[]) => void;
   onWakeUpTimesChange?: (wakeUpTimes: { [day: number]: TimeBlock | null }) => void;
   onBedtimesChange?: (bedtimes: { [day: number]: TimeBlock | null }) => void;
-  onStudyTimesChange?: (studyTimes: TimeBlock[]) => void;
+  onBusyTimesChange?: (busyTimes: TimeBlock[]) => void;
 }
 
-export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimesChange, onStudyTimesChange }: WeekCalendarProps) {
+export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimesChange, onBusyTimesChange }: InputCalendarProps) {
   const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([]);
   const [wakeUpTimes, setWakeUpTimes] = useState<{ [day: number]: TimeBlock | null }>({});
   const [bedtimes, setBedtimes] = useState<{ [day: number]: TimeBlock | null }>({});
@@ -63,29 +56,29 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
     if (savedBedtimes) {
       setBedtimes(JSON.parse(savedBedtimes));
     }
-  }, []); // Only run once on mount, callbacks are stable
+  }, [onScheduleChange]); // Add onScheduleChange dependency
 
   // Notify parent component when wake up times change
   useEffect(() => {
     if (onWakeUpTimesChange) {
       onWakeUpTimesChange(wakeUpTimes);
     }
-  }, [wakeUpTimes]); // Remove callback from dependencies to prevent infinite re-renders
+  }, [wakeUpTimes, onWakeUpTimesChange]);
 
   // Notify parent component when bedtimes change
   useEffect(() => {
     if (onBedtimesChange) {
       onBedtimesChange(bedtimes);
     }
-  }, [bedtimes]); // Remove callback from dependencies to prevent infinite re-renders
+  }, [bedtimes, onBedtimesChange]);
 
   // Notify parent component when study times change
   useEffect(() => {
-    if (onStudyTimesChange) {
-      const studyTimes = timeBlocks.filter(block => block.type === 'study');
-      onStudyTimesChange(studyTimes);
+    if (onBusyTimesChange) {
+      const busyTimes = timeBlocks.filter(block => block.type === 'study');
+      onBusyTimesChange(busyTimes);
     }
-  }, [timeBlocks]); // Remove callback from dependencies to prevent infinite re-renders
+  }, [timeBlocks, onBusyTimesChange]);
 
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const timeSlots = Array.from({ length: 48 }, (_, i) => i); // 48 slots for 30-minute intervals
@@ -136,7 +129,7 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
     setSelectedButton(selectedButton === buttonType ? null : buttonType);
     setErrorMessage(''); // Clear any existing error when switching buttons
     
-    // Cancel study time creation if switching away from study
+    // Cancel busy time creation if switching away from study
     if (isCreating && selectedButton === 'study' && buttonType !== 'study') {
       setIsCreating(false);
       setCreateStart(null);
@@ -297,11 +290,11 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
         
         // Only create if it's the same day
         if (createStart.day !== day) {
-          setErrorMessage('Study time blocks must be on the same day');
+          setErrorMessage('Busy time blocks must be on the same day');
           return;
         }
         
-        // Validate study time placement
+        // Validate busy time placement
         const validationError = validateStudyTime(day, startTime, endTime);
         if (validationError) {
           setErrorMessage(validationError);
@@ -333,7 +326,7 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    // Only handle study time creation preview, not block creation
+    // Only handle busy time creation preview, not block creation
     if (!isCreating || !createStart || !calendarRef.current || selectedButton !== 'study') return;
 
     const rect = calendarRef.current.getBoundingClientRect();
@@ -396,16 +389,16 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
     }
   };
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     // Handle resize completion
     if (resizing) {
       setResizing(null);
       setDragStart(null);
     }
     
-    // Note: Study time creation is handled in handleMouseDown, not here
+    // Note: Busy time creation is handled in handleMouseDown, not here
     // This function only handles cleanup for other operations
-  };
+  }, [resizing]);
 
   const handleBlockMouseDown = (e: React.MouseEvent, blockId: string) => {
     if (!selectedButton) return;
@@ -447,13 +440,13 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
     onScheduleChange(updatedBlocks);
   };
 
-  const handleBlockMouseUp = () => {
+  const handleBlockMouseUp = useCallback(() => {
     if (dragging) {
       onScheduleChange(timeBlocks);
     }
     setDragging(null);
     setDragStart(null);
-  };
+  }, [dragging, timeBlocks, onScheduleChange]);
 
   const deleteBlock = (blockId: string) => {
     const updatedBlocks = timeBlocks.filter(block => block.id !== blockId);
@@ -520,21 +513,21 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
     const bedtime = bedtimes[day];
     
     if (!wakeUp) {
-      return `Please set a wake up time for ${days[day]} before creating study blocks`;
+      return `Please set a wake up time for ${days[day]} before creating busy time blocks`;
     }
     
     if (!bedtime) {
-      return `Please set a bedtime for ${days[day]} before creating study blocks`;
+      return `Please set a bedtime for ${days[day]} before creating busy time blocks`;
     }
     
-    // Check if study time starts before wake up time
+    // Check if busy time starts before wake up time
     if (!isTimeBefore(wakeUp.startTime, startTime)) {
-      return `Study time cannot start before wake up time (${formatTimeWithDay(wakeUp.startTime)}) on ${days[day]}`;
+      return `Busy time cannot start before wake up time (${formatTimeWithDay(wakeUp.startTime)}) on ${days[day]}`;
     }
     
-    // Check if study time ends after bedtime
+    // Check if busy time ends after bedtime
     if (!isTimeBefore(endTime, bedtime.startTime)) {
-      return `Study time cannot end after bedtime (${formatTimeWithDay(bedtime.startTime, true)}) on ${days[day]}`;
+      return `Busy time cannot end after bedtime (${formatTimeWithDay(bedtime.startTime, true)}) on ${days[day]}`;
     }
     
     return null;
@@ -549,9 +542,9 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
 
     document.addEventListener('mouseup', handleGlobalMouseUp);
     return () => document.removeEventListener('mouseup', handleGlobalMouseUp);
-  }, [isCreating, dragging, resizing]);
+  }, [isCreating, dragging, resizing, handleMouseUp, handleBlockMouseUp]);
 
-  // Escape key handler to cancel study time creation
+  // Escape key handler to cancel busy time creation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isCreating && selectedButton === 'study') {
@@ -571,8 +564,8 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
       <div className="preferences-calendar-header">
         <div className="preferences-header-content">
           <div className="preferences-header-text">
-            <h3>Weekly Study Schedule</h3>
-            <p>Click on the buttons below to set your wake up times, bedtimes, and valid study times</p>
+            <h3>Weekly Schedule</h3>
+            <p>Click on the buttons below to set your wake up times, bedtimes, and busy times</p>
           </div>
           <button 
             className="preferences-minimize-button"
@@ -604,7 +597,7 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
               className={`preferences-schedule-button ${selectedButton === 'study' ? 'selected' : ''}`}
               onClick={() => handleButtonSelect('study')}
             >
-              Valid Study Times
+              Busy Times
             </button>
           </div>
 
@@ -763,7 +756,7 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
             );
           })}
 
-          {/* Study time creation preview */}
+          {/* Busy time creation preview */}
           {isCreating && createStart && selectedButton === 'study' && (
             <div
               className="preferences-time-block study preview"
