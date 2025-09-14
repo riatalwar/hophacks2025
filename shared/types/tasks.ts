@@ -18,6 +18,4 @@ export interface TodoItem {
   estimatedHours?: number;
   /** Status of the task */
   completed: boolean;
-  /** Activity ID */
-  activityId?: string;
 }
