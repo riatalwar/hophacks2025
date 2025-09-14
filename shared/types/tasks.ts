@@ -6,8 +6,8 @@ export interface TodoItem {
   id: string;
   /** Title or name of the task */
   title: string;
-  /** Detailed description of what the task involves */
-  description: string;
+  /** Notes the user can add about the task */
+  notes: string;
   /** Due date in YYYY-MM-DD format, or 'TBD' if not specified */
   dueDate: string;
   /** Category of the task */
