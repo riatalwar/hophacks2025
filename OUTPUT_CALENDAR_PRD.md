@@ -5,10 +5,9 @@
 ### Broad Vision
 The Output Calendar is an intelligent study schedule generator that automatically creates optimized study sessions for users based on their tasks, deadlines, and available time slots. Unlike traditional calendars that simply display events, this system acts as a proactive study planner that breaks down large assignments, prioritizes work based on urgency and workload distribution, and generates a personalized weekly/daily schedule that maximizes productivity while respecting the user's availability constraints.
 
-The system transforms raw input data (tasks with due dates and time estimates, plus user availability) into a structured, time-blocked study schedule that can be viewed in a web interface and eventually exported as industry-standard .ics calendar files for integration with external calendar applications.
+The system transforms raw input data (tasks with due dates and time estimates, plus user availability) into a structured, time-blocked study schedule that can be viewed in a web interface and exported as industry-standard .ics calendar files for integration with external calendar applications.
 
 ### Future Scope (Post-MVP)
-- **ICS Calendar Export**: Generate .ics files that users can subscribe to in Google Calendar, Outlook, Apple Calendar, etc.
 - **Manual Schedule Editing**: Drag-and-drop interface for users to manually adjust generated study sessions
 - **Advanced Break Optimization**: Intelligent break scheduling based on cognitive load, task switching costs, and personal productivity patterns
 - **Cross-Platform Synchronization**: Real-time sync between web interface and external calendar applications
@@ -243,9 +242,54 @@ basePriority = averageHoursPerDay
 3. Longer available time slots (to minimize fragmentation)
 4. Time slots that create even distribution across the week
 
-### 4. User Interface Specifications
+### 4. ICS Calendar Export Specifications
 
-#### 4.1 Calendar Component Requirements
+#### 4.1 ICS File Generation
+
+**Endpoint**: `GET /calendar/:userId`
+- Generates and serves .ics calendar file for user's generated schedule
+- Returns `text/calendar` content type
+- Includes all scheduled study sessions as calendar events
+- Supports subscription in Google Calendar, Outlook, Apple Calendar, etc.
+
+**ICS Event Properties**:
+```typescript
+interface ICSEvent {
+  uid: string; // Unique identifier for the event
+  summary: string; // Event title (e.g., "Study for Chemistry Exam")
+  description?: string; // Event description from TodoItem notes
+  location?: string; // Always null for MVP
+  dtstart: Date; // Event start time
+  dtend: Date; // Event end time
+  dtstamp: Date; // Creation/modification timestamp
+  categories?: string; // From TodoItem activityId
+  status: 'CONFIRMED' | 'CANCELLED';
+  lastModified: Date; // Last modification time
+}
+```
+
+**ICS File Structure**:
+- Calendar header with PRODID, VERSION, CALSCALE
+- Timezone definitions (UTC)
+- Individual VEVENT blocks for each ScheduledStudySession
+- Calendar footer with END:VCALENDAR
+
+#### 4.2 Calendar Integration Features
+
+**Subscription URL**: `https://yourdomain.com/calendar/:userId`
+- Users can subscribe to this URL in external calendar applications
+- Automatic updates when schedule is regenerated
+- Real-time sync with generated schedule changes
+
+**Event Details**:
+- Study session titles include chunk information (e.g., "Math Study (Part 2 of 3)")
+- Descriptions include task notes and priority information
+- Categories map to user's activity names
+- All times in user's local timezone
+
+### 5. User Interface Specifications
+
+#### 5.1 Calendar Component Requirements
 
 **View Options:**
 - Weekly View: Shows 7-day grid with time slots and scheduled sessions
@@ -253,12 +297,13 @@ basePriority = averageHoursPerDay
 - View toggle: Prominent switch/tabs at top of component
 
 **Visual Design Requirements:**
-- Replace existing hardcoded calendar widget in Dashboard.tsx (lines 188-207)
+- Replace existing hardcoded calendar widget in Dashboard.tsx (lines 443-462)
 - Maintain consistent styling with existing dashboard sections
 - Use existing CSS class structure: `.dashboard-section`, `.section-header`, etc.
 - Color coding for different task categories/priorities
 - Clear time labels and session durations
 - Responsive design for different screen sizes
+- **Export Button**: Prominent "Export to Calendar" button for .ics download
 
 **Loading States:**
 - Display "Generating schedule..." message during calculation
@@ -311,6 +356,8 @@ interface OutputCalendarState {
 - `formatTimeSlot()`: Convert time data to display format
 - `groupSessionsByDay()`: Organize sessions for rendering
 - `calculateAvailableTimeSlots()`: Process BusyTimeList into available slots
+- `exportToCalendar()`: Download .ics file from `/calendar/:userId` endpoint
+- `getCalendarSubscriptionUrl()`: Return subscription URL for external calendars
 
 #### 5.2 Backend Service Requirements (*Requires Database Integration Research*)
 
@@ -323,6 +370,7 @@ interface OutputCalendarState {
 **API Endpoints Needed:**
 - `POST /api/schedule/:userId/generate`: Trigger schedule recalculation (NEW - NEEDS IMPLEMENTATION)
 - `GET /api/schedule/:userId`: Retrieve current generated schedule (NEW - NEEDS IMPLEMENTATION)
+- `GET /calendar/:userId`: Generate and serve .ics calendar file (NEW - NEEDS IMPLEMENTATION)
 
 **Database Schema Considerations:**
 - NEW: Create `generatedSchedules` collection for GeneratedSchedule objects
@@ -440,6 +488,8 @@ interface OutputCalendarState {
 - [ ] Displays schedules in both weekly and daily views
 - [ ] Automatically recalculates when tasks are modified
 - [ ] Handles edge cases gracefully without crashes
+- [ ] Generates valid .ics calendar files for external calendar integration
+- [ ] Provides calendar subscription URL for real-time updates
 
 **Performance Requirements:**
 - [ ] Schedule generation completes within 3 seconds for typical user data
@@ -479,6 +529,7 @@ interface OutputCalendarState {
 - **NEW**: Create `generatedSchedules` collection for storing generated schedules
 - **NEW**: Implement `POST /api/schedule/:userId/generate` endpoint
 - **NEW**: Implement `GET /api/schedule/:userId` endpoint  
+- **NEW**: Implement `GET /calendar/:userId` endpoint for .ics file generation
 - **CRITICAL**: Build TimeBlock[] → BusyTimeList[] conversion logic
 - Set up automatic recalculation triggers
 
@@ -487,6 +538,8 @@ interface OutputCalendarState {
 - Implement weekly/daily view switching
 - Create loading and error state handling
 - Replace hardcoded calendar in Dashboard.tsx lines 443-462
+- Add "Export to Calendar" button for .ics download
+- Add calendar subscription URL display for external calendar integration
 - **EXISTING**: Dashboard already imports todos/activities via existing APIs
 
 ### Phase 4: Testing and Polish
