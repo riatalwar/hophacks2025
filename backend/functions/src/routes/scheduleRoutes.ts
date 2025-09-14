@@ -106,4 +106,77 @@ router.get("/api/schedule/:userId", async (req, res) => {
   }
 });
 
+/**
+ * GET /calendar/:userId
+ * Serves the user's most recent generated schedule as a .ics calendar file.
+ */
+router.get("/calendar/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    // Query for the most recent generated schedule for the user
+    const snapshot = await db
+      .collection("generatedSchedules")
+      .where("userId", "==", userId)
+      .orderBy("createdAt", "desc")
+      .limit(1)
+      .get();
+
+    if (snapshot.empty) {
+      return res.status(404).json({ message: "No generated schedule found for this user." });
+    }
+
+    const scheduleDoc = snapshot.docs[0];
+    const data = scheduleDoc.data();
+    const schedule = data.generatedSchedule;
+    const sessions = schedule.sessions || [];
+
+    // Construct ICS content
+    let icsContent = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//HopHacks//Schedule//EN"
+    ];
+
+    sessions.forEach((session, idx) => {
+      // Required fields: uid, summary, description, dtstart, dtend
+      // Example mapping (customize if your session shape demands):
+      // session = { id, name, description, start, end }
+      const uid = session.id || `session-${idx}-${userId}`;
+      const summary = session.name || "";
+      const description = session.description || "";
+      // Datetime conversion for ICS (expects: YYYYMMDDTHHmmssZ)
+      // Assume session.start and session.end are ISO strings
+      const dtstart = session.start ? new Date(session.start).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z").replace("T", "T") : "";
+      const dtend = session.end ? new Date(session.end).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z").replace("T", "T") : "";
+
+      icsContent.push(
+        "BEGIN:VEVENT",
+        `UID:${uid}`,
+        `SUMMARY:${summary}`,
+        `DESCRIPTION:${description}`,
+        `DTSTART:${dtstart}`,
+        `DTEND:${dtend}`,
+        "END:VEVENT"
+      );
+    });
+
+    icsContent.push("END:VCALENDAR");
+    const icsString = icsContent.join("\r\n");
+
+    res.setHeader("Content-Type", "text/calendar; charset=utf-8");
+    res.setHeader("Content-Disposition", 'attachment; filename="schedule.ics"');
+    res.send(icsString);
+  } catch (error) {
+    console.error("Error generating calendar ICS:", error);
+    return res.status(500).json({
+      message: "Failed to generate calendar ICS file",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+});
 export default router;
