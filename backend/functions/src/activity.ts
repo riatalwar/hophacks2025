@@ -155,6 +155,7 @@ router.post("/process-syllabus", async (req, res) => {
           estimatedHours: task.estimatedHours,
           completed: false,
           activityId,
+          userId,
         };
 
         const docRef = await todosCollection.add(todoData);
