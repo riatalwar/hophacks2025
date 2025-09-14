@@ -58,27 +58,6 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
     }
   }, [onScheduleChange]); // Add onScheduleChange dependency
 
-  // Notify parent component when wake up times change
-  useEffect(() => {
-    if (onWakeUpTimesChange) {
-      onWakeUpTimesChange(wakeUpTimes);
-    }
-  }, [wakeUpTimes, onWakeUpTimesChange]);
-
-  // Notify parent component when bedtimes change
-  useEffect(() => {
-    if (onBedtimesChange) {
-      onBedtimesChange(bedtimes);
-    }
-  }, [bedtimes, onBedtimesChange]);
-
-  // Notify parent component when study times change
-  useEffect(() => {
-    if (onBusyTimesChange) {
-      const busyTimes = timeBlocks.filter(block => block.type === 'study');
-      onBusyTimesChange(busyTimes);
-    }
-  }, [timeBlocks, onBusyTimesChange]);
 
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const timeSlots = Array.from({ length: 48 }, (_, i) => i); // 48 slots for 30-minute intervals
@@ -233,6 +212,11 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
       setWakeUpTimes(updatedWakeUpTimes);
       saveWakeUpTimes(updatedWakeUpTimes);
       setErrorMessage(''); // Clear error on successful placement
+      
+      // Notify parent component
+      if (onWakeUpTimesChange) {
+        onWakeUpTimesChange(updatedWakeUpTimes);
+      }
     } else if (selectedButton === 'bedtime') {
       // Convert slot to minutes (30-minute intervals)
       const startTime = slot * 30; // Convert slot to minutes
@@ -260,6 +244,11 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
       setBedtimes(updatedBedtimes);
       saveBedtimes(updatedBedtimes);
       setErrorMessage(''); // Clear error on successful placement
+      
+      // Notify parent component
+      if (onBedtimesChange) {
+        onBedtimesChange(updatedBedtimes);
+      }
     } else if (selectedButton === 'study') {
       // Two-click study time creation pattern
       if (!isCreating || !createStart) {
@@ -313,6 +302,12 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
         setTimeBlocks(updatedBlocks);
         saveTimeBlocks(updatedBlocks);
         onScheduleChange(updatedBlocks);
+        
+        // Notify parent component about busy times
+        if (onBusyTimesChange) {
+          const busyTimes = updatedBlocks.filter(block => block.type === 'study');
+          onBusyTimesChange(busyTimes);
+        }
         
         // Reset creation state
         setIsCreating(false);
@@ -453,6 +448,12 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
     setTimeBlocks(updatedBlocks);
     saveTimeBlocks(updatedBlocks);
     onScheduleChange(updatedBlocks);
+    
+    // Notify parent component about busy times
+    if (onBusyTimesChange) {
+      const busyTimes = updatedBlocks.filter(block => block.type === 'study');
+      onBusyTimesChange(busyTimes);
+    }
   };
 
   const deleteWakeTime = (day: number) => {
@@ -462,6 +463,11 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
     };
     setWakeUpTimes(updatedWakeUpTimes);
     saveWakeUpTimes(updatedWakeUpTimes);
+    
+    // Notify parent component
+    if (onWakeUpTimesChange) {
+      onWakeUpTimesChange(updatedWakeUpTimes);
+    }
   };
 
   const deleteBedtime = (day: number) => {
@@ -471,6 +477,11 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
     };
     setBedtimes(updatedBedtimes);
     saveBedtimes(updatedBedtimes);
+    
+    // Notify parent component
+    if (onBedtimesChange) {
+      onBedtimesChange(updatedBedtimes);
+    }
   };
 
   // Helper function to check if time A is before time B in a 24-hour cycle
