@@ -2,14 +2,14 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import '../styles/PreferencesWeekCalendar.css';
 import type { TimeBlock } from '@shared/types/activities';
 
-interface WeekCalendarProps {
+interface InputCalendarProps {
   onScheduleChange: (schedule: TimeBlock[]) => void;
   onWakeUpTimesChange?: (wakeUpTimes: { [day: number]: TimeBlock | null }) => void;
   onBedtimesChange?: (bedtimes: { [day: number]: TimeBlock | null }) => void;
   onBusyTimesChange?: (busyTimes: TimeBlock[]) => void;
 }
 
-export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimesChange, onBusyTimesChange }: WeekCalendarProps) {
+export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimesChange, onBusyTimesChange }: InputCalendarProps) {
   const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([]);
   const [wakeUpTimes, setWakeUpTimes] = useState<{ [day: number]: TimeBlock | null }>({});
   const [bedtimes, setBedtimes] = useState<{ [day: number]: TimeBlock | null }>({});

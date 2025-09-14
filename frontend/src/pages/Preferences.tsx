@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Navigation } from '../components/Navigation';
-import { WeekCalendar } from '../components/WeekCalendar';
+import { InputCalendar } from '../components/InputCalendar';
 import type { BusyTimeList, BusyTimeNode, Preferences, TimeBlock } from '@shared/types/activities';
 import '../styles/Preferences.css';
 
@@ -163,7 +163,7 @@ export function Preferences() {
     loadAllPreferences();
   }, [loadAllPreferences]); // Include loadAllPreferences dependency
 
-  // Function to sync wake up times from WeekCalendar
+  // Function to sync wake up times from InputCalendar
   const handleWakeUpTimesChange = useCallback((newWakeUpTimes: { [day: number]: TimeBlock | null }) => {
     const wakeUpArray = [0, 0, 0, 0, 0, 0, 0];
     Object.entries(newWakeUpTimes).forEach(([day, wakeTime]) => {
@@ -177,7 +177,7 @@ export function Preferences() {
     setTimeout(() => saveAllPreferencesRef.current(), 100);
   }, []); // Stable callback
 
-  // Function to sync bedtimes from WeekCalendar
+  // Function to sync bedtimes from InputCalendar
   const handleBedtimesChange = useCallback((newBedtimes: { [day: number]: TimeBlock | null }) => {
     const bedtimesArray = [0, 0, 0, 0, 0, 0, 0];
     Object.entries(newBedtimes).forEach(([day, bedtime]) => {
@@ -191,7 +191,7 @@ export function Preferences() {
     setTimeout(() => saveAllPreferencesRef.current(), 100);
   }, []); // Stable callback
 
-  // Function to sync study times from WeekCalendar
+  // Function to sync study times from InputCalendar
   const handleBusyTimesChange = useCallback((newBusyTimes: TimeBlock[]) => {
     // Convert study times array to StudyTimeList format
     const busyTimesList: BusyTimeList[] = [
@@ -496,7 +496,7 @@ export function Preferences() {
               <h2>Study Preferences</h2>
               <div className="section-content">
                 <p>Customize your study schedule, learning style, and academic preferences to optimize your Schedule Sort experience.</p>
-                <WeekCalendar 
+                <InputCalendar 
                   onScheduleChange={handleScheduleChange}
                   onWakeUpTimesChange={handleWakeUpTimesChange}
                   onBedtimesChange={handleBedtimesChange}
