@@ -198,6 +198,42 @@ const OutputCalendar: React.FC<OutputCalendarProps> = ({
             {DAYS.map((day, idx) => (
               <button
                 key={day}
+            ))}
+          </div>
+        )}
+      </div>
+      {/* --- NEW EXPORT + SUBSCRIPTION UI --- */}
+      {schedule && (
+        <div className="calendar-subscription-area">
+          <a
+            className="calendar-export-btn"
+            href={`/calendar/${userId}`}
+            download
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Export to Calendar
+          </a>
+          <div className="calendar-url-row">
+            <input
+              className="calendar-url-input"
+              type="text"
+              readOnly
+              value={`https://yourdomain.com/calendar/${userId}`}
+              tabIndex={-1}
+            />
+            <button
+              className="calendar-copy-btn"
+              type="button"
+              onClick={() =>
+                navigator.clipboard.writeText(`https://yourdomain.com/calendar/${userId}`)
+              }
+            >
+              Copy
+            </button>
+          </div>
+        </div>
+      )}
                 className={selectedDay === idx ? 'day-btn active' : 'day-btn'}
                 onClick={() => setSelectedDay(idx)}
               >
