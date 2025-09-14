@@ -3,8 +3,6 @@ import '../styles/OutputCalendar.css';
 
 export interface OutputCalendarProps {
   userId: string;
-  viewMode: string;
-  onViewModeChange: (mode: string) => void;
 }
 
 // Days and time slots for grid rendering
@@ -22,10 +20,8 @@ type ScheduledStudySession = {
   notes?: string;
 };
 
-const OutputCalendar: React.FC<OutputCalendarProps> = ({
+export const OutputCalendar: React.FC<OutputCalendarProps> = ({
   userId,
-  viewMode,
-  onViewModeChange,
 }) => {
   // View state: weekly | daily
   const [viewModeState, setViewModeState] = useState<'weekly' | 'daily'>('weekly');
@@ -198,6 +194,11 @@ const OutputCalendar: React.FC<OutputCalendarProps> = ({
             {DAYS.map((day, idx) => (
               <button
                 key={day}
+                className={selectedDay === idx ? 'day-btn active' : 'day-btn'}
+                onClick={() => setSelectedDay(idx)}
+              >
+                {day}
+              </button>
             ))}
           </div>
         )}
@@ -234,15 +235,6 @@ const OutputCalendar: React.FC<OutputCalendarProps> = ({
           </div>
         </div>
       )}
-                className={selectedDay === idx ? 'day-btn active' : 'day-btn'}
-                onClick={() => setSelectedDay(idx)}
-              >
-                {day}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
       <h2>Output Calendar</h2>
       {isLoading && <div>Generating schedule...</div>}
       {error && <div className="error-message">{error}</div>}
@@ -258,17 +250,5 @@ const OutputCalendar: React.FC<OutputCalendarProps> = ({
   );
 };
 
-  return (
-    <div className="output-calendar">
-      <h2>Output Calendar</h2>
-      {isLoading && <div>Generating schedule...</div>}
-      {error && <div className="error-message">{error}</div>}
-      {!isLoading && !error && !schedule && (
-        <div>No schedule generated.</div>
-      )}
-      {!isLoading && !error && schedule && schedule.sessions && renderWeeklyGrid()}
-    </div>
-  );
-};
 
 export default OutputCalendar;

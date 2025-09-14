@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Navigation } from '../components/Navigation';
-import { OutputCalendar } from '../components/OutputCalendar';
+import OutputCalendar from '../components/OutputCalendar';
 import type { TodoItem } from '@shared/types/tasks';
 import type { Activity } from '@shared/types/activities';
 import '../styles/Dashboard.css';
@@ -160,7 +160,7 @@ export function Dashboard() {
         activityId: editTodo.activityId.trim() || undefined,
         priority: editTodo.priority,
         estimatedHours: editTodo.estimatedHours ? parseInt(editTodo.estimatedHours) : undefined,
-        userId: currentUser?.uid
+        userId: currentUser?.uid || ''
       };
       try {
         await axios.put(`${import.meta.env.VITE_API_BASE_URL}/todos/${editingId}`, updatedData);
@@ -446,7 +446,7 @@ export function Dashboard() {
           <div className="section-header">
             <h2>📅 Weekly Schedule</h2>
           </div>
-          <OutputCalendar userId={currentUser?.uid} />
+          <OutputCalendar userId={currentUser?.uid || ''} />
         </div>
 
         {/* Analytics Section */}

@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { db } from "../config/firebase";
-import { TodoItem } from "../../../shared/types/tasks";
-import { TimeBlock } from "../../../frontend/src/types/scheduling";
-import { generateSchedule } from "../../../frontend/src/utils/schedulingUtils";
+import { TodoItem } from "@shared/types/tasks";
+import { TimeBlock } from "@shared/types/scheduling";
+import { generateSchedule } from "@shared/utils/schedulingUtils";
 
 const router = Router();
 
@@ -142,7 +142,7 @@ router.get("/calendar/:userId", async (req, res) => {
       "PRODID:-//HopHacks//Schedule//EN"
     ];
 
-    sessions.forEach((session, idx) => {
+    sessions.forEach((session: any, idx: number) => {
       // Required fields: uid, summary, description, dtstart, dtend
       // Example mapping (customize if your session shape demands):
       // session = { id, name, description, start, end }
@@ -170,7 +170,7 @@ router.get("/calendar/:userId", async (req, res) => {
 
     res.setHeader("Content-Type", "text/calendar; charset=utf-8");
     res.setHeader("Content-Disposition", 'attachment; filename="schedule.ics"');
-    res.send(icsString);
+    return res.send(icsString);
   } catch (error) {
     console.error("Error generating calendar ICS:", error);
     return res.status(500).json({

@@ -4,7 +4,7 @@ export interface TimeBlock {
   day: number; // 0-6 for Mon-Sun  
   startTime: number; // minutes from midnight
   endTime: number; // minutes from midnight
- type: 'busy' | 'wake' | 'bedtime';
+  type: 'busy' | 'wake' | 'bedtime';
   notes?: string;
 }
 
@@ -20,7 +20,7 @@ export interface BusyTimeList {
 }
 
 // ScheduledStudySession interface from PRD section 2.2
-interface ScheduledStudySession {
+export interface ScheduledStudySession {
   id: string;
   taskId: string; // Reference to source TodoItem
   title: string; // e.g., "Study for Chemistry Exam"

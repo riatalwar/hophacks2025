@@ -1,4 +1,4 @@
-import type { TodoItem } from '@shared/types/tasks';
+import type { TodoItem } from '../types/tasks';
 import type { TimeBlock, BusyTimeList, BusyTimeNode } from '../types/scheduling';
 
 export interface TaskChunk {
@@ -193,6 +193,7 @@ export function chunkTask(task: TodoItem): TaskChunk[] {
   
   return chunks;
 }
+
 export function prepareSortedTaskChunks(tasks: TodoItem[]): TaskChunk[] {
   // Create a map to store the calculated priority of each parent task
   const taskPriorityMap = new Map<string, number>();
@@ -225,9 +226,9 @@ export function prepareSortedTaskChunks(tasks: TodoItem[]): TaskChunk[] {
     const taskB = tasks.find(t => t.id === b.taskId);
     
     // Secondary sort: task priority field (high > medium > low)
-    const priorityOrder: Record<string, number> = { high: 3, medium: 2, low: 1 };
-    const taskAPriorityField = taskA ? priorityOrder[taskA.priority] || 0 : 0;
-    const taskBPriorityField = taskB ? priorityOrder[taskB.priority] || 0 : 0;
+    const priorityOrder = { high: 3, medium: 2, low: 1 };
+    const taskAPriorityField = taskA ? priorityOrder[taskA.priority] : 0;
+    const taskBPriorityField = taskB ? priorityOrder[taskB.priority] : 0;
     
     if (taskAPriorityField !== taskBPriorityField) {
       return taskBPriorityField - taskAPriorityField;
@@ -252,6 +253,7 @@ export function prepareSortedTaskChunks(tasks: TodoItem[]): TaskChunk[] {
     return a.taskId.localeCompare(b.taskId);
   });
 }
+
 /**
  * Generates a weekly schedule based on tasks and user busy time.
  * Allocates chunked tasks to available time slots, prioritizing urgent and high priority tasks.
@@ -344,9 +346,9 @@ export function generateSchedule(
     const taskB = tasksWithBoostedPriority.find(t => t.id === b.taskId);
 
     // Secondary sort: task priority field (high > medium > low)
-    const priorityOrder: Record<string, number> = { high: 3, medium: 2, low: 1 };
-    const taskAPriorityField = taskA ? priorityOrder[taskA.priority] || 0 : 0;
-    const taskBPriorityField = taskB ? priorityOrder[taskB.priority] || 0 : 0;
+    const priorityOrder = { high: 3, medium: 2, low: 1 };
+    const taskAPriorityField = taskA ? priorityOrder[taskA.priority] : 0;
+    const taskBPriorityField = taskB ? priorityOrder[taskB.priority] : 0;
 
     if (taskAPriorityField !== taskBPriorityField) {
       return taskBPriorityField - taskAPriorityField;
