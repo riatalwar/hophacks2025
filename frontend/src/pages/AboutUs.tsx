@@ -74,7 +74,7 @@ export function AboutUs() {
             <p>
               As students ourselves, we understand the challenges of managing multiple courses, 
               keeping track of assignments, and staying organized throughout the semester. 
-              Class Catcher was born from our own struggles and our desire to make academic 
+              Schedule Sort was born from our own struggles and our desire to make academic 
               life more manageable for students everywhere.
             </p>
             <p>
@@ -88,7 +88,7 @@ export function AboutUs() {
         {/* Call to Action */}
         <div className="about-cta">
           <h2>Ready to Transform Your Study Experience?</h2>
-          <p>Join thousands of students who are already using Class Catcher to stay organized and succeed.</p>
+          <p>Join thousands of students who are already using Schedule Sort to stay organized and succeed.</p>
           <div className="cta-buttons">
             <Link to="/classes" className="primary-button">Get Started Now</Link>
             <Link to="/" className="secondary-button">Learn More Features</Link>

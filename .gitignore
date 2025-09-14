@@ -24,4 +24,7 @@ dist-ssr
 *.sw?
 .vite
 
+# Generated PDF worker file
+frontend/public/pdf.worker.min.js
+
 .env

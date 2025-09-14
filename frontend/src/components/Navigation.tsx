@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
 // Navigation component props interface
@@ -16,6 +16,9 @@ export function Navigation({
 }: NavigationProps) {
   // React Router hook for navigation
   const navigate = useNavigate();
+  
+  // React Router hook to get current location
+  const location = useLocation();
   
   // Authentication hook to get current user and sign out function
   const { currentUser, signOut } = useAuth();
@@ -86,18 +89,27 @@ export function Navigation({
    * @param children - The link text/content
    * @param className - CSS class for styling
    * @param onClick - Optional custom click handler
+   * @param isDashboard - Whether this is the Dashboard link (special styling)
    */
-  const NavLink = ({ 
-    to, 
-    children, 
-    className = '', 
-    onClick 
-  }: { 
-    to: string; 
-    children: React.ReactNode; 
-    className?: string; 
+  const NavLink = ({
+    to,
+    children,
+    className = '',
+    onClick,
+    isDashboard = false
+  }: {
+    to: string;
+    children: React.ReactNode;
+    className?: string;
     onClick?: () => void;
+    isDashboard?: boolean;
   }) => {
+    // Determine if this link is the active one
+    const isActive = location.pathname === to;
+    
+    // Build the class name with conditional cta-button for active link
+    const linkClassName = `${className} ${isActive ? 'cta-button' : ''} ${isDashboard ? 'dashboard-link' : ''}`.trim();
+
     const handleClick = (e: React.MouseEvent) => {
       // Always prevent default to ensure our handler runs
       e.preventDefault();
@@ -113,9 +125,9 @@ export function Navigation({
     };
 
     return (
-      <Link 
-        to={to} 
-        className={className}
+      <Link
+        to={to}
+        className={linkClassName}
         onClick={handleClick}
       >
         {children}
@@ -158,7 +170,7 @@ export function Navigation({
             onClick={handleLogoClick} 
             className="logo-button"
           >
-            <h2>Class Catcher</h2>
+            <h2>Schedule Sort</h2>
           </NavButton>
         </div>
 
@@ -176,9 +188,9 @@ export function Navigation({
             // Standard navigation mode
             <>
               {/* Features button - always visible */}
-              <NavButton 
+              <NavButton
                 onClick={handleFeaturesClick}
-                className="nav-link-button"
+                className={`nav-link-button ${location.pathname === '/home' ? 'cta-button' : ''}`.trim()}
               >
                 Features
               </NavButton>
@@ -195,9 +207,10 @@ export function Navigation({
               {currentUser ? (
                 // Authenticated user navigation
                 <>
-                  <NavLink 
+                  <NavLink
                     to="/dashboard"
-                    className="cta-button"
+                    className=""
+                    isDashboard={true}
                   >
                     Dashboard
                   </NavLink>
@@ -226,9 +239,9 @@ export function Navigation({
                     Login
                   </NavLink>
                   
-                  <NavLink 
+                  <NavLink
                     to="/activities"
-                    className="cta-button"
+                    className=""
                   >
                     Get Started
                   </NavLink>
