@@ -9,7 +9,12 @@
     "sourceMap": true,
     "strict": true,
     "target": "es2017",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@shared/types/*": ["../../shared/types/*"],
+      "@shared/*": ["../../shared/*"]
+    }
   },
   "compileOnSave": true,
   "include": [
