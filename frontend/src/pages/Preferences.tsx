@@ -39,8 +39,8 @@ export function Preferences() {
   const [wakeUpTimes, setWakeUpTimes] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
   const [bedtimes, setBedtimes] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
 
-  // Array called studyTimes storing linked lists (of 2-value tuples) in each index
-  const [studyTimes, setStudyTimes] = useState<StudyTimeList[]>([
+  // Array called busyTimes storing linked lists (of 2-value tuples) in each index
+  const [busyTimes, setBusyTimes] = useState<StudyTimeList[]>([
     { head: null, size: 0 }, // Monday
     { head: null, size: 0 }, // Tuesday
     { head: null, size: 0 }, // Wednesday
@@ -81,7 +81,7 @@ export function Preferences() {
     const currentPreferences = {
       wakeUpTimes,
       bedtimes,
-      studyTimes,
+      busyTimes,
       studyReminders: emailNotifications.studyReminders,
       assignmentDeadlines: emailNotifications.assignmentDeadlines,
       weeklyDigest: emailNotifications.weeklyDigest,
@@ -100,7 +100,7 @@ export function Preferences() {
     localStorage.setItem('classCatcher_accentColor', accentColor);
     
     console.log('Preferences saved:', currentPreferences);
-  }, [wakeUpTimes, bedtimes, studyTimes, emailNotifications, shareDataAnonymously, isDarkMode, accentColor]);
+  }, [wakeUpTimes, bedtimes, busyTimes, emailNotifications, shareDataAnonymously, isDarkMode, accentColor]);
 
   // Create a stable reference to saveAllPreferences using useRef
   const saveAllPreferencesRef = useRef(saveAllPreferences);
@@ -122,9 +122,9 @@ export function Preferences() {
           setBedtimes(preferences.bedtimes);
         }
         
-        // Load study times
-        if (preferences.studyTimes) {
-          setStudyTimes(preferences.studyTimes);
+        // Load busy times
+        if (preferences.busyTimes) {
+          setBusyTimes(preferences.busyTimes);
         }
         
         // Load email notifications
@@ -191,10 +191,10 @@ export function Preferences() {
     setTimeout(() => saveAllPreferencesRef.current(), 100);
   }, []); // Stable callback
 
-  // Function to sync study times from WeekCalendar
-  const handleStudyTimesChange = useCallback((newStudyTimes: any[]) => {
-    // Convert study times array to StudyTimeList format
-    const studyTimesList: StudyTimeList[] = [
+  // Function to sync busy times from WeekCalendar
+  const handleBusyTimesChange = useCallback((newBusyTimes: any[]) => {
+    // Convert busy times array to StudyTimeList format
+    const busyTimesList: StudyTimeList[] = [
       { head: null, size: 0 }, // Monday
       { head: null, size: 0 }, // Tuesday
       { head: null, size: 0 }, // Wednesday
@@ -204,8 +204,8 @@ export function Preferences() {
       { head: null, size: 0 }  // Sunday
     ];
 
-    // Group study times by day and convert to linked list format
-    newStudyTimes.forEach((timeBlock) => {
+    // Group busy times by day and convert to linked list format
+    newBusyTimes.forEach((timeBlock) => {
       if (timeBlock.day !== undefined && timeBlock.startTime !== undefined && timeBlock.endTime !== undefined) {
         const day = timeBlock.day;
         const node: StudyTimeNode = {
@@ -213,21 +213,21 @@ export function Preferences() {
           next: null
         };
         
-        if (studyTimesList[day].head === null) {
-          studyTimesList[day].head = node;
+        if (busyTimesList[day].head === null) {
+          busyTimesList[day].head = node;
         } else {
           // Add to end of linked list
-          let current = studyTimesList[day].head;
+          let current = busyTimesList[day].head;
           while (current.next !== null) {
             current = current.next;
           }
           current.next = node;
         }
-        studyTimesList[day].size++;
+        busyTimesList[day].size++;
       }
     });
 
-    setStudyTimes(studyTimesList);
+    setBusyTimes(busyTimesList);
     
     // Auto-save preferences using stable reference
     setTimeout(() => saveAllPreferencesRef.current(), 100);
@@ -499,7 +499,7 @@ export function Preferences() {
                   onScheduleChange={handleScheduleChange}
                   onWakeUpTimesChange={handleWakeUpTimesChange}
                   onBedtimesChange={handleBedtimesChange}
-                  onStudyTimesChange={handleStudyTimesChange}
+                  onStudyTimesChange={handleBusyTimesChange}
                 />
               </div>
             </div>
