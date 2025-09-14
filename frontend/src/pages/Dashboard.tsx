@@ -1,70 +1,117 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Navigation } from '../components/Navigation';
-import type { TodoItem } from '@shared/types/activities';
+import type { TodoItem } from '@shared/types/tasks';
 import '../styles/Dashboard.css';
+import axios from 'axios';
 
 export function Dashboard() {
   const { currentUser } = useAuth();
-  const [todos, setTodos] = useState<TodoItem[]>([
-    { id: '1', text: 'Complete Math homework', completed: false, priority: 'high' },
-    { id: '2', text: 'Review Biology notes', completed: true, priority: 'medium' },
-    { id: '3', text: 'Prepare for Chemistry exam', completed: false, priority: 'high' },
-    { id: '4', text: 'Read assigned literature', completed: false, priority: 'low' },
-    { id: '5', text: 'Submit project proposal', completed: true, priority: 'medium' },
-  ]);
+  const [todos, setTodos] = useState<TodoItem[]>([]);
   const [newTodo, setNewTodo] = useState('');
   const [selectedPriority, setSelectedPriority] = useState<'high' | 'medium' | 'low'>('medium');
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editText, setEditText] = useState('');
+  const [editTodoName, setEditTodoName] = useState('');
   const [editPriority, setEditPriority] = useState<'high' | 'medium' | 'low'>('medium');
 
-  const addTodo = () => {
+  useEffect(() => {
+    const fetchTodos = async () => {
+      try {
+        const userId = currentUser?.uid;
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/todos/${userId}`);
+        const data = response.data as { success: boolean; todos: TodoItem[]; message: string };
+        if (data.success) {
+          setTodos(data.todos);
+        } else {
+          console.error(data.message);
+        }
+      } catch (error) {
+        console.error("Failed to fetch todos:", error);
+      }
+    };
+
+    fetchTodos();
+  }, [currentUser]);
+
+  const addTodo = async () => {
     if (newTodo.trim()) {
-      const todo: TodoItem = {
-        id: Date.now().toString(),
-        text: newTodo.trim(),
+      if (!currentUser) {
+        console.error("User not logged in, cannot add todo");
+        return;
+      }
+
+      const todoData = {
+        userId: currentUser?.uid,
+        todoName: newTodo.trim(),
+        priority: selectedPriority,
         completed: false,
-        priority: selectedPriority
       };
-      setTodos([...todos, todo]);
-      setNewTodo('');
-      setSelectedPriority('medium'); // Reset to default after adding
+      try {
+        console.log("Adding todo:", todoData);
+        const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/todos`, todoData);
+        const { success, todo } = response.data as { success: boolean; todo: TodoItem };
+        if (success) {
+          setTodos([...todos, todo]);
+          setNewTodo('');
+          setSelectedPriority('medium');
+        }
+      } catch (error) {
+        console.error("Failed to add todo:", error);
+      }
     }
   };
 
-  const toggleTodo = (id: string) => {
-    setTodos(todos.map(todo => 
-      todo.id === id ? { ...todo, completed: !todo.completed } : todo
-    ));
+  const toggleTodo = async (id: string) => {
+    const todoToUpdate = todos.find(todo => todo.id === id);
+    if (!todoToUpdate) return;
+
+    const updatedTodo = { ...todoToUpdate, completed: !todoToUpdate.completed };
+
+    try {
+      await axios.put(`${import.meta.env.VITE_API_BASE_URL}/todos/${id}`, { completed: updatedTodo.completed });
+      setTodos(todos.map(todo => (todo.id === id ? updatedTodo : todo)));
+    } catch (error) {
+      console.error("Failed to toggle todo:", error);
+    }
   };
 
-  const deleteTodo = (id: string) => {
-    setTodos(todos.filter(todo => todo.id !== id));
+  const deleteTodo = async (id: string) => {
+    try {
+      const response = await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/todos/${id}`);
+      const { success } = response.data as { success: boolean };
+
+      if (success) {
+        setTodos(todos.filter(todo => todo.id !== id));
+      }
+    } catch (error) {
+      console.error("Failed to delete todo:", error);
+    }
   };
 
   const startEdit = (todo: TodoItem) => {
     setEditingId(todo.id);
-    setEditText(todo.text);
+    setEditTodoName(todo.title);
     setEditPriority(todo.priority);
   };
 
-  const saveEdit = () => {
-    if (editText.trim() && editingId) {
-      setTodos(todos.map(todo => 
-        todo.id === editingId 
-          ? { ...todo, text: editText.trim(), priority: editPriority }
-          : todo
-      ));
-      setEditingId(null);
-      setEditText('');
-      setEditPriority('medium');
+  const saveEdit = async () => {
+    if (editTodoName.trim() && editingId) {
+      const updatedData = { todoName: editTodoName.trim(), priority: editPriority };
+      try {
+        await axios.put(`${import.meta.env.VITE_API_BASE_URL}/todos/${editingId}`, updatedData);
+        setTodos(todos.map(todo =>
+          todo.id === editingId ? { ...todo, ...updatedData } : todo
+        ));
+        cancelEdit();
+      } catch (error) {
+        console.error("Failed to save edit:", error);
+      }
     }
   };
 
   const cancelEdit = () => {
     setEditingId(null);
-    setEditText('');
+    setEditTodoName('');
     setEditPriority('medium');
   };
 
@@ -123,8 +170,8 @@ export function Dashboard() {
                   <div className="todo-edit">
                     <input
                       type="text"
-                      value={editText}
-                      onChange={(e) => setEditText(e.target.value)}
+                      value={editTodoName}
+                      onChange={(e) => setEditTodoName(e.target.value)}
                       className="edit-text-input"
                       onKeyPress={(e) => e.key === 'Enter' && saveEdit()}
                     />
@@ -154,7 +201,7 @@ export function Dashboard() {
                         onChange={() => toggleTodo(todo.id)}
                         className="todo-checkbox"
                       />
-                      <span className="todo-text">{todo.text}</span>
+                      <span className="todo-text">{todo.title}</span>
                       <div 
                         className="todo-priority"
                         style={{ backgroundColor: getPriorityColor(todo.priority) }}

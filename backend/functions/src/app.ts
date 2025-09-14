@@ -3,14 +3,17 @@ import cors from "cors";
 import {db} from "./config/firebase";
 import {GoogleGenerativeAI} from "@google/generative-ai";
 import syllabusRoutes from "./routes/syllabusRoutes";
+import scheduleRoutes from "./services/scheduleService";
 
 import activityRoutes from "./activity";
+import todoRoutes from "./todo";
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
 app.use("/syllabus", syllabusRoutes);
+app.use("/schedule", scheduleRoutes);
 
 app.get("/health", (req, res) => {
   res.json({status: "OK", message: "Backend server is running!"});
@@ -71,5 +74,6 @@ app.get("/test-gemini", async (req, res) => {
 });
 
 app.use(activityRoutes);
+app.use(todoRoutes);
 
 export default app;

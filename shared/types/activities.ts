@@ -10,15 +10,6 @@ export interface Activity {
   canvasContent?: string;
 }
 
-/**
- * Simple todo item for frontend use
- */
-export interface TodoItem {
-  id: string;
-  text: string;
-  completed: boolean;
-  priority: 'high' | 'medium' | 'low';
-}
 
 /**
  * User preferences and settings
@@ -68,4 +59,13 @@ export interface TimeBlock {
   startTime: number; // minutes from midnight
   endTime: number; // minutes from midnight
   type: 'study' | 'wake' | 'bedtime';
+  notes?: string; // Optional notes for the time block
+}
+
+/**
+ * User schedule containing all time blocks for a user
+ */
+export interface Schedule {
+  userId: string;
+  timeBlocks: { [timeBlockId: string]: TimeBlock }; // Map of time block ID to TimeBlock object
 }
