@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import '../styles/PreferencesWeekCalendar.css';
+import { useScheduleApi } from '../hooks/useScheduleApi';
 import type { TimeBlock } from '@shared/types/activities';
 
 interface InputCalendarProps {
@@ -10,6 +11,19 @@ interface InputCalendarProps {
 }
 
 export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimesChange, onBusyTimesChange }: InputCalendarProps) {
+  // Use API-backed calendar data
+  const { 
+    calendarData, 
+    loading: apiLoading, 
+    error: apiError,
+    saving: apiSaving,
+    saveWakeUpTimes: saveWakeUpTimesToApi,
+    saveBedtimes: saveBedtimesToApi,
+    saveBusyTimes: saveBusyTimesToApi,
+    clearError
+  } = useScheduleApi();
+
+  // Local state for UI interactions
   const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([]);
   const [wakeUpTimes, setWakeUpTimes] = useState<{ [day: number]: TimeBlock | null }>({});
   const [bedtimes, setBedtimes] = useState<{ [day: number]: TimeBlock | null }>({});
@@ -20,43 +34,45 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
   const [isCreating, setIsCreating] = useState(false);
   const [createStart, setCreateStart] = useState<{ day: number; time: number } | null>(null);
   const [hoverEnd, setHoverEnd] = useState<{ day: number; time: number } | null>(null);
-  const [selectedButton, setSelectedButton] = useState<'wake' | 'bedtime' | 'study' | null>(null);
+  const [selectedButton, setSelectedButton] = useState<'wake' | 'bedtime' | 'busy' | null>(null);
   const [isMinimized, setIsMinimized] = useState(false);
   const calendarRef = useRef<HTMLDivElement>(null);
 
-  // Helper functions for localStorage persistence
-  const saveTimeBlocks = (blocks: TimeBlock[]) => {
-    localStorage.setItem('studySchedule_timeBlocks', JSON.stringify(blocks));
-  };
-
-  const saveWakeUpTimes = (wakeTimes: { [day: number]: TimeBlock | null }) => {
-    localStorage.setItem('studySchedule_wakeUpTimes', JSON.stringify(wakeTimes));
-  };
-
-  const saveBedtimes = (bedTimes: { [day: number]: TimeBlock | null }) => {
-    localStorage.setItem('studySchedule_bedtimes', JSON.stringify(bedTimes));
-  };
-
-  // Load data from localStorage on component mount
+  // Sync data from API to local state
   useEffect(() => {
-    const savedTimeBlocks = localStorage.getItem('studySchedule_timeBlocks');
-    const savedWakeUpTimes = localStorage.getItem('studySchedule_wakeUpTimes');
-    const savedBedtimes = localStorage.getItem('studySchedule_bedtimes');
-    
-    if (savedTimeBlocks) {
-      const parsedBlocks = JSON.parse(savedTimeBlocks);
-      setTimeBlocks(parsedBlocks);
-      onScheduleChange(parsedBlocks);
+    if (!apiLoading) {
+      setTimeBlocks(calendarData.busyTimes);
+      setWakeUpTimes(calendarData.wakeUpTimes);
+      setBedtimes(calendarData.bedtimes);
+      
+      // Notify parent components of the loaded data
+      onScheduleChange(calendarData.busyTimes);
+      if (onWakeUpTimesChange) {
+        onWakeUpTimesChange(calendarData.wakeUpTimes);
+      }
+      if (onBedtimesChange) {
+        onBedtimesChange(calendarData.bedtimes);
+      }
+      if (onBusyTimesChange) {
+        onBusyTimesChange(calendarData.busyTimes);
+      }
     }
-    
-    if (savedWakeUpTimes) {
-      setWakeUpTimes(JSON.parse(savedWakeUpTimes));
+  }, [calendarData, apiLoading, onScheduleChange, onWakeUpTimesChange, onBedtimesChange, onBusyTimesChange]);
+
+  // Handle API errors
+  useEffect(() => {
+    if (apiError) {
+      setErrorMessage(apiError);
+      // Auto-clear error after 5 seconds
+      const timer = setTimeout(() => {
+        clearError();
+        setErrorMessage('');
+      }, 5000);
+      return () => clearTimeout(timer);
     }
-    
-    if (savedBedtimes) {
-      setBedtimes(JSON.parse(savedBedtimes));
-    }
-  }, [onScheduleChange]); // Add onScheduleChange dependency
+  }, [apiError, clearError]);
+
+  // Data is now loaded via useScheduleApi hook - no localStorage loading needed
 
   // Notify parent component when wake up times change
   useEffect(() => {
@@ -75,7 +91,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
   // Notify parent component when study times change
   useEffect(() => {
     if (onBusyTimesChange) {
-      const busyTimes = timeBlocks.filter(block => block.type === 'study');
+      const busyTimes = timeBlocks.filter(block => block.type === 'busy');
       onBusyTimesChange(busyTimes);
     }
   }, [timeBlocks, onBusyTimesChange]);
@@ -125,12 +141,12 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
   };
 
   // Button selection handlers
-  const handleButtonSelect = (buttonType: 'wake' | 'bedtime' | 'study') => {
+  const handleButtonSelect = (buttonType: 'wake' | 'bedtime' | 'busy') => {
     setSelectedButton(selectedButton === buttonType ? null : buttonType);
     setErrorMessage(''); // Clear any existing error when switching buttons
     
-    // Cancel busy time creation if switching away from study
-    if (isCreating && selectedButton === 'study' && buttonType !== 'study') {
+    // Cancel busy time creation if switching away from busy
+    if (isCreating && selectedButton === 'busy' && buttonType !== 'busy') {
       setIsCreating(false);
       setCreateStart(null);
       setHoverEnd(null);
@@ -166,13 +182,13 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
       cell.style.backgroundColor = 'rgba(255, 140, 0, 0.15)'; // Deeper orange for wake up
     } else if (selectedButton === 'bedtime') {
       cell.style.backgroundColor = 'rgba(156, 39, 176, 0.1)'; // Purple for bedtime
-    } else if (selectedButton === 'study') {
+    } else if (selectedButton === 'busy') {
       if (isCreating && createStart) {
         // Track hover position for dynamic preview
         if (day === createStart.day && slot > createStart.time) {
           const startTime = createStart.time * 30;
           const endTime = slot * 30;
-          const validationError = validateStudyTime(day, startTime, endTime);
+          const validationError = validateBusyTime(day, startTime, endTime);
           
           if (validationError) {
             cell.style.backgroundColor = 'rgba(244, 67, 54, 0.2)'; // Red for invalid
@@ -187,7 +203,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
       } else {
         // Show start time selection - check if valid
         const startTime = slot * 30;
-        const validationError = validateStudyTime(day, startTime, startTime + 30);
+        const validationError = validateBusyTime(day, startTime, startTime + 30);
         
         if (validationError) {
           cell.style.backgroundColor = 'rgba(244, 67, 54, 0.1)'; // Light red for invalid
@@ -231,7 +247,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
         [day]: newWakeTime
       };
       setWakeUpTimes(updatedWakeUpTimes);
-      saveWakeUpTimes(updatedWakeUpTimes);
+      saveWakeUpTimesToApi(updatedWakeUpTimes);
       setErrorMessage(''); // Clear error on successful placement
     } else if (selectedButton === 'bedtime') {
       // Convert slot to minutes (30-minute intervals)
@@ -258,16 +274,16 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
         [day]: newBedtime
       };
       setBedtimes(updatedBedtimes);
-      saveBedtimes(updatedBedtimes);
+      saveBedtimesToApi(updatedBedtimes);
       setErrorMessage(''); // Clear error on successful placement
-    } else if (selectedButton === 'study') {
-      // Two-click study time creation pattern
+    } else if (selectedButton === 'busy') {
+      // Two-click busy time creation pattern
       if (!isCreating || !createStart) {
         // First click: set start time
         const startTime = slot * 30; // Convert to minutes
         
         // Validate that wake up and bedtime exist
-        const validationError = validateStudyTime(day, startTime, startTime + 30); // Check with minimum duration
+        const validationError = validateBusyTime(day, startTime, startTime + 30); // Check with minimum duration
         if (validationError) {
           setErrorMessage(validationError);
           return;
@@ -295,23 +311,23 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
         }
         
         // Validate busy time placement
-        const validationError = validateStudyTime(day, startTime, endTime);
+        const validationError = validateBusyTime(day, startTime, endTime);
         if (validationError) {
           setErrorMessage(validationError);
           return;
         }
         
-        const newStudyTime: TimeBlock = {
-          id: `study-${day}-${Date.now()}`,
+        const newBusyTime: TimeBlock = {
+          id: `busy-${day}-${Date.now()}`,
           day,
           startTime,
           endTime,
-          type: 'study'
+          type: 'busy'
         };
         
-        const updatedBlocks = [...timeBlocks, newStudyTime];
+        const updatedBlocks = [...timeBlocks, newBusyTime];
         setTimeBlocks(updatedBlocks);
-        saveTimeBlocks(updatedBlocks);
+        saveBusyTimesToApi(updatedBlocks);
         onScheduleChange(updatedBlocks);
         
         // Reset creation state
@@ -327,7 +343,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
 
   const handleMouseMove = (e: React.MouseEvent) => {
     // Only handle busy time creation preview, not block creation
-    if (!isCreating || !createStart || !calendarRef.current || selectedButton !== 'study') return;
+    if (!isCreating || !createStart || !calendarRef.current || selectedButton !== 'busy') return;
 
     const rect = calendarRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -347,8 +363,8 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
       const startTime = createStart.time * 30;
       const endTime = time * 30;
       
-      // Validate the preview study time
-      const validationError = validateStudyTime(day, startTime, endTime);
+      // Validate the preview busy time
+      const validationError = validateBusyTime(day, startTime, endTime);
       if (validationError) {
         setErrorMessage(validationError);
       } else {
@@ -384,7 +400,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
         return block;
       });
       setTimeBlocks(updatedBlocks);
-      saveTimeBlocks(updatedBlocks);
+      saveBusyTimesToApi(updatedBlocks);
       onScheduleChange(updatedBlocks);
     }
   };
@@ -436,7 +452,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
       return block;
     });
     setTimeBlocks(updatedBlocks);
-    saveTimeBlocks(updatedBlocks);
+    saveBusyTimesToApi(updatedBlocks);
     onScheduleChange(updatedBlocks);
   };
 
@@ -451,7 +467,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
   const deleteBlock = (blockId: string) => {
     const updatedBlocks = timeBlocks.filter(block => block.id !== blockId);
     setTimeBlocks(updatedBlocks);
-    saveTimeBlocks(updatedBlocks);
+    saveBusyTimesToApi(updatedBlocks);
     onScheduleChange(updatedBlocks);
   };
 
@@ -461,7 +477,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
       [day]: null
     };
     setWakeUpTimes(updatedWakeUpTimes);
-    saveWakeUpTimes(updatedWakeUpTimes);
+    saveWakeUpTimesToApi(updatedWakeUpTimes);
   };
 
   const deleteBedtime = (day: number) => {
@@ -470,7 +486,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
       [day]: null
     };
     setBedtimes(updatedBedtimes);
-    saveBedtimes(updatedBedtimes);
+    saveBedtimesToApi(updatedBedtimes);
   };
 
   // Helper function to check if time A is before time B in a 24-hour cycle
@@ -507,8 +523,8 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
     return null;
   };
 
-  // Validation function to check if study time is valid (between wake up and bedtime)
-  const validateStudyTime = (day: number, startTime: number, endTime: number) => {
+  // Validation function to check if busy time is valid (between wake up and bedtime)
+  const validateBusyTime = (day: number, startTime: number, endTime: number) => {
     const wakeUp = wakeUpTimes[day];
     const bedtime = bedtimes[day];
     
@@ -547,7 +563,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
   // Escape key handler to cancel busy time creation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isCreating && selectedButton === 'study') {
+      if (e.key === 'Escape' && isCreating && selectedButton === 'busy') {
         setIsCreating(false);
         setCreateStart(null);
         setHoverEnd(null);
@@ -559,12 +575,28 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isCreating, selectedButton]);
 
+  // Show loading state while data is being fetched
+  if (apiLoading) {
+    return (
+      <div className={`preferences-week-calendar-container ${isMinimized ? 'minimized' : ''}`}>
+        <div className="preferences-calendar-header">
+          <div className="preferences-header-content">
+            <div className="preferences-header-text">
+              <h3>Weekly Schedule</h3>
+              <p>Loading your calendar data...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`preferences-week-calendar-container ${isMinimized ? 'minimized' : ''}`}>
       <div className="preferences-calendar-header">
         <div className="preferences-header-content">
           <div className="preferences-header-text">
-            <h3>Weekly Schedule</h3>
+            <h3>Weekly Schedule {apiSaving && <span style={{fontSize: '0.8em', color: '#4ecdc4'}}>• Saving...</span>}</h3>
             <p>Click on the buttons below to set your wake up times, bedtimes, and busy times</p>
           </div>
           <button 
@@ -594,8 +626,8 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
               Bedtimes
             </button>
             <button 
-              className={`preferences-schedule-button ${selectedButton === 'study' ? 'selected' : ''}`}
-              onClick={() => handleButtonSelect('study')}
+              className={`preferences-schedule-button ${selectedButton === 'busy' ? 'selected' : ''}`}
+              onClick={() => handleButtonSelect('busy')}
             >
               Busy Times
             </button>
@@ -757,9 +789,9 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
           })}
 
           {/* Busy time creation preview */}
-          {isCreating && createStart && selectedButton === 'study' && (
+          {isCreating && createStart && selectedButton === 'busy' && (
             <div
-              className="preferences-time-block study preview"
+              className="preferences-time-block busy preview"
               style={{
                 left: dayToPosition(createStart.day),
                 top: timeToPosition(createStart.time * 30),

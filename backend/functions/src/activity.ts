@@ -1,10 +1,12 @@
 import express from "express";
 import {db} from "./config/firebase";
+import {SyllabusProcessor} from "./services/syllabusProcessor";
+import {TodoItem} from "@shared/types/tasks";
 
 // eslint-disable-next-line new-cap
 const router = express.Router();
 
-router.get("/activities/:userId", async (req, res) => {
+router.get("/:userId", async (req, res) => {
   try {
     const {userId} = req.params;
 
@@ -39,7 +41,7 @@ router.get("/activities/:userId", async (req, res) => {
   }
 });
 
-router.post("/activities", async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const {
       activityName,
@@ -80,7 +82,7 @@ router.post("/activities", async (req, res) => {
   }
 });
 
-router.delete("/activities/:activityId", async (req, res) => {
+router.delete("/:activityId", async (req, res) => {
   try {
     const {
       activityId,
@@ -103,6 +105,80 @@ router.delete("/activities/:activityId", async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to delete activity",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+});
+
+router.post("/process-syllabus", async (req, res) => {
+  try {
+    const {
+      text,
+      activityId,
+      userId,
+    } = req.body;
+
+    if (!text || !activityId || !userId) {
+      return res.status(400).json({
+        success: false,
+        message: "Text, activity ID, and user ID are required",
+      });
+    }
+
+    // Initialize the syllabus processor
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.error("GEMINI_API_KEY not found in environment variables");
+      return res.status(500).json({
+        success: false,
+        message: "AI processing service not configured",
+      });
+    }
+
+    const processor = new SyllabusProcessor(apiKey);
+
+    // Process the syllabus text with Gemini
+    const processedSyllabus = await processor.processSyllabusText(text);
+
+    // Store tasks in database using the existing todos collection structure
+    let tasksCreated = 0;
+    if (processedSyllabus.tasks && processedSyllabus.tasks.length > 0) {
+      const todosCollection = db.collection("todos");
+
+      for (const task of processedSyllabus.tasks) {
+        const todoData: TodoItem = {
+          id: "", // Will be set by Firestore when document is created
+          title: task.title,
+          notes: task.notes,
+          dueDate: task.dueDate !== "TBD" ? task.dueDate : "TBD",
+          priority: task.priority,
+          estimatedHours: task.estimatedHours,
+          completed: false,
+          activityId,
+          userId,
+        };
+
+        const docRef = await todosCollection.add(todoData);
+
+        // Update the document with its ID to match TodoItem interface
+        await docRef.update({id: docRef.id});
+
+        tasksCreated++;
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: "Syllabus processed successfully",
+      tasksCreated,
+      courseName: processedSyllabus.courseName,
+      courseCode: processedSyllabus.courseCode,
+    });
+  } catch (error) {
+    console.error("Syllabus processing error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to process syllabus",
       error: error instanceof Error ? error.message : "Unknown error",
     });
   }

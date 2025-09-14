@@ -73,7 +73,7 @@ app.get("/test-gemini", async (req, res) => {
   }
 });
 
-app.use(activityRoutes);
+app.use("/activities", activityRoutes);
 app.use(todoRoutes);
 
 export default app;

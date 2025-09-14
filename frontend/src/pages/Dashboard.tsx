@@ -2,39 +2,65 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Navigation } from '../components/Navigation';
 import type { TodoItem } from '@shared/types/tasks';
+import type { Activity } from '@shared/types/activities';
 import '../styles/Dashboard.css';
 import axios from 'axios';
 
 export function Dashboard() {
   const { currentUser } = useAuth();
   const [todos, setTodos] = useState<TodoItem[]>([]);
-  const [newTodo, setNewTodo] = useState('');
-  const [selectedPriority, setSelectedPriority] = useState<'high' | 'medium' | 'low'>('medium');
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [newTodo, setNewTodo] = useState({
+    title: '',
+    notes: '',
+    dueDate: '',
+    activityId: '',
+    priority: 'medium' as 'high' | 'medium' | 'low',
+    estimatedHours: ''
+  });
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editTodoName, setEditTodoName] = useState('');
-  const [editPriority, setEditPriority] = useState<'high' | 'medium' | 'low'>('medium');
+  const [editTodo, setEditTodo] = useState({
+    title: '',
+    notes: '',
+    dueDate: '',
+    activityId: '',
+    priority: 'medium' as 'high' | 'medium' | 'low',
+    estimatedHours: ''
+  });
+  const [showAddForm, setShowAddForm] = useState(false);
 
   useEffect(() => {
-    const fetchTodos = async () => {
+    const fetchData = async () => {
       try {
         const userId = currentUser?.uid;
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/todos/${userId}`);
-        const data = response.data as { success: boolean; todos: TodoItem[]; message: string };
-        if (data.success) {
-          setTodos(data.todos);
+        
+        // Fetch todos
+        const todosResponse = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/todos/${userId}`);
+        const todosData = todosResponse.data as { success: boolean; todos: TodoItem[]; message: string };
+        if (todosData.success) {
+          setTodos(todosData.todos);
         } else {
-          console.error(data.message);
+          console.error(todosData.message);
+        }
+
+        // Fetch activities
+        const activitiesResponse = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/activities/${userId}`);
+        const activitiesData = activitiesResponse.data as { success: boolean; activities: Activity[]; message: string };
+        if (activitiesData.success) {
+          setActivities(activitiesData.activities);
+        } else {
+          console.error(activitiesData.message);
         }
       } catch (error) {
-        console.error("Failed to fetch todos:", error);
+        console.error("Failed to fetch data:", error);
       }
     };
 
-    fetchTodos();
+    fetchData();
   }, [currentUser]);
 
   const addTodo = async () => {
-    if (newTodo.trim()) {
+    if (newTodo.title.trim()) {
       if (!currentUser) {
         console.error("User not logged in, cannot add todo");
         return;
@@ -42,8 +68,12 @@ export function Dashboard() {
 
       const todoData = {
         userId: currentUser?.uid,
-        todoName: newTodo.trim(),
-        priority: selectedPriority,
+        title: newTodo.title.trim(),
+        notes: newTodo.notes.trim(),
+        dueDate: newTodo.dueDate || 'TBD',
+        activityId: newTodo.activityId.trim() || undefined,
+        priority: newTodo.priority,
+        estimatedHours: newTodo.estimatedHours ? parseInt(newTodo.estimatedHours) : undefined,
         completed: false,
       };
       try {
@@ -52,8 +82,26 @@ export function Dashboard() {
         const { success, todo } = response.data as { success: boolean; todo: TodoItem };
         if (success) {
           setTodos([...todos, todo]);
-          setNewTodo('');
-          setSelectedPriority('medium');
+          setNewTodo({
+            title: '',
+            notes: '',
+            dueDate: '',
+            activityId: '',
+            priority: 'medium',
+            estimatedHours: ''
+          });
+          
+          // Refresh activities list in case a new one was created
+          try {
+            const activitiesResponse = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/activities/${currentUser?.uid}`);
+            const activitiesData = activitiesResponse.data as { success: boolean; activities: Activity[] };
+            if (activitiesData.success) {
+              setActivities(activitiesData.activities);
+            }
+          } catch (error) {
+            console.error("Failed to refresh activities:", error);
+          }
+          setShowAddForm(false);
         }
       } catch (error) {
         console.error("Failed to add todo:", error);
@@ -90,18 +138,46 @@ export function Dashboard() {
 
   const startEdit = (todo: TodoItem) => {
     setEditingId(todo.id);
-    setEditTodoName(todo.title);
-    setEditPriority(todo.priority);
+    // Find the activity name by ID
+    const activity = activities.find(a => a.id === todo.activityId);
+    setEditTodo({
+      title: todo.title,
+      notes: todo.notes,
+      dueDate: todo.dueDate === 'TBD' ? '' : todo.dueDate,
+      activityId: activity?.activityName || '',
+      priority: todo.priority,
+      estimatedHours: todo.estimatedHours?.toString() || ''
+    });
   };
 
   const saveEdit = async () => {
-    if (editTodoName.trim() && editingId) {
-      const updatedData = { todoName: editTodoName.trim(), priority: editPriority };
+    if (editTodo.title.trim() && editingId) {
+      const updatedData = {
+        title: editTodo.title.trim(),
+        notes: editTodo.notes.trim(),
+        dueDate: editTodo.dueDate || 'TBD',
+        activityId: editTodo.activityId.trim() || undefined,
+        priority: editTodo.priority,
+        estimatedHours: editTodo.estimatedHours ? parseInt(editTodo.estimatedHours) : undefined,
+        userId: currentUser?.uid
+      };
       try {
         await axios.put(`${import.meta.env.VITE_API_BASE_URL}/todos/${editingId}`, updatedData);
         setTodos(todos.map(todo =>
           todo.id === editingId ? { ...todo, ...updatedData } : todo
         ));
+        
+        // Refresh activities list in case a new one was created
+        try {
+          const activitiesResponse = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/activities/${currentUser?.uid}`);
+          const activitiesData = activitiesResponse.data as { success: boolean; activities: Activity[] };
+          if (activitiesData.success) {
+            setActivities(activitiesData.activities);
+          }
+        } catch (error) {
+          console.error("Failed to refresh activities:", error);
+        }
+        
         cancelEdit();
       } catch (error) {
         console.error("Failed to save edit:", error);
@@ -111,8 +187,14 @@ export function Dashboard() {
 
   const cancelEdit = () => {
     setEditingId(null);
-    setEditTodoName('');
-    setEditPriority('medium');
+    setEditTodo({
+      title: '',
+      notes: '',
+      dueDate: '',
+      activityId: '',
+      priority: 'medium',
+      estimatedHours: ''
+    });
   };
 
   const getPriorityColor = (priority: string) => {
@@ -141,26 +223,84 @@ export function Dashboard() {
             <h2>📝 To-Do List</h2>
           </div>
           <div className="todo-input">
-            <input
-              type="text"
-              value={newTodo}
-              onChange={(e) => setNewTodo(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && addTodo()}
-              placeholder="Add a new task..."
-              className="todo-input-field"
-            />
-            <select
-              value={selectedPriority}
-              onChange={(e) => setSelectedPriority(e.target.value as 'high' | 'medium' | 'low')}
-              className="priority-selector"
-            >
-              <option value="high">🔴 High</option>
-              <option value="medium">🟡 Medium</option>
-              <option value="low">🟢 Low</option>
-            </select>
-            <button onClick={addTodo} className="primary-button">
-              Add
-            </button>
+            {!showAddForm ? (
+              <button 
+                onClick={() => setShowAddForm(true)} 
+                className="primary-button add-todo-button"
+              >
+                ➕ Add New Task
+              </button>
+            ) : (
+              <div className="todo-form">
+                <div className="form-row">
+                  <input
+                    type="text"
+                    value={newTodo.title}
+                    onChange={(e) => setNewTodo({...newTodo, title: e.target.value})}
+                    placeholder="Task title..."
+                    className="todo-input-field"
+                  />
+                  <select
+                    value={newTodo.priority}
+                    onChange={(e) => setNewTodo({...newTodo, priority: e.target.value as 'high' | 'medium' | 'low'})}
+                    className="priority-selector"
+                  >
+                    <option value="high">🔴 High</option>
+                    <option value="medium">🟡 Medium</option>
+                    <option value="low">🟢 Low</option>
+                  </select>
+                </div>
+                <div className="form-row">
+                  <input
+                    type="text"
+                    value={newTodo.activityId}
+                    onChange={(e) => setNewTodo({...newTodo, activityId: e.target.value})}
+                    placeholder="Activity (e.g., Math, Biology)..."
+                    className="todo-input-field"
+                    list="activities-list"
+                  />
+                  <datalist id="activities-list">
+                    {activities.map((activity) => (
+                      <option key={activity.id} value={activity.activityName} />
+                    ))}
+                  </datalist>
+                  <input
+                    type="date"
+                    value={newTodo.dueDate}
+                    onChange={(e) => setNewTodo({...newTodo, dueDate: e.target.value})}
+                    className="todo-input-field"
+                    title="Due Date"
+                  />
+                  <input
+                    type="number"
+                    value={newTodo.estimatedHours}
+                    onChange={(e) => setNewTodo({...newTodo, estimatedHours: e.target.value})}
+                    placeholder="Hours"
+                    className="todo-input-field small"
+                    min="0.5"
+                    step="0.5"
+                    title="Estimated Hours"
+                  />
+                </div>
+                <div className="form-row">
+                  <textarea
+                    value={newTodo.notes}
+                    onChange={(e) => setNewTodo({...newTodo, notes: e.target.value})}
+                    placeholder="Additional notes..."
+                    className="todo-textarea"
+                    rows={2}
+                  />
+                </div>
+                <div className="form-actions">
+                  <button onClick={() => setShowAddForm(false)} className="cancel-button">
+                    Cancel
+                  </button>
+                  <button onClick={addTodo} className="primary-button">
+                    Add Task
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
           <div className="todo-list">
             {todos.map(todo => (
@@ -168,28 +308,71 @@ export function Dashboard() {
                 {editingId === todo.id ? (
                   // Edit mode
                   <div className="todo-edit">
-                    <input
-                      type="text"
-                      value={editTodoName}
-                      onChange={(e) => setEditTodoName(e.target.value)}
-                      className="edit-text-input"
-                      onKeyPress={(e) => e.key === 'Enter' && saveEdit()}
-                    />
-                    <select
-                      value={editPriority}
-                      onChange={(e) => setEditPriority(e.target.value as 'high' | 'medium' | 'low')}
-                      className="edit-priority-selector"
-                    >
-                      <option value="high">🔴 High</option>
-                      <option value="medium">🟡 Medium</option>
-                      <option value="low">🟢 Low</option>
-                    </select>
-                    <button onClick={saveEdit} className="save-button">
-                      ✓
-                    </button>
-                    <button onClick={cancelEdit} className="cancel-button">
-                      ×
-                    </button>
+                    <div className="form-row">
+                      <input
+                        type="text"
+                        value={editTodo.title}
+                        onChange={(e) => setEditTodo({...editTodo, title: e.target.value})}
+                        className="edit-text-input"
+                        placeholder="Task title..."
+                      />
+                      <select
+                        value={editTodo.priority}
+                        onChange={(e) => setEditTodo({...editTodo, priority: e.target.value as 'high' | 'medium' | 'low'})}
+                        className="edit-priority-selector"
+                      >
+                        <option value="high">🔴 High</option>
+                        <option value="medium">🟡 Medium</option>
+                        <option value="low">🟢 Low</option>
+                      </select>
+                    </div>
+                    <div className="form-row">
+                      <input
+                        type="text"
+                        value={editTodo.activityId}
+                        onChange={(e) => setEditTodo({...editTodo, activityId: e.target.value})}
+                        className="edit-text-input"
+                        placeholder="Activity..."
+                        list="edit-activities-list"
+                      />
+                      <datalist id="edit-activities-list">
+                        {activities.map((activity) => (
+                          <option key={activity.id} value={activity.activityName} />
+                        ))}
+                      </datalist>
+                      <input
+                        type="date"
+                        value={editTodo.dueDate}
+                        onChange={(e) => setEditTodo({...editTodo, dueDate: e.target.value})}
+                        className="edit-text-input"
+                      />
+                      <input
+                        type="number"
+                        value={editTodo.estimatedHours}
+                        onChange={(e) => setEditTodo({...editTodo, estimatedHours: e.target.value})}
+                        className="edit-text-input small"
+                        placeholder="Hours"
+                        min="0.5"
+                        step="0.5"
+                      />
+                    </div>
+                    <div className="form-row">
+                      <textarea
+                        value={editTodo.notes}
+                        onChange={(e) => setEditTodo({...editTodo, notes: e.target.value})}
+                        className="edit-textarea"
+                        placeholder="Notes..."
+                        rows={2}
+                      />
+                    </div>
+                    <div className="edit-actions">
+                      <button onClick={saveEdit} className="save-button">
+                        ✓ Save
+                      </button>
+                      <button onClick={cancelEdit} className="cancel-button">
+                        × Cancel
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   // View mode
@@ -201,12 +384,37 @@ export function Dashboard() {
                         onChange={() => toggleTodo(todo.id)}
                         className="todo-checkbox"
                       />
-                      <span className="todo-text">{todo.title}</span>
-                      <div 
-                        className="todo-priority"
-                        style={{ backgroundColor: getPriorityColor(todo.priority) }}
-                      >
-                        {todo.priority}
+                      <div className="todo-main">
+                        <div className="todo-header">
+                          <span className="todo-text">{todo.title}</span>
+                          <div className="todo-badges">
+                            <div 
+                              className="todo-priority"
+                              style={{ backgroundColor: getPriorityColor(todo.priority) }}
+                            >
+                              {todo.priority}
+                            </div>
+                            {todo.activityId && (() => {
+                              const activity = activities.find(a => a.id === todo.activityId);
+                              return activity ? (
+                                <div className="todo-activity">
+                                  {activity.activityName}
+                                </div>
+                              ) : null;
+                            })()}
+                          </div>
+                        </div>
+                        <div className="todo-details">
+                          {todo.dueDate && todo.dueDate !== 'TBD' && (
+                            <span className="todo-due-date">📅 Due: {todo.dueDate}</span>
+                          )}
+                          {todo.estimatedHours && (
+                            <span className="todo-hours">⏱️ {todo.estimatedHours}h</span>
+                          )}
+                        </div>
+                        {todo.notes && (
+                          <div className="todo-notes">💭 {todo.notes}</div>
+                        )}
                       </div>
                     </div>
                     <div className="todo-actions">
