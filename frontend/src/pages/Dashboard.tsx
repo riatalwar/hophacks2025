@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Navigation } from '../components/Navigation';
+import { OutputCalendar } from '../components/OutputCalendar';
 import type { TodoItem } from '@shared/types/tasks';
 import type { Activity } from '@shared/types/activities';
 import '../styles/Dashboard.css';
@@ -445,20 +446,7 @@ export function Dashboard() {
           <div className="section-header">
             <h2>📅 Weekly Schedule</h2>
           </div>
-          <div className="schedule-grid">
-            {['Mon', 'Tue', 'Wed'].map(day => (
-              <div key={day} className="schedule-day">
-                <div className="day-header">{day}</div>
-                <div className="day-events">
-                  <div className="event wake-up">7:00 AM - Wake Up</div>
-                  <div className="event study">9:00 AM - Math Study</div>
-                  <div className="event class">11:00 AM - Biology Class</div>
-                  <div className="event study">2:00 PM - Chemistry Study</div>
-                  <div className="event bedtime">11:00 PM - Bedtime</div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <OutputCalendar userId={currentUser?.uid} />
         </div>
 
         {/* Analytics Section */}
