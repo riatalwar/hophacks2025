@@ -1,13 +1,9 @@
 import express from "express";
-import cors from "cors";
 import {db} from "./config/firebase";
 
-const activity = express();
+const router = express.Router();
 
-activity.use(cors());
-activity.use(express.json());
-
-activity.get("/activities/:userId", async (req, res) => {
+router.get("/activities/:userId", async (req, res) => {
     try {
         const { userId } = req.params;
 
@@ -40,4 +36,4 @@ activity.get("/activities/:userId", async (req, res) => {
     }
 });
 
-export default activity;
+export default router;

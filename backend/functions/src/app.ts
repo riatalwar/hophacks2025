@@ -3,6 +3,7 @@ import cors from "cors";
 import {db} from "./config/firebase";
 import {GoogleGenerativeAI} from "@google/generative-ai";
 
+import activityRoutes from "./activity";
 const app = express();
 
 app.use(cors());
@@ -65,5 +66,7 @@ app.get("/test-gemini", async (req, res) => {
     });
   }
 });
+
+app.use(activityRoutes);
 
 export default app;

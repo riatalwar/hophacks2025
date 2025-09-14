@@ -64,7 +64,7 @@ export function ActivityInput() {
         const auth = getAuth();
         const user = auth.currentUser;
         const userId = user?.uid;
-        const response = await axios.get(`/activities/${userId}`);
+        const response = await axios.get(`http://localhost:5001/hophacks2025/us-central1/api/activities/${userId}`);
         const data = response.data as { success: boolean; activities: Activity[]; message: string };
         if (data.success) {
           setActivities(data.activities);
