@@ -1001,3 +1001,378 @@
 .light-theme .save-info {
   color: var(--text-secondary);
 }
+
+/* Calendar Import Section */
+.calendar-import {
+  grid-column: 1 / -1; /* Span full width */
+  margin-bottom: 2rem;
+}
+
+.calendar-import-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* File Upload Area */
+.file-upload-area {
+  background: rgba(255, 255, 255, 0.02);
+  border: 2px dashed var(--border-color);
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.file-upload-area:hover {
+  border-color: var(--accent-color);
+  background: rgba(78, 205, 196, 0.05);
+  transform: translateY(-2px);
+}
+
+.file-upload-area.drag-over {
+  border-color: var(--accent-color);
+  background: rgba(78, 205, 196, 0.1);
+  transform: scale(1.02);
+}
+
+.file-upload-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.upload-icon {
+  font-size: 3rem;
+  opacity: 0.7;
+  transition: all 0.3s ease;
+}
+
+.file-upload-area:hover .upload-icon {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.file-upload-content h3 {
+  color: var(--text-primary);
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.file-upload-content p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.file-upload-button {
+  background: var(--accent-gradient);
+  color: var(--text-primary);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(78, 205, 196, 0.3);
+}
+
+.file-upload-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(78, 205, 196, 0.4);
+}
+
+/* File Selected State */
+.file-selected {
+  background: rgba(78, 205, 196, 0.1);
+  border: 1px solid rgba(78, 205, 196, 0.3);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.file-icon {
+  font-size: 1.5rem;
+}
+
+.file-name {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.file-size {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.remove-file-button {
+  background: rgba(255, 107, 107, 0.1);
+  color: #ff6b6b;
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.remove-file-button:hover {
+  background: rgba(255, 107, 107, 0.2);
+  border-color: rgba(255, 107, 107, 0.5);
+  transform: scale(1.1);
+}
+
+
+/* Import Actions */
+.import-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.import-button {
+  background: var(--accent-gradient);
+  color: var(--text-primary);
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+  min-width: 200px;
+}
+
+.import-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(78, 205, 196, 0.4);
+}
+
+.import-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.import-result {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: center;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.import-result.success {
+  background: rgba(76, 175, 80, 0.1);
+  color: #4caf50;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.import-result.error {
+  background: rgba(244, 67, 54, 0.1);
+  color: #f44336;
+  border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+/* Responsive Design for Calendar Import */
+@media (max-width: 768px) {
+  .calendar-import-group {
+    gap: 1.5rem;
+  }
+  
+  .file-upload-area {
+    padding: 1.5rem;
+  }
+  
+  .file-selected {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .file-info {
+    width: 100%;
+  }
+  
+  .remove-file-button {
+    align-self: flex-end;
+  }
+  
+  
+  .import-button {
+    width: 100%;
+    min-width: auto;
+  }
+}
+
+/* Imported Calendars List */
+.imported-calendars {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+}
+
+.imported-calendars h4 {
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.imported-calendars h4::before {
+  content: '📚';
+  font-size: 1.2rem;
+}
+
+.calendars-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.calendar-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  padding: 1rem;
+  transition: all 0.3s ease;
+}
+
+.calendar-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--border-color);
+  transform: translateY(-1px);
+}
+
+.calendar-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.calendar-icon {
+  font-size: 1.5rem;
+  opacity: 0.8;
+}
+
+.calendar-details {
+  flex: 1;
+}
+
+.calendar-details h5 {
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+}
+
+.calendar-meta {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin: 0 0 0.25rem 0;
+  opacity: 0.8;
+}
+
+.calendar-filename {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin: 0;
+  font-family: monospace;
+  opacity: 0.7;
+}
+
+.remove-calendar-button {
+  background: rgba(255, 107, 107, 0.1);
+  color: #ff6b6b;
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.8rem;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.remove-calendar-button:hover {
+  background: rgba(255, 107, 107, 0.2);
+  border-color: rgba(255, 107, 107, 0.5);
+  transform: scale(1.1);
+}
+
+/* Responsive Design for Imported Calendars */
+@media (max-width: 768px) {
+  .calendar-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .calendar-info {
+    width: 100%;
+  }
+  
+  .remove-calendar-button {
+    align-self: flex-end;
+  }
+}

@@ -14,6 +14,9 @@ importers:
       firebase:
         specifier: ^12.2.1
         version: 12.2.1
+      ical.js:
+        specifier: ^2.2.1
+        version: 2.2.1
       mammoth:
         specifier: ^1.10.0
         version: 1.10.0
@@ -1260,6 +1263,9 @@ packages:
 
   http-parser-js@0.5.10:
     resolution: {integrity: sha512-Pysuw9XpUq5dVc/2SMHpuTY01RFl8fttgcyunjL7eEMhGM3cI4eOmiCycJDVCo/7O7ClfQD3SaI6ftDzqOXYMA==}
+
+  ical.js@2.2.1:
+    resolution: {integrity: sha512-yK/UlPbEs316igb/tjRgbFA8ZV75rCsBJp/hWOatpyaPNlgw0dGDmU+FoicOcwX4xXkeXOkYiOmCqNPFpNPkQg==}
 
   idb@7.1.1:
     resolution: {integrity: sha512-gchesWBzyvGHRO9W8tzUWFDycow5gwjvFKfyV9FF32Y7F50yZMp7mP+T2mJIWFx49zicqyC4uefHM17o6xKIVQ==}
@@ -3021,6 +3027,8 @@ snapshots:
       function-bind: 1.1.2
 
   http-parser-js@0.5.10: {}
+
+  ical.js@2.2.1: {}
 
   idb@7.1.1: {}
 
