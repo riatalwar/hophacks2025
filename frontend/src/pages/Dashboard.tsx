@@ -3,6 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 import { Navigation } from '../components/Navigation';
 import { DashboardWeeklySchedule } from '../components/DashboardWeeklySchedule';
 import type { TodoItem } from '@shared/types/tasks';
+import type { Schedule } from '@shared/types/activities';
 import '../styles/Dashboard.css';
 import axios from 'axios';
 
@@ -10,6 +11,7 @@ export function Dashboard() {
   const { currentUser } = useAuth();
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [newTodo, setNewTodo] = useState('');
+  const [schedule, setSchedule] = useState<Schedule | null>(null);
   const [selectedPriority, setSelectedPriority] = useState<'high' | 'medium' | 'low'>('medium');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTodoName, setEditTodoName] = useState('');
@@ -129,6 +131,27 @@ export function Dashboard() {
     }
   };
 
+  useEffect(() => {
+    const fetchSchedule = async () => {
+      try {
+        const userId = currentUser?.uid;
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/schedules/${userId}`);
+        const data = response.data as { success: boolean; schedules: Schedule[]; message: string };
+        if (data.success && data.schedules.length > 0) {
+          setSchedule(data.schedules[0]); // Use the first schedule if multiple exist
+        } else {
+          console.log("No schedule found for user");
+        }
+      } catch (error) {
+        console.error("Failed to fetch schedule", error);
+      }
+    };
+
+    if (currentUser?.uid) {
+      fetchSchedule();
+    }
+  }, [currentUser]);
+
   return (
     <>
       <Navigation />
@@ -243,7 +266,7 @@ export function Dashboard() {
             <h2>📅 Weekly Schedule</h2>
           </div>
           <div className="section-content">
-            <DashboardWeeklySchedule />
+            <DashboardWeeklySchedule schedule={schedule} />
           </div>
         </div>
 

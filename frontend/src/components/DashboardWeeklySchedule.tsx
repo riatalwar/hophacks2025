@@ -1,14 +1,17 @@
 import { useState, useRef, useEffect } from 'react';
-import type { TimeBlock } from '@shared/types/activities';
+import type { TimeBlock, Schedule } from '@shared/types/activities';
 import '../styles/PreferencesWeekCalendar.css';
 
 interface DashboardWeeklyScheduleProps {
-  // Props removed - dashboard will always show empty state
+  schedule?: Schedule | null;
 }
 
-export function DashboardWeeklySchedule({}: DashboardWeeklyScheduleProps) {
+export function DashboardWeeklySchedule({ schedule }: DashboardWeeklyScheduleProps) {
   const [isMinimized, setIsMinimized] = useState(false);
   const [currentWeek, setCurrentWeek] = useState<Date[]>([]);
+  const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([]);
+  const [wakeUpTimes, setWakeUpTimes] = useState<{ [day: number]: TimeBlock | null }>({});
+  const [bedtimes, setBedtimes] = useState<{ [day: number]: TimeBlock | null }>({});
   const calendarRef = useRef<HTMLDivElement>(null);
 
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -20,7 +23,6 @@ export function DashboardWeeklySchedule({}: DashboardWeeklyScheduleProps) {
 
   // Helper functions
   const timeToPosition = (time: number) => (time / 30) * HALF_HOUR_HEIGHT; // 30-minute intervals
-  const positionToTime = (position: number) => Math.round((position / HALF_HOUR_HEIGHT) * 30); // 30-minute intervals
   
   const dayToPosition = (day: number) => {
     if (!calendarRef.current) return 0;
@@ -77,6 +79,36 @@ export function DashboardWeeklySchedule({}: DashboardWeeklyScheduleProps) {
     setCurrentWeek(week);
   }, []);
 
+  // Process schedule data when it changes
+  useEffect(() => {
+    if (schedule && schedule.timeBlocks) {
+      const allTimeBlocks: TimeBlock[] = Object.values(schedule.timeBlocks);
+      const wakeUpTimesMap: { [day: number]: TimeBlock | null } = {};
+      const bedtimesMap: { [day: number]: TimeBlock | null } = {};
+      const studyTimeBlocks: TimeBlock[] = [];
+
+      // Process each time block
+      allTimeBlocks.forEach(block => {
+        if (block.type === 'wake') {
+          wakeUpTimesMap[block.day] = block;
+        } else if (block.type === 'bedtime') {
+          bedtimesMap[block.day] = block;
+        } else if (block.type === 'study') {
+          studyTimeBlocks.push(block);
+        }
+      });
+
+      setTimeBlocks(studyTimeBlocks);
+      setWakeUpTimes(wakeUpTimesMap);
+      setBedtimes(bedtimesMap);
+    } else {
+      // Clear data if no schedule
+      setTimeBlocks([]);
+      setWakeUpTimes({});
+      setBedtimes({});
+    }
+  }, [schedule]);
+
   // Toggle minimize/maximize
   const toggleMinimize = () => {
     setIsMinimized(!isMinimized);
@@ -88,14 +120,7 @@ export function DashboardWeeklySchedule({}: DashboardWeeklyScheduleProps) {
     return { dayWidth: gridWidth / DAYS_COUNT, gridWidth };
   };
 
-  // Helper function to get time block at position
-  const getTimeBlockAt = (day: number, timeSlot: number) => {
-    return timeBlocks.find(block => 
-      block.day === day && 
-      timeSlot >= block.startTime && 
-      timeSlot < block.endTime
-    );
-  };
+  // Helper function removed - not needed for display-only component
 
   return (
     <div className={`preferences-week-calendar-container ${isMinimized ? 'minimized' : ''}`}>
@@ -167,7 +192,86 @@ export function DashboardWeeklySchedule({}: DashboardWeeklyScheduleProps) {
               ))}
             </div>
 
-            {/* Empty state - no message displayed */}
+            {/* Time blocks */}
+            {timeBlocks.map(block => (
+              <div
+                key={block.id}
+                className={`preferences-time-block ${block.type}`}
+                style={{
+                  left: dayToPosition(block.day),
+                  top: timeToPosition(block.startTime),
+                  height: timeToPosition(block.endTime - block.startTime),
+                  width: getGridDimensions().dayWidth
+                }}
+              >
+                <div className="preferences-block-content">
+                  <span className="preferences-block-time">
+                    {formatTimeWithDay(block.startTime)} - {formatTimeWithDay(block.endTime)}
+                  </span>
+                  {block.notes && (
+                    <span className="preferences-block-summary">
+                      {block.notes}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {/* Wake up time blocks */}
+            {Object.entries(wakeUpTimes).map(([day, wakeTime]) => {
+              if (!wakeTime) return null;
+              return (
+                <div
+                  key={wakeTime.id}
+                  className={`preferences-time-block ${wakeTime.type}`}
+                  style={{
+                    left: dayToPosition(parseInt(day)),
+                    top: timeToPosition(wakeTime.startTime),
+                    height: timeToPosition(wakeTime.endTime - wakeTime.startTime),
+                    width: getGridDimensions().dayWidth
+                  }}
+                >
+                  <div className="preferences-block-content">
+                    <span className="preferences-block-time">
+                      {formatTimeWithDay(wakeTime.startTime)}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Bedtime blocks */}
+            {Object.entries(bedtimes).map(([day, bedtime]) => {
+              if (!bedtime) return null;
+              return (
+                <div
+                  key={bedtime.id}
+                  className={`preferences-time-block ${bedtime.type}`}
+                  style={{
+                    left: dayToPosition(parseInt(day)),
+                    top: timeToPosition(bedtime.startTime),
+                    height: timeToPosition(bedtime.endTime - bedtime.startTime),
+                    width: getGridDimensions().dayWidth
+                  }}
+                >
+                  <div className="preferences-block-content">
+                    <span className="preferences-block-time">
+                      {formatTimeWithDay(bedtime.startTime, true)}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Empty state message when no blocks */}
+            {timeBlocks.length === 0 && Object.values(wakeUpTimes).every(v => !v) && Object.values(bedtimes).every(v => !v) && (
+              <div className="preferences-empty-state">
+                <div className="preferences-empty-message">
+                  <h4>No Schedule Set</h4>
+                  <p>Go to Settings to set up your weekly schedule with wake up times, bedtimes, and busy times.</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

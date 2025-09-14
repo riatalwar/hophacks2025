@@ -21,6 +21,7 @@
     "@google-cloud/functions-framework": "^4.0.0",
     "@google/generative-ai": "^0.24.1",
     "@types/multer": "^2.0.0",
+    "axios": "^1.12.1",
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "firebase-admin": "^12.6.0",

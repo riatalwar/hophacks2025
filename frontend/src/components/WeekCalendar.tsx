@@ -53,16 +53,16 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
     const savedWakeUpTimes = localStorage.getItem('studySchedule_wakeUpTimes');
     if (savedWakeUpTimes) {
       try {
-        setWakeUpTimes(JSON.parse(savedWakeUpTimes));
+      setWakeUpTimes(JSON.parse(savedWakeUpTimes));
       } catch (error) {
         console.error('Error loading wake up times:', error);
       }
     }
-
+    
     const savedBedtimes = localStorage.getItem('studySchedule_bedtimes');
     if (savedBedtimes) {
       try {
-        setBedtimes(JSON.parse(savedBedtimes));
+      setBedtimes(JSON.parse(savedBedtimes));
       } catch (error) {
         console.error('Error loading bedtimes:', error);
       }
@@ -225,12 +225,12 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
         } else {
           const newBlock: TimeBlock = {
             id: `study-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            day,
-            startTime,
-            endTime,
-            type: 'study'
-          };
-          
+          day,
+          startTime,
+          endTime,
+          type: 'study'
+        };
+        
           setTimeBlocks(prev => {
             const updated = [...prev, newBlock];
             saveTimeBlocks(updated);
@@ -278,19 +278,19 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
         )}
         
         <div className="preferences-calendar-controls">
-          <button
+          <button 
             className={`preferences-control-button ${selectedButton === 'wake' ? 'active' : ''}`}
             onClick={() => handleButtonClick('wake')}
           >
             Wake Up Times
           </button>
-          <button
+            <button 
             className={`preferences-control-button ${selectedButton === 'bedtime' ? 'active' : ''}`}
             onClick={() => handleButtonClick('bedtime')}
-          >
-            Bedtimes
-          </button>
-          <button
+            >
+              Bedtimes
+            </button>
+            <button 
             className={`preferences-control-button ${selectedButton === 'study' ? 'active' : ''}`}
             onClick={() => handleButtonClick('study')}
           >
@@ -301,16 +301,16 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
             onClick={handleMinimizeToggle}
           >
             {isMinimized ? '▼' : '▲'}
-          </button>
-        </div>
-        
-        {errorMessage && (
-          <div className="preferences-error-message">
-            {errorMessage}
+            </button>
           </div>
-        )}
-      </div>
 
+          {errorMessage && (
+            <div className="preferences-error-message">
+              {errorMessage}
+            </div>
+          )}
+      </div>
+      
       {!isMinimized && (
         <div className="preferences-calendar-grid">
           <div className="preferences-time-column">
@@ -324,7 +324,7 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
               </div>
             ))}
           </div>
-          
+
           {days.map((day, dayIndex) => (
             <div key={day} className="preferences-day-column">
               <div className="preferences-day-header">
@@ -332,8 +332,8 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
                 {currentWeek.length > 0 && (
                   <div className="preferences-day-date">{formatDate(currentWeek[dayIndex])}</div>
                 )}
-              </div>
-              
+          </div>
+
               <div className="preferences-day-slots">
                 {timeSlots.map(timeSlot => {
                   const block = getTimeBlockAt(dayIndex, timeSlot);
@@ -344,15 +344,15 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
                     timeSlot >= Math.min(createStart.time, hoverEnd.time) && 
                     timeSlot <= Math.max(createStart.time, hoverEnd.time);
                   
-                  return (
-                    <div
+            return (
+              <div
                       key={timeSlot}
                       className={`preferences-time-slot ${
                         block ? `preferences-${block.type}-block` : ''
                       } ${isCreatingBlock ? 'preferences-creating-block' : ''}`}
                       onClick={() => handleTimeSlotClick(dayIndex, timeSlot)}
                       onMouseMove={() => handleMouseMove(dayIndex, timeSlot)}
-                      style={{
+                style={{
                         height: `${HALF_HOUR_HEIGHT}px`,
                         backgroundColor: block ? 
                           (block.type === 'study' ? '#4ecdc4' : 
@@ -361,15 +361,15 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
                       }}
                     >
                       {block && (
-                        <div className="preferences-block-content">
+                <div className="preferences-block-content">
                           {block.type === 'study' && 'Study'}
                           {block.type === 'wake' && 'Wake'}
                           {block.type === 'bedtime' && 'Sleep'}
-                        </div>
+                </div>
                       )}
-                    </div>
-                  );
-                })}
+              </div>
+            );
+          })}
               </div>
             </div>
           ))}
