@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Navigation } from '../components/Navigation';
 import { WeekCalendar } from '../components/WeekCalendar';
-import type { StudyTimeList, StudyTimeNode, Preferences } from '../types/ClassTypes';
+import type { BusyTimeList, BusyTimeNode, Preferences, TimeBlock } from '@shared/types/activities';
 import '../styles/Preferences.css';
 
 export function Preferences() {
-  const [, setStudySchedule] = useState<any[]>([]);
+  const [, setBusySchedule] = useState<TimeBlock[]>([]);
   const [emailNotifications, setEmailNotifications] = useState({
     studyReminders: true,
     assignmentDeadlines: true,
@@ -28,7 +28,7 @@ export function Preferences() {
   const [bedtimes, setBedtimes] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
 
   // Array called studyTimes storing linked lists (of 2-value tuples) in each index
-  const [studyTimes, setStudyTimes] = useState<StudyTimeList[]>([
+  const [busyTimes, setBusyTimes] = useState<BusyTimeList[]>([
     { head: null, size: 0 }, // Monday
     { head: null, size: 0 }, // Tuesday
     { head: null, size: 0 }, // Wednesday
@@ -59,8 +59,8 @@ export function Preferences() {
     return colorMap[color] || color;
   };
 
-  const handleScheduleChange = useCallback((schedule: any[]) => {
-    setStudySchedule(schedule);
+  const handleScheduleChange = useCallback((schedule: TimeBlock[]) => {
+    setBusySchedule(schedule);
   }, []);
 
   // Comprehensive function to save all preferences
@@ -69,7 +69,7 @@ export function Preferences() {
     const currentPreferences = {
       wakeUpTimes,
       bedtimes,
-      studyTimes,
+      busyTimes,
       studyReminders: emailNotifications.studyReminders,
       assignmentDeadlines: emailNotifications.assignmentDeadlines,
       weeklyDigest: emailNotifications.weeklyDigest,
@@ -88,7 +88,7 @@ export function Preferences() {
     localStorage.setItem('scheduleSort_accentColor', accentColor);
     
     console.log('Preferences saved:', currentPreferences);
-  }, [wakeUpTimes, bedtimes, studyTimes, emailNotifications, shareDataAnonymously, isDarkMode, accentColor]);
+  }, [wakeUpTimes, bedtimes, busyTimes, emailNotifications, shareDataAnonymously, isDarkMode, accentColor]);
 
   // Create a stable reference to saveAllPreferences using useRef
   const saveAllPreferencesRef = useRef(saveAllPreferences);
@@ -111,8 +111,8 @@ export function Preferences() {
         }
         
         // Load study times
-        if (preferences.studyTimes) {
-          setStudyTimes(preferences.studyTimes);
+        if (preferences.busyTimes) {
+          setBusyTimes(preferences.busyTimes);
         }
         
         // Load email notifications
@@ -149,10 +149,10 @@ export function Preferences() {
   // Load preferences on component mount
   useEffect(() => {
     loadAllPreferences();
-  }, []); // Only run once on mount
+  }, [loadAllPreferences]); // Include loadAllPreferences dependency
 
   // Function to sync wake up times from WeekCalendar
-  const handleWakeUpTimesChange = useCallback((newWakeUpTimes: { [day: number]: any | null }) => {
+  const handleWakeUpTimesChange = useCallback((newWakeUpTimes: { [day: number]: TimeBlock | null }) => {
     const wakeUpArray = [0, 0, 0, 0, 0, 0, 0];
     Object.entries(newWakeUpTimes).forEach(([day, wakeTime]) => {
       if (wakeTime && wakeTime.startTime !== undefined) {
@@ -166,7 +166,7 @@ export function Preferences() {
   }, []); // Stable callback
 
   // Function to sync bedtimes from WeekCalendar
-  const handleBedtimesChange = useCallback((newBedtimes: { [day: number]: any | null }) => {
+  const handleBedtimesChange = useCallback((newBedtimes: { [day: number]: TimeBlock | null }) => {
     const bedtimesArray = [0, 0, 0, 0, 0, 0, 0];
     Object.entries(newBedtimes).forEach(([day, bedtime]) => {
       if (bedtime && bedtime.startTime !== undefined) {
@@ -180,9 +180,9 @@ export function Preferences() {
   }, []); // Stable callback
 
   // Function to sync study times from WeekCalendar
-  const handleStudyTimesChange = useCallback((newStudyTimes: any[]) => {
+  const handleStudyTimesChange = useCallback((newStudyTimes: TimeBlock[]) => {
     // Convert study times array to StudyTimeList format
-    const studyTimesList: StudyTimeList[] = [
+    const busyTimesList: BusyTimeList[] = [
       { head: null, size: 0 }, // Monday
       { head: null, size: 0 }, // Tuesday
       { head: null, size: 0 }, // Wednesday
@@ -196,26 +196,26 @@ export function Preferences() {
     newStudyTimes.forEach((timeBlock) => {
       if (timeBlock.day !== undefined && timeBlock.startTime !== undefined && timeBlock.endTime !== undefined) {
         const day = timeBlock.day;
-        const node: StudyTimeNode = {
+        const node: BusyTimeNode = {
           data: [timeBlock.startTime, timeBlock.endTime],
           next: null
         };
         
-        if (studyTimesList[day].head === null) {
-          studyTimesList[day].head = node;
+        if (busyTimesList[day].head === null) {
+          busyTimesList[day].head = node;
         } else {
           // Add to end of linked list
-          let current = studyTimesList[day].head;
+          let current = busyTimesList[day].head;
           while (current.next !== null) {
             current = current.next;
           }
           current.next = node;
         }
-        studyTimesList[day].size++;
+        busyTimesList[day].size++;
       }
     });
 
-    setStudyTimes(studyTimesList);
+    setBusyTimes(busyTimesList);
     
     // Auto-save preferences using stable reference
     setTimeout(() => saveAllPreferencesRef.current(), 100);

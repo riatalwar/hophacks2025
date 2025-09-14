@@ -1,13 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import '../styles/PreferencesWeekCalendar.css';
-
-interface TimeBlock {
-  id: string;
-  day: number; // 0 = Monday, 1 = Tuesday, etc.
-  startTime: number; // minutes from midnight
-  endTime: number; // minutes from midnight
-  type: 'study' | 'wake' | 'bedtime';
-}
+import type { TimeBlock } from '@shared/types/activities';
 
 interface WeekCalendarProps {
   onScheduleChange: (schedule: TimeBlock[]) => void;
@@ -63,21 +56,21 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
     if (savedBedtimes) {
       setBedtimes(JSON.parse(savedBedtimes));
     }
-  }, []); // Only run once on mount, callbacks are stable
+  }, [onScheduleChange]); // Add onScheduleChange dependency
 
   // Notify parent component when wake up times change
   useEffect(() => {
     if (onWakeUpTimesChange) {
       onWakeUpTimesChange(wakeUpTimes);
     }
-  }, [wakeUpTimes]); // Remove callback from dependencies to prevent infinite re-renders
+  }, [wakeUpTimes, onWakeUpTimesChange]);
 
   // Notify parent component when bedtimes change
   useEffect(() => {
     if (onBedtimesChange) {
       onBedtimesChange(bedtimes);
     }
-  }, [bedtimes]); // Remove callback from dependencies to prevent infinite re-renders
+  }, [bedtimes, onBedtimesChange]);
 
   // Notify parent component when study times change
   useEffect(() => {
@@ -85,7 +78,7 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
       const studyTimes = timeBlocks.filter(block => block.type === 'study');
       onStudyTimesChange(studyTimes);
     }
-  }, [timeBlocks]); // Remove callback from dependencies to prevent infinite re-renders
+  }, [timeBlocks, onStudyTimesChange]);
 
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const timeSlots = Array.from({ length: 48 }, (_, i) => i); // 48 slots for 30-minute intervals
@@ -396,7 +389,7 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
     }
   };
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     // Handle resize completion
     if (resizing) {
       setResizing(null);
@@ -405,7 +398,7 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
     
     // Note: Study time creation is handled in handleMouseDown, not here
     // This function only handles cleanup for other operations
-  };
+  }, [resizing]);
 
   const handleBlockMouseDown = (e: React.MouseEvent, blockId: string) => {
     if (!selectedButton) return;
@@ -447,13 +440,13 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
     onScheduleChange(updatedBlocks);
   };
 
-  const handleBlockMouseUp = () => {
+  const handleBlockMouseUp = useCallback(() => {
     if (dragging) {
       onScheduleChange(timeBlocks);
     }
     setDragging(null);
     setDragStart(null);
-  };
+  }, [dragging, timeBlocks, onScheduleChange]);
 
   const deleteBlock = (blockId: string) => {
     const updatedBlocks = timeBlocks.filter(block => block.id !== blockId);
@@ -549,7 +542,7 @@ export function WeekCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimes
 
     document.addEventListener('mouseup', handleGlobalMouseUp);
     return () => document.removeEventListener('mouseup', handleGlobalMouseUp);
-  }, [isCreating, dragging, resizing]);
+  }, [isCreating, dragging, resizing, handleMouseUp, handleBlockMouseUp]);
 
   // Escape key handler to cancel study time creation
   useEffect(() => {
