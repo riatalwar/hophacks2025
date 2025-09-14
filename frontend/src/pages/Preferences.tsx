@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Navigation } from '../components/Navigation';
-import { WeekCalendar } from '../components/WeekCalendar';
-import type { StudyTimeList, StudyTimeNode, Preferences } from '../types/ClassTypes';
+import { InputCalendar } from '../components/InputCalendar';
+import type { BusyTimeList, BusyTimeNode, Preferences, TimeBlock } from '@shared/types/activities';
 import '../styles/Preferences.css';
 
 export function Preferences() {
-  const [, setStudySchedule] = useState<any[]>([]);
+  const [, setBusySchedule] = useState<TimeBlock[]>([]);
   const [emailNotifications, setEmailNotifications] = useState({
     studyReminders: true,
     assignmentDeadlines: true,
@@ -39,8 +39,8 @@ export function Preferences() {
   const [wakeUpTimes, setWakeUpTimes] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
   const [bedtimes, setBedtimes] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
 
-  // Array called busyTimes storing linked lists (of 2-value tuples) in each index
-  const [busyTimes, setBusyTimes] = useState<StudyTimeList[]>([
+  // Array called studyTimes storing linked lists (of 2-value tuples) in each index
+  const [busyTimes, setBusyTimes] = useState<BusyTimeList[]>([
     { head: null, size: 0 }, // Monday
     { head: null, size: 0 }, // Tuesday
     { head: null, size: 0 }, // Wednesday
@@ -71,8 +71,8 @@ export function Preferences() {
     return colorMap[color] || color;
   };
 
-  const handleScheduleChange = useCallback((schedule: any[]) => {
-    setStudySchedule(schedule);
+  const handleScheduleChange = useCallback((schedule: TimeBlock[]) => {
+    setBusySchedule(schedule);
   }, []);
 
   // Comprehensive function to save all preferences
@@ -161,10 +161,10 @@ export function Preferences() {
   // Load preferences on component mount
   useEffect(() => {
     loadAllPreferences();
-  }, []); // Only run once on mount
+  }, [loadAllPreferences]); // Include loadAllPreferences dependency
 
-  // Function to sync wake up times from WeekCalendar
-  const handleWakeUpTimesChange = useCallback((newWakeUpTimes: { [day: number]: any | null }) => {
+  // Function to sync wake up times from InputCalendar
+  const handleWakeUpTimesChange = useCallback((newWakeUpTimes: { [day: number]: TimeBlock | null }) => {
     const wakeUpArray = [0, 0, 0, 0, 0, 0, 0];
     Object.entries(newWakeUpTimes).forEach(([day, wakeTime]) => {
       if (wakeTime && wakeTime.startTime !== undefined) {
@@ -177,8 +177,8 @@ export function Preferences() {
     setTimeout(() => saveAllPreferencesRef.current(), 100);
   }, []); // Stable callback
 
-  // Function to sync bedtimes from WeekCalendar
-  const handleBedtimesChange = useCallback((newBedtimes: { [day: number]: any | null }) => {
+  // Function to sync bedtimes from InputCalendar
+  const handleBedtimesChange = useCallback((newBedtimes: { [day: number]: TimeBlock | null }) => {
     const bedtimesArray = [0, 0, 0, 0, 0, 0, 0];
     Object.entries(newBedtimes).forEach(([day, bedtime]) => {
       if (bedtime && bedtime.startTime !== undefined) {
@@ -191,10 +191,10 @@ export function Preferences() {
     setTimeout(() => saveAllPreferencesRef.current(), 100);
   }, []); // Stable callback
 
-  // Function to sync busy times from WeekCalendar
-  const handleBusyTimesChange = useCallback((newBusyTimes: any[]) => {
-    // Convert busy times array to StudyTimeList format
-    const busyTimesList: StudyTimeList[] = [
+  // Function to sync study times from InputCalendar
+  const handleBusyTimesChange = useCallback((newBusyTimes: TimeBlock[]) => {
+    // Convert study times array to StudyTimeList format
+    const busyTimesList: BusyTimeList[] = [
       { head: null, size: 0 }, // Monday
       { head: null, size: 0 }, // Tuesday
       { head: null, size: 0 }, // Wednesday
@@ -208,7 +208,7 @@ export function Preferences() {
     newBusyTimes.forEach((timeBlock) => {
       if (timeBlock.day !== undefined && timeBlock.startTime !== undefined && timeBlock.endTime !== undefined) {
         const day = timeBlock.day;
-        const node: StudyTimeNode = {
+        const node: BusyTimeNode = {
           data: [timeBlock.startTime, timeBlock.endTime],
           next: null
         };
@@ -354,7 +354,8 @@ export function Preferences() {
         setImportResult(null);
       }, 3000);
 
-    } catch (error) {
+    } catch (error: unknown) {
+      console.error('Error importing calendar file:', error);
       setImportResult({
         success: false,
         message: 'Failed to import calendar file. Please try again.'
@@ -495,11 +496,11 @@ export function Preferences() {
               <h2>Study Preferences</h2>
               <div className="section-content">
                 <p>Customize your study schedule, learning style, and academic preferences to optimize your Schedule Sort experience.</p>
-                <WeekCalendar 
+                <InputCalendar 
                   onScheduleChange={handleScheduleChange}
                   onWakeUpTimesChange={handleWakeUpTimesChange}
                   onBedtimesChange={handleBedtimesChange}
-                  onStudyTimesChange={handleBusyTimesChange}
+                  onBusyTimesChange={handleBusyTimesChange}
                 />
               </div>
             </div>

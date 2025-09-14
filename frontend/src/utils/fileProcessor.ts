@@ -255,7 +255,7 @@ export async function processWebpage(url: string): Promise<FileProcessResult> {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
-    const html = response.data;
+    const html = response.data as string;
     const processor = new HTMLFileProcessor();
     
     // Extract text directly from HTML
@@ -272,15 +272,20 @@ export async function processWebpage(url: string): Promise<FileProcessResult> {
         fileSize: html.length,
       },
     };
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      if (error.code === 'ENOTFOUND') {
+  } catch (error: unknown) {
+    if (error && typeof error === 'object' && 'isAxiosError' in error) {
+      const axiosError = error as {
+        code?: string;
+        response?: { status: number; statusText: string };
+        request?: unknown;
+      };
+      if (axiosError.code === 'ENOTFOUND') {
         throw new Error(`Website not found: ${url}`);
-      } else if (error.code === 'ECONNREFUSED') {
+      } else if (axiosError.code === 'ECONNREFUSED') {
         throw new Error(`Connection refused: ${url}`);
-      } else if (error.response) {
-        throw new Error(`HTTP ${error.response.status}: ${error.response.statusText}`);
-      } else if (error.request) {
+      } else if (axiosError.response) {
+        throw new Error(`HTTP ${axiosError.response.status}: ${axiosError.response.statusText}`);
+      } else if (axiosError.request) {
         throw new Error(`Network error: Unable to reach ${url}`);
       }
     }
