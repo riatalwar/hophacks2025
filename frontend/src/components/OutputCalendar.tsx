@@ -27,6 +27,11 @@ const OutputCalendar: React.FC<OutputCalendarProps> = ({
   viewMode,
   onViewModeChange,
 }) => {
+  // View state: weekly | daily
+  const [viewModeState, setViewModeState] = useState<'weekly' | 'daily'>('weekly');
+  // Selected day for daily view (default today, Monday = 0)
+  const [selectedDay, setSelectedDay] = useState<number>(new Date().getDay() === 0 ? 6 : new Date().getDay() - 1);
+
   const [schedule, setSchedule] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,9 +77,8 @@ const OutputCalendar: React.FC<OutputCalendarProps> = ({
     fetchSchedule();
   }, [userId]);
 
-  // Helper: map sessions for current week
+  // Weekly grid (existing)
   const renderWeeklyGrid = () => {
-    // Build timeslots (array of intervals)
     const timeSlots = [];
     for (let mins = START_HOUR * 60; mins < END_HOUR * 60; mins += TIME_INTERVAL) {
       const hour = Math.floor(mins / 60);
@@ -87,10 +91,6 @@ const OutputCalendar: React.FC<OutputCalendarProps> = ({
         label,
       });
     }
-
-    // 1. Header row for days
-    // 2. Grid rows for time slots.
-    // 3. For each slot/day, find session(s) whose startTime falls into that slot/day.
 
     return (
       <div className="calendar-grid">
@@ -126,6 +126,101 @@ const OutputCalendar: React.FC<OutputCalendarProps> = ({
       </div>
     );
   };
+
+  // Daily view
+  const renderDailyView = () => {
+    const timeSlots = [];
+    for (let mins = START_HOUR * 60; mins < END_HOUR * 60; mins += TIME_INTERVAL) {
+      const hour = Math.floor(mins / 60);
+      const minutes = mins % 60;
+      const label =
+        `${hour % 12 === 0 ? 12 : hour % 12}:${minutes.toString().padStart(2, '0')}${hour < 12 ? 'AM' : 'PM'}`;
+      timeSlots.push({
+        start: mins,
+        end: mins + TIME_INTERVAL,
+        label,
+      });
+    }
+
+    // Sessions for the selected day
+    const sessionsForDay: ScheduledStudySession[] = (schedule.sessions ?? []).filter(
+      (session: ScheduledStudySession) => session.day === selectedDay
+    );
+
+    return (
+      <div className="daily-calendar-container">
+        <div className="daily-header">
+          <div className="day-title">{DAYS[selectedDay]}</div>
+          <div className="daily-date">{/* Optionally show actual date here */}</div>
+        </div>
+        <div className="daily-time-grid">
+          {timeSlots.map((slot, idx) => {
+            // Find sessions in this slot
+            const slotSessions = sessionsForDay.filter(
+              (session) => session.startTime >= slot.start && session.startTime < slot.end
+            );
+            return (
+              <div className="daily-time-row" key={`day-row-${idx}`}>
+                <div className="daily-time-label">{slot.label}</div>
+                <div className="daily-session-cell">
+                  {slotSessions.map((session) => (
+                    <div className="session-block" key={session.id}>
+                      <div className="session-title">{session.title}</div>
+                      {session.notes && <div className="session-notes">{session.notes}</div>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="output-calendar">
+      <div className="view-switcher">
+        <button
+          className={viewModeState === 'weekly' ? 'view-btn active' : 'view-btn'}
+          onClick={() => setViewModeState('weekly')}
+        >
+          Weekly View
+        </button>
+        <button
+          className={viewModeState === 'daily' ? 'view-btn active' : 'view-btn'}
+          onClick={() => setViewModeState('daily')}
+        >
+          Daily View
+        </button>
+        {viewModeState === 'daily' && (
+          <div className="day-selector">
+            {DAYS.map((day, idx) => (
+              <button
+                key={day}
+                className={selectedDay === idx ? 'day-btn active' : 'day-btn'}
+                onClick={() => setSelectedDay(idx)}
+              >
+                {day}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      <h2>Output Calendar</h2>
+      {isLoading && <div>Generating schedule...</div>}
+      {error && <div className="error-message">{error}</div>}
+      {!isLoading && !error && !schedule && (
+        <div>No schedule generated.</div>
+      )}
+      {!isLoading && !error && schedule && schedule.sessions && (
+        viewModeState === 'weekly'
+          ? renderWeeklyGrid()
+          : renderDailyView()
+      )}
+    </div>
+  );
+};
 
   return (
     <div className="output-calendar">

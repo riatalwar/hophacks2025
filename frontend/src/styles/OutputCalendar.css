@@ -91,3 +91,128 @@
   font-weight: 500;
   border-left: 3px solid #e22c2c;
 }
+
+/* ------- View Switcher Controls ------- */
+.view-switcher {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  background: #f1f1f7;
+  padding: 0.5em 0 1em 0;
+  margin-bottom: 0.5em;
+  border-radius: 8px;
+  justify-content: flex-start;
+}
+
+.view-btn {
+  font-weight: 600;
+  font-size: 1em;
+  border: none;
+  background: #e5e9fa;
+  color: #3a406a;
+  padding: 0.4em 1.1em;
+  margin-right: 0.7em;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.view-btn.active {
+  background: #3a5dd7;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(58,93,215,0.10);
+}
+
+.day-selector {
+  display: flex;
+  gap: 0.3em;
+}
+
+.day-btn {
+  font-size: 0.96em;
+  font-weight: 500;
+  padding: 0.25em 0.7em;
+  background: #e7e9ef;
+  color: #3a406a;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-right: 0.1em;
+}
+
+.day-btn.active {
+  background: #566fda;
+  color: #fff;
+}
+
+/* ------- Daily Calendar Layout ------- */
+.daily-calendar-container {
+  background: #f7f7fa;
+  border: 1px solid #e5e5ea;
+  border-radius: 5px;
+  padding: 0.8em;
+  margin-top: 0.8em;
+}
+
+.daily-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.7em;
+  padding-bottom: 0.25em;
+  border-bottom: 1px solid #eceff5;
+}
+
+.day-title {
+  font-size: 1.13em;
+  font-weight: 700;
+  color: #3a5dd7;
+  letter-spacing: 0.01em;
+}
+
+.daily-date {
+  font-size: 0.95em;
+  font-weight: 500;
+  color: #484858;
+  opacity: 0.84;
+}
+
+.daily-time-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.daily-time-row {
+  display: flex;
+  align-items: flex-start;
+  border-bottom: 1px solid #e5e5ea;
+  min-height: 36px;
+}
+
+.daily-time-label {
+  width: 80px;
+  font-size: 1em;
+  color: #484858;
+  background: #f2f2fa;
+  text-align: center;
+  font-weight: 500;
+  padding: 0.36em 0.1em;
+  border-right: 1px solid #dbe1f3;
+  flex-shrink: 0;
+  border-radius: 4px 0 0 4px;
+}
+
+.daily-session-cell {
+  flex: 1;
+  padding: 0.2em 5px;
+  background: #fcfcfe;
+  min-height: 36px;
+  display: flex;
+  gap: 0.18em;
+  align-items: flex-start;
+}
+
+.daily-session-cell .session-block {
+  margin: 2px 2px 2px 0;
+}
