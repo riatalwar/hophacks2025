@@ -62,7 +62,7 @@ export function HomePage() {
         <div className="container">
           <div className="cta-content">
             <h2>Ready to Transform Your Academic Life?</h2>
-            <p>Join thousands of students who have already streamlined their study process with Class Catcher.</p>
+            <p>Join thousands of students who have already streamlined their study process with Schedule Sort.</p>
             <Link to="/activities" className="primary-button large">Get Started Today</Link>
           </div>
         </div>
@@ -73,7 +73,7 @@ export function HomePage() {
         <div className="container">
           <div className="footer-content">
             <div className="footer-brand">
-              <h3>Class Catcher</h3>
+              <h3>Schedule Sort</h3>
               <p>Your academic success, simplified.</p>
             </div>
             <div className="footer-links">
@@ -98,7 +98,7 @@ export function HomePage() {
             </div>
           </div>
           <div className="footer-bottom">
-            <p>&copy; 2024 Class Catcher. All rights reserved.</p>
+            <p>&copy; 2024 Schedule Sort. All rights reserved.</p>
           </div>
         </div>
       </footer>

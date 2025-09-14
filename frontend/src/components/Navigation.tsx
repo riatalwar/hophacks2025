@@ -170,7 +170,7 @@ export function Navigation({
             onClick={handleLogoClick} 
             className="logo-button"
           >
-            <h2>Class Catcher</h2>
+            <h2>Schedule Sort</h2>
           </NavButton>
         </div>
 

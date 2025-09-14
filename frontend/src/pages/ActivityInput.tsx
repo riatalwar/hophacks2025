@@ -114,7 +114,7 @@ export function ActivityInput() {
       <div className="class-input-container">
         <div className="class-input-header">
           <h1>Add Your Activities</h1>
-          <p>Enter all the activities you're involved in this semester to get started with Class Catcher</p>
+          <p>Enter all the activities you're involved in this semester to get started with Schedule Sort</p>
         </div>
 
         {/* Activities List */}
