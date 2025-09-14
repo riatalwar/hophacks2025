@@ -252,3 +252,99 @@ export function prepareSortedTaskChunks(tasks: TodoItem[]): TaskChunk[] {
     return a.taskId.localeCompare(b.taskId);
   });
 }
+/**
+ * Generates a weekly schedule based on tasks and user busy time.
+ * Allocates chunked tasks to available time slots, prioritizing urgent and high priority tasks.
+ * CRITICAL DATE BUG FIX: weekStartDate is set to preceding Monday using correct calculation.
+ *
+ * @param tasks Array of TodoItem representing user tasks.
+ * @param timeBlocks Array of TimeBlock representing user's busy times (each with start/end times per week day).
+ * @returns Array of scheduled chunks: { taskId, title, chunkIndex, totalChunks, scheduledStart, scheduledEnd, scheduledDate }
+ */
+export function generateSchedule(
+  tasks: TodoItem[],
+  timeBlocks: TimeBlock[]
+): Array<{
+  taskId: string;
+  title: string;
+  chunkIndex: number;
+  totalChunks: number;
+  scheduledStart: number;
+  scheduledEnd: number;
+  scheduledDate: string;
+}> {
+  // --- CRITICAL BUG FIX: Calculate start of week using correct preceding Monday logic
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dayOfWeek = today.getDay(); // Sunday = 0, Monday = 1, ...
+  const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Adjust for Sunday
+  const weekStartDate = new Date(today.setDate(diff));
+
+  // Prepare task chunks sorted by priority
+  const taskChunks = prepareSortedTaskChunks(tasks);
+
+  // Convert busy blocks and calculate weekly available slots
+  const busyTimeLists = convertTimeBlocksToBusyTimeLists(timeBlocks);
+  const availableTimeSlots = calculateAvailableTimeSlots(busyTimeLists);
+
+  // Initialize results and assignment trackers
+  const scheduledChunks: Array<{
+    taskId: string;
+    title: string;
+    chunkIndex: number;
+    totalChunks: number;
+    scheduledStart: number;
+    scheduledEnd: number;
+    scheduledDate: string;
+  }> = [];
+
+  // Track remaining durations for current chunk indexes
+  let chunkCursor = 0;
+
+  // Outer: iterate over chunks sorted by priority
+  for (const chunk of taskChunks) {
+    let chunkAssigned = false;
+    // Try placing in available slots this week (Monday=0, ..., Sunday=6)
+    for (let dayIdx = 0; dayIdx < 7 && !chunkAssigned; dayIdx++) {
+      const slots = availableTimeSlots[dayIdx];
+      // For each available slot on this day
+      for (let slotIdx = 0; slotIdx < slots.length && !chunkAssigned; slotIdx++) {
+        const slot = slots[slotIdx];
+        // If chunk fits in available slot
+        if (slot.duration >= chunk.duration) {
+          // Assign chunk
+          scheduledChunks.push({
+            taskId: chunk.taskId,
+            title: chunk.title,
+            chunkIndex: chunk.chunkIndex,
+            totalChunks: chunk.totalChunks,
+            scheduledStart: slot.start,
+            scheduledEnd: slot.start + chunk.duration,
+            scheduledDate: formatDate(addDays(weekStartDate, dayIdx)),
+          });
+          // Update slot availability (reduce duration, shift start time)
+          slot.start += chunk.duration;
+          slot.duration -= chunk.duration;
+          chunkAssigned = true;
+        }
+      }
+    }
+    // If not assignable, skip chunk (would require multi-week logic, not handled here)
+  }
+  return scheduledChunks;
+}
+
+// Helper: Adds days to a Date object and returns new Date
+function addDays(date: Date, days: number): Date {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
+// Helper: Formats Date as yyyy-mm-dd
+function formatDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
