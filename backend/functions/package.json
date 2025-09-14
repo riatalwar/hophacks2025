@@ -18,6 +18,7 @@
   },
   "main": "lib/backend/functions/src/index.js",
   "dependencies": {
+    "@google-cloud/functions-framework": "^4.0.0",
     "@google/generative-ai": "^0.24.1",
     "@types/multer": "^2.0.0",
     "cors": "^2.8.5",
