@@ -531,6 +531,46 @@
   background: rgba(78, 205, 196, 0.1);
 }
 
+/* Empty State Styles */
+.preferences-empty-state {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.preferences-empty-message {
+  background: rgba(var(--bg-primary-rgb), 0.95);
+  padding: 2rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-light);
+  box-shadow: 0 4px 12px var(--shadow-color);
+  backdrop-filter: blur(10px);
+  max-width: 300px;
+}
+
+.preferences-empty-message h4 {
+  color: var(--text-primary);
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.preferences-empty-message p {
+  color: var(--text-secondary);
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.light-theme .preferences-empty-message {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid var(--border-light);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .preferences-week-calendar-container {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Navigation } from '../components/Navigation';
+import { DashboardWeeklySchedule } from '../components/DashboardWeeklySchedule';
 import type { TodoItem } from '@shared/types/tasks';
 import '../styles/Dashboard.css';
 import axios from 'axios';
@@ -13,6 +14,8 @@ export function Dashboard() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTodoName, setEditTodoName] = useState('');
   const [editPriority, setEditPriority] = useState<'high' | 'medium' | 'low'>('medium');
+  
+  // Schedule data state removed - dashboard will always show empty state
 
   useEffect(() => {
     const fetchTodos = async () => {
@@ -32,6 +35,8 @@ export function Dashboard() {
 
     fetchTodos();
   }, [currentUser]);
+
+  // Schedule data loading removed - dashboard will always show empty state
 
   const addTodo = async () => {
     if (newTodo.trim()) {
@@ -237,19 +242,8 @@ export function Dashboard() {
           <div className="section-header">
             <h2>📅 Weekly Schedule</h2>
           </div>
-          <div className="schedule-grid">
-            {['Mon', 'Tue', 'Wed'].map(day => (
-              <div key={day} className="schedule-day">
-                <div className="day-header">{day}</div>
-                <div className="day-events">
-                  <div className="event wake-up">7:00 AM - Wake Up</div>
-                  <div className="event study">9:00 AM - Math Study</div>
-                  <div className="event class">11:00 AM - Biology Class</div>
-                  <div className="event study">2:00 PM - Chemistry Study</div>
-                  <div className="event bedtime">11:00 PM - Bedtime</div>
-                </div>
-              </div>
-            ))}
+          <div className="section-content">
+            <DashboardWeeklySchedule />
           </div>
         </div>
 

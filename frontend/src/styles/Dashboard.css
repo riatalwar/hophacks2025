@@ -45,20 +45,7 @@
   overflow: hidden;
 }
 
-.dashboard-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-  transition: left 0.5s ease;
-}
-
-.dashboard-section:hover::before {
-  left: 100%;
-}
+/* Hover animation removed */
 
 .section-header {
   display: flex;
@@ -122,9 +109,7 @@
   box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
 }
 
-.priority-selector:hover {
-  border-color: var(--border-hover);
-}
+/* Priority selector hover animation removed */
 
 .todo-list {
   max-height: 400px;
@@ -144,11 +129,7 @@
   transition: all 0.2s ease;
 }
 
-.todo-item:hover {
-  background: rgba(255, 255, 255, 0.08);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
+/* Todo item hover animation removed */
 
 .todo-item.completed {
   opacity: 0.6;
@@ -205,10 +186,7 @@
   transition: all 0.2s ease;
 }
 
-.todo-delete:hover {
-  background: rgba(244, 67, 54, 0.2);
-  transform: scale(1.1);
-}
+/* Todo delete hover animation removed */
 
 /* Todo Actions */
 .todo-actions {
@@ -232,10 +210,7 @@
   transition: all 0.2s ease;
 }
 
-.todo-edit-btn:hover {
-  background: rgba(78, 205, 196, 0.2);
-  transform: scale(1.1);
-}
+/* Todo edit hover animation removed */
 
 /* Edit Mode Styles */
 .todo-edit {
@@ -296,10 +271,7 @@
   transition: all 0.2s ease;
 }
 
-.save-button:hover {
-  background: rgba(76, 175, 80, 0.2);
-  transform: scale(1.1);
-}
+/* Save button hover animation removed */
 
 .cancel-button {
   background: rgba(244, 67, 54, 0.1);
@@ -317,10 +289,7 @@
   transition: all 0.2s ease;
 }
 
-.cancel-button:hover {
-  background: rgba(244, 67, 54, 0.2);
-  transform: scale(1.1);
-}
+/* Cancel button hover animation removed */
 
 /* Weekly Schedule Styles */
 .schedule-section {
@@ -387,10 +356,7 @@
   background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
 }
 
-.event:hover {
-  transform: scale(1.02);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
+/* Event hover animation removed */
 
 /* Analytics Styles */
 .analytics-section {
@@ -433,15 +399,7 @@
   transition: transform 0.3s ease;
 }
 
-.metric-card:hover::before {
-  transform: scaleX(1);
-}
-
-.metric-card:hover {
-  background: rgba(255, 255, 255, 0.08);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
+/* Metric card hover animation removed */
 
 .primary-metric {
   background: linear-gradient(135deg, rgba(78, 205, 196, 0.1) 0%, rgba(78, 205, 196, 0.05) 100%);
@@ -515,11 +473,7 @@
   transition: all 0.3s ease;
 }
 
-.chart-container:hover {
-  background: rgba(255, 255, 255, 0.08);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-}
+/* Chart container hover animation removed */
 
 .chart-header {
   display: flex;
@@ -602,10 +556,7 @@
   transition: all 0.3s ease;
 }
 
-.bar:hover {
-  opacity: 0.8;
-  transform: scaleY(1.05);
-}
+/* Bar hover animation removed */
 
 .study-bar {
   background: var(--accent-gradient);
@@ -641,10 +592,7 @@
   transition: all 0.3s ease;
 }
 
-.pie-slice:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
+/* Pie slice hover animation removed */
 
 .pie-slice.math {
   background: var(--accent-gradient);
