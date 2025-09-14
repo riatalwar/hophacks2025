@@ -14,7 +14,7 @@ export function Dashboard() {
     title: '',
     notes: '',
     dueDate: '',
-    associatedActivity: '',
+    activityId: '',
     priority: 'medium' as 'high' | 'medium' | 'low',
     estimatedHours: ''
   });
@@ -23,7 +23,7 @@ export function Dashboard() {
     title: '',
     notes: '',
     dueDate: '',
-    associatedActivity: '',
+    activityId: '',
     priority: 'medium' as 'high' | 'medium' | 'low',
     estimatedHours: ''
   });
@@ -71,7 +71,7 @@ export function Dashboard() {
         title: newTodo.title.trim(),
         notes: newTodo.notes.trim(),
         dueDate: newTodo.dueDate || 'TBD',
-        associatedActivity: newTodo.associatedActivity.trim() || undefined,
+        activityId: newTodo.activityId.trim() || undefined,
         priority: newTodo.priority,
         estimatedHours: newTodo.estimatedHours ? parseInt(newTodo.estimatedHours) : undefined,
         completed: false,
@@ -86,7 +86,7 @@ export function Dashboard() {
             title: '',
             notes: '',
             dueDate: '',
-            associatedActivity: '',
+            activityId: '',
             priority: 'medium',
             estimatedHours: ''
           });
@@ -139,12 +139,12 @@ export function Dashboard() {
   const startEdit = (todo: TodoItem) => {
     setEditingId(todo.id);
     // Find the activity name by ID
-    const activity = activities.find(a => a.id === todo.associatedActivity);
+    const activity = activities.find(a => a.id === todo.activityId);
     setEditTodo({
       title: todo.title,
       notes: todo.notes,
       dueDate: todo.dueDate === 'TBD' ? '' : todo.dueDate,
-      associatedActivity: activity?.activityName || '',
+      activityId: activity?.activityName || '',
       priority: todo.priority,
       estimatedHours: todo.estimatedHours?.toString() || ''
     });
@@ -156,7 +156,7 @@ export function Dashboard() {
         title: editTodo.title.trim(),
         notes: editTodo.notes.trim(),
         dueDate: editTodo.dueDate || 'TBD',
-        associatedActivity: editTodo.associatedActivity.trim() || undefined,
+        activityId: editTodo.activityId.trim() || undefined,
         priority: editTodo.priority,
         estimatedHours: editTodo.estimatedHours ? parseInt(editTodo.estimatedHours) : undefined,
         userId: currentUser?.uid
@@ -191,7 +191,7 @@ export function Dashboard() {
       title: '',
       notes: '',
       dueDate: '',
-      associatedActivity: '',
+      activityId: '',
       priority: 'medium',
       estimatedHours: ''
     });
@@ -253,8 +253,8 @@ export function Dashboard() {
                 <div className="form-row">
                   <input
                     type="text"
-                    value={newTodo.associatedActivity}
-                    onChange={(e) => setNewTodo({...newTodo, associatedActivity: e.target.value})}
+                    value={newTodo.activityId}
+                    onChange={(e) => setNewTodo({...newTodo, activityId: e.target.value})}
                     placeholder="Activity (e.g., Math, Biology)..."
                     className="todo-input-field"
                     list="activities-list"
@@ -329,8 +329,8 @@ export function Dashboard() {
                     <div className="form-row">
                       <input
                         type="text"
-                        value={editTodo.associatedActivity}
-                        onChange={(e) => setEditTodo({...editTodo, associatedActivity: e.target.value})}
+                        value={editTodo.activityId}
+                        onChange={(e) => setEditTodo({...editTodo, activityId: e.target.value})}
                         className="edit-text-input"
                         placeholder="Activity..."
                         list="edit-activities-list"
@@ -394,11 +394,14 @@ export function Dashboard() {
                             >
                               {todo.priority}
                             </div>
-                            {todo.associatedActivity && (
-                              <div className="todo-activity">
-                                {activities.find(a => a.id === todo.associatedActivity)?.activityName || 'Unknown Activity'}
-                              </div>
-                            )}
+                            {todo.activityId && (() => {
+                              const activity = activities.find(a => a.id === todo.activityId);
+                              return activity ? (
+                                <div className="todo-activity">
+                                  {activity.activityName}
+                                </div>
+                              ) : null;
+                            })()}
                           </div>
                         </div>
                         <div className="todo-details">

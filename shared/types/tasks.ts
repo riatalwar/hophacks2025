@@ -10,8 +10,8 @@ export interface TodoItem {
   notes: string;
   /** Due date in YYYY-MM-DD format, or 'TBD' if not specified */
   dueDate: string;
-  /** Associated activity identifier that links to an activity in the activities database */
-  associatedActivity?: string;
+  /** Activity identifier that links to an activity in the activities database */
+  activityId?: string;
   /** Priority level based on point value/weight */
   priority: "low" | "medium" | "high";
   /** Estimated hours to complete the task */

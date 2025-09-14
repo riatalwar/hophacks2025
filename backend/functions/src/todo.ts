@@ -42,7 +42,7 @@ router.post("/todos", async (req, res) => {
       title,
       notes,
       dueDate,
-      associatedActivity,
+      activityId,
       priority,
       estimatedHours,
       userId,
@@ -55,28 +55,28 @@ router.post("/todos", async (req, res) => {
       });
     }
 
-    // If associatedActivity is provided, check if it exists or create it
-    let activityId = associatedActivity;
-    if (associatedActivity && associatedActivity.trim()) {
+    // If activityId is provided as activity name, check if it exists or create
+    let finalActivityId = activityId;
+    if (activityId && activityId.trim()) {
       const activitiesCollection = db.collection("activities");
       const activityQuery = await activitiesCollection
         .where("userId", "==", userId)
-        .where("name", "==", associatedActivity.trim())
+        .where("activityName", "==", activityId.trim())
         .get();
 
       if (activityQuery.empty) {
         // Create new activity if it doesn't exist
         const newActivityData = {
-          name: associatedActivity.trim(),
+          activityName: activityId.trim(),
           color: "#4ecdc4", // Default color
           userId,
           createdAt: new Date().toISOString(),
         };
         const newActivityRef = await activitiesCollection.add(newActivityData);
-        activityId = newActivityRef.id;
+        finalActivityId = newActivityRef.id;
       } else {
         // Use existing activity ID
-        activityId = activityQuery.docs[0].id;
+        finalActivityId = activityQuery.docs[0].id;
       }
     }
 
@@ -84,7 +84,7 @@ router.post("/todos", async (req, res) => {
       title,
       notes: notes || "",
       dueDate: dueDate || "TBD",
-      associatedActivity: activityId || undefined,
+      activityId: finalActivityId || undefined,
       priority,
       estimatedHours: estimatedHours || undefined,
       userId,
@@ -115,7 +115,7 @@ router.put("/todos/:todoId", async (req, res) => {
       title,
       notes,
       dueDate,
-      associatedActivity,
+      activityId,
       priority,
       estimatedHours,
       completed,
@@ -141,32 +141,32 @@ router.put("/todos/:todoId", async (req, res) => {
     }
     if (completed !== undefined) updateData.completed = completed;
 
-    // Handle associatedActivity update
-    if (associatedActivity !== undefined) {
-      if (associatedActivity && associatedActivity.trim() && userId) {
+    // Handle activityId update
+    if (activityId !== undefined) {
+      if (activityId && activityId.trim() && userId) {
         const activitiesCollection = db.collection("activities");
         const activityQuery = await activitiesCollection
           .where("userId", "==", userId)
-          .where("name", "==", associatedActivity.trim())
+          .where("activityName", "==", activityId.trim())
           .get();
 
         if (activityQuery.empty) {
           // Create new activity if it doesn't exist
           const newActivityData = {
-            name: associatedActivity.trim(),
+            activityName: activityId.trim(),
             color: "#4ecdc4", // Default color
             userId,
             createdAt: new Date().toISOString(),
           };
           const newActivityRef = await activitiesCollection
             .add(newActivityData);
-          updateData.associatedActivity = newActivityRef.id;
+          updateData.activityId = newActivityRef.id;
         } else {
           // Use existing activity ID
-          updateData.associatedActivity = activityQuery.docs[0].id;
+          updateData.activityId = activityQuery.docs[0].id;
         }
       } else {
-        updateData.associatedActivity = undefined;
+        updateData.activityId = undefined;
       }
     }
 
