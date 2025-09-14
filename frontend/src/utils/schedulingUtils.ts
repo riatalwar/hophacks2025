@@ -280,12 +280,97 @@ export function generateSchedule(
   const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Adjust for Sunday
   const weekStartDate = new Date(today.setDate(diff));
 
-  // Prepare task chunks sorted by priority
-  const taskChunks = prepareSortedTaskChunks(tasks);
-
   // Convert busy blocks and calculate weekly available slots
   const busyTimeLists = convertTimeBlocksToBusyTimeLists(timeBlocks);
   const availableTimeSlots = calculateAvailableTimeSlots(busyTimeLists);
+
+  // --- "Insufficient time" priority multiplier logic ---
+  // 1. Compute total available time for the week
+  let totalAvailableTime = 0;
+  for (const slots of availableTimeSlots) {
+    for (const slot of slots) {
+      totalAvailableTime += slot.duration;
+    }
+  }
+
+  // 2. Compute total required estimated time for all incomplete tasks
+  const incompleteTasks = tasks.filter(task => task.status !== 'completed'); // Assuming completed status (adjust if different)
+  const totalRequiredTime = incompleteTasks.reduce(
+    (sum, task) => sum + (typeof task.estimatedHours === 'number' ? task.estimatedHours : 0),
+    0
+  );
+
+  // 3. If insufficient time, apply 50x priority multiplier to all tasks
+  const priorityMultiplier =
+    totalRequiredTime > totalAvailableTime ? 50 : 1;
+
+  // 4. Prepare task chunks sorted by (possibly boosted) priority
+  // To implement this without modifying other functions, run our own priority calculation:
+  const tasksWithBoostedPriority = tasks.map(task => ({
+    ...task,
+    __priorityMultiplier: priorityMultiplier,
+  }));
+
+  function calculateTaskPriorityWithMultiplier(task: TodoItem & { __priorityMultiplier?: number }): number {
+    // Import the actual priority calculation via the same logic as original
+    // (Assuming calculateTaskPriority is in scope)
+    return calculateTaskPriority(task) * (task.__priorityMultiplier || 1);
+  }
+
+  // Prepare Sorted Chunks, using custom logic
+  // Replicate prepareSortedTaskChunks logic here with boosted priorities
+  const taskPriorityMap = new Map<string, number>();
+  for (const task of tasksWithBoostedPriority) {
+    const priority = calculateTaskPriorityWithMultiplier(task);
+    taskPriorityMap.set(task.id, priority);
+  }
+  const allChunks: any[] = [];
+  for (const task of tasksWithBoostedPriority) {
+    const chunks = chunkTask(task);
+    allChunks.push(...chunks);
+  }
+
+  const taskChunks = allChunks.sort((a, b) => {
+    const taskAPriority = taskPriorityMap.get(a.taskId) || 0;
+    const taskBPriority = taskPriorityMap.get(b.taskId) || 0;
+
+    // Primary sort: parent task priority (descending)
+    if (taskAPriority !== taskBPriority) {
+      return taskBPriority - taskAPriority;
+    }
+
+    // Find the parent tasks for tie-breaking
+    const taskA = tasksWithBoostedPriority.find(t => t.id === a.taskId);
+    const taskB = tasksWithBoostedPriority.find(t => t.id === b.taskId);
+
+    // Secondary sort: task priority field (high > medium > low)
+    const priorityOrder = { high: 3, medium: 2, low: 1 };
+    const taskAPriorityField = taskA ? priorityOrder[taskA.priority] : 0;
+    const taskBPriorityField = taskB ? priorityOrder[taskB.priority] : 0;
+
+    if (taskAPriorityField !== taskBPriorityField) {
+      return taskBPriorityField - taskAPriorityField;
+    }
+
+    // Tertiary sort: due date (earliest first)
+    if (taskA && taskB) {
+      // Handle TBD dates by treating them as far in the future
+      if (taskA.dueDate === 'TBD' && taskB.dueDate !== 'TBD') return 1;
+      if (taskA.dueDate !== 'TBD' && taskB.dueDate === 'TBD') return -1;
+      if (taskA.dueDate === 'TBD' && taskB.dueDate === 'TBD') return 0;
+
+      // Compare actual dates
+      const dateA = new Date(taskA.dueDate);
+      const dateB = new Date(taskB.dueDate);
+      if (dateA.getTime() !== dateB.getTime()) {
+        return dateA.getTime() - dateB.getTime();
+      }
+    }
+
+    // Final sort: by id
+    return a.taskId.localeCompare(b.taskId);
+  });
+
 
   // Initialize results and assignment trackers
   const scheduledChunks: Array<{
