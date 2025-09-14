@@ -10,15 +10,6 @@ export interface Activity {
   canvasContent?: string;
 }
 
-/**
- * Simple todo item for frontend use
- */
-export interface TodoItem {
-  id: string;
-  text: string;
-  completed: boolean;
-  priority: 'high' | 'medium' | 'low';
-}
 
 /**
  * User preferences and settings
