@@ -2,26 +2,23 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Navigation } from '../components/Navigation';
 import { WeekCalendar } from '../components/WeekCalendar';
 import type { StudyTimeList, StudyTimeNode, Preferences } from '../types/ClassTypes';
+import { usePreferences } from '../hooks/usePreferences';
 import '../styles/Preferences.css';
 
 export function Preferences() {
+  // Use the backend integration hook
+  const { 
+    preferences, 
+    loading, 
+    error, 
+    savePreferences, 
+    updatePreferences 
+  } = usePreferences();
+
+  // Local state for UI
   const [, setStudySchedule] = useState<any[]>([]);
-  const [emailNotifications, setEmailNotifications] = useState({
-    studyReminders: true,
-    assignmentDeadlines: true,
-    weeklyDigest: false,
-    courseUpdates: true,
-    systemAlerts: true
-  });
-  const [shareDataAnonymously, setShareDataAnonymously] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const saved = localStorage.getItem('scheduleSort_theme');
-    return saved ? saved === 'dark' : true;
-  });
-  const [accentColor, setAccentColor] = useState(() => {
-    const saved = localStorage.getItem('scheduleSort_accentColor');
-    return saved || '#4ecdc4';
-  });
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<{success: boolean; message: string} | null>(null);
 
   // Calendar import state
   const [selectedIcsFile, setSelectedIcsFile] = useState<File | null>(null);
@@ -35,12 +32,29 @@ export function Preferences() {
     eventCount: number;
   }>>([]);
 
-  // Wake up times and bedtimes arrays (7 days)
-  const [wakeUpTimes, setWakeUpTimes] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
-  const [bedtimes, setBedtimes] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
+  // Note: ICS import functionality removed - externalTimeBlocks not needed
 
-  // Array called busyTimes storing linked lists (of 2-value tuples) in each index
-  const [busyTimes, setBusyTimes] = useState<StudyTimeList[]>([
+  // Derived state from preferences
+  const emailNotifications = preferences ? {
+    studyReminders: preferences.studyReminders,
+    assignmentDeadlines: preferences.assignmentDeadlines,
+    weeklyDigest: preferences.weeklyDigest,
+    courseUpdates: preferences.courseUpdates,
+    systemAlerts: preferences.systemAlerts
+  } : {
+    studyReminders: true,
+    assignmentDeadlines: true,
+    weeklyDigest: false,
+    courseUpdates: true,
+    systemAlerts: true
+  };
+
+  const shareDataAnonymously = preferences?.shareDataAnonymously ?? false;
+  const isDarkMode = preferences?.isDarkMode ?? true;
+  const accentColor = preferences?.accentColor ?? '#4ecdc4';
+  const wakeUpTimes = preferences?.wakeUpTimes ?? [0, 0, 0, 0, 0, 0, 0];
+  const bedtimes = preferences?.bedtimes ?? [0, 0, 0, 0, 0, 0, 0];
+  const busyTimes = preferences?.busyTimes ?? [
     { head: null, size: 0 }, // Monday
     { head: null, size: 0 }, // Tuesday
     { head: null, size: 0 }, // Wednesday
@@ -48,7 +62,7 @@ export function Preferences() {
     { head: null, size: 0 }, // Friday
     { head: null, size: 0 }, // Saturday
     { head: null, size: 0 }  // Sunday
-  ]);
+  ];
 
   const accentColors = [
     '#4ecdc4', '#ff6b6b', '#45b7d1', '#96ceb4',
@@ -75,124 +89,85 @@ export function Preferences() {
     setStudySchedule(schedule);
   }, []);
 
-  // Comprehensive function to save all preferences
-  const saveAllPreferences = useCallback(() => {
-    // Get current values from state at the time of saving
-    const currentPreferences = {
-      wakeUpTimes,
-      bedtimes,
-      busyTimes,
-      studyReminders: emailNotifications.studyReminders,
-      assignmentDeadlines: emailNotifications.assignmentDeadlines,
-      weeklyDigest: emailNotifications.weeklyDigest,
-      courseUpdates: emailNotifications.courseUpdates,
-      systemAlerts: emailNotifications.systemAlerts,
-      shareDataAnonymously,
-      isDarkMode,
-      accentColor
-    };
+  // Comprehensive function to save all preferences to backend
+  const saveAllPreferences = useCallback(async () => {
+    if (!preferences) return;
 
-    // Save to localStorage
-    localStorage.setItem('scheduleSort_preferences', JSON.stringify(currentPreferences));
-    
-    // Also save individual theme and accent color for immediate application
-    localStorage.setItem('scheduleSort_theme', isDarkMode ? 'dark' : 'light');
-    localStorage.setItem('scheduleSort_accentColor', accentColor);
-    
-    console.log('Preferences saved:', currentPreferences);
-  }, [wakeUpTimes, bedtimes, busyTimes, emailNotifications, shareDataAnonymously, isDarkMode, accentColor]);
+    setIsSaving(true);
+    setSaveMessage(null);
+
+    try {
+      const currentPreferences = {
+        wakeUpTimes,
+        bedtimes,
+        busyTimes,
+        studyReminders: emailNotifications.studyReminders,
+        assignmentDeadlines: emailNotifications.assignmentDeadlines,
+        weeklyDigest: emailNotifications.weeklyDigest,
+        courseUpdates: emailNotifications.courseUpdates,
+        systemAlerts: emailNotifications.systemAlerts,
+        shareDataAnonymously,
+        isDarkMode,
+        accentColor
+      };
+
+      const success = await savePreferences(currentPreferences);
+      
+      if (success) {
+        setSaveMessage({ success: true, message: 'Preferences saved successfully!' });
+        // Clear message after 3 seconds
+        setTimeout(() => setSaveMessage(null), 3000);
+      } else {
+        setSaveMessage({ success: false, message: 'Failed to save preferences' });
+      }
+    } catch (error) {
+      setSaveMessage({ 
+        success: false, 
+        message: `Error saving preferences: ${error instanceof Error ? error.message : 'Unknown error'}` 
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  }, [preferences, wakeUpTimes, bedtimes, busyTimes, emailNotifications, shareDataAnonymously, isDarkMode, accentColor, savePreferences]);
 
   // Create a stable reference to saveAllPreferences using useRef
   const saveAllPreferencesRef = useRef(saveAllPreferences);
   saveAllPreferencesRef.current = saveAllPreferences;
 
-  // Function to load all preferences
-  const loadAllPreferences = useCallback(() => {
-    const savedPreferences = localStorage.getItem('scheduleSort_preferences');
-    
-    if (savedPreferences) {
-      try {
-        const preferences: Preferences = JSON.parse(savedPreferences);
-        
-        // Load wake up times and bedtimes
-        if (preferences.wakeUpTimes) {
-          setWakeUpTimes(preferences.wakeUpTimes);
-        }
-        if (preferences.bedtimes) {
-          setBedtimes(preferences.bedtimes);
-        }
-        
-        // Load busy times
-        if (preferences.busyTimes) {
-          setBusyTimes(preferences.busyTimes);
-        }
-        
-        // Load email notifications
-        if (preferences.studyReminders !== undefined) {
-          setEmailNotifications({
-            studyReminders: preferences.studyReminders,
-            assignmentDeadlines: preferences.assignmentDeadlines,
-            weeklyDigest: preferences.weeklyDigest,
-            courseUpdates: preferences.courseUpdates,
-            systemAlerts: preferences.systemAlerts
-          });
-        }
-        
-        // Load privacy settings
-        if (preferences.shareDataAnonymously !== undefined) {
-          setShareDataAnonymously(preferences.shareDataAnonymously);
-        }
-        
-        // Load appearance settings
-        if (preferences.isDarkMode !== undefined) {
-          setIsDarkMode(preferences.isDarkMode);
-        }
-        if (preferences.accentColor) {
-          setAccentColor(preferences.accentColor);
-        }
-        
-        console.log('Preferences loaded:', preferences);
-      } catch (error) {
-        console.error('Error loading preferences:', error);
-      }
-    }
-  }, []); // Empty dependency array since this should only run once on mount
-
-  // Load preferences on component mount
-  useEffect(() => {
-    loadAllPreferences();
-  }, []); // Only run once on mount
+  // Note: Preferences are now loaded via the usePreferences hook from backend
 
   // Function to sync wake up times from WeekCalendar
-  const handleWakeUpTimesChange = useCallback((newWakeUpTimes: { [day: number]: any | null }) => {
+  const handleWakeUpTimesChange = useCallback(async (newWakeUpTimes: { [day: number]: any | null }) => {
     const wakeUpArray = [0, 0, 0, 0, 0, 0, 0];
     Object.entries(newWakeUpTimes).forEach(([day, wakeTime]) => {
       if (wakeTime && wakeTime.startTime !== undefined) {
         wakeUpArray[parseInt(day)] = wakeTime.startTime;
       }
     });
-    setWakeUpTimes(wakeUpArray);
     
-    // Auto-save preferences using stable reference
-    setTimeout(() => saveAllPreferencesRef.current(), 100);
-  }, []); // Stable callback
+    // Update backend
+    await updatePreferences({
+      wakeUpTimes: wakeUpArray
+    });
+  }, [updatePreferences]);
 
   // Function to sync bedtimes from WeekCalendar
-  const handleBedtimesChange = useCallback((newBedtimes: { [day: number]: any | null }) => {
+  const handleBedtimesChange = useCallback(async (newBedtimes: { [day: number]: any | null }) => {
     const bedtimesArray = [0, 0, 0, 0, 0, 0, 0];
     Object.entries(newBedtimes).forEach(([day, bedtime]) => {
       if (bedtime && bedtime.startTime !== undefined) {
         bedtimesArray[parseInt(day)] = bedtime.startTime;
       }
     });
-    setBedtimes(bedtimesArray);
     
-    // Auto-save preferences using stable reference
-    setTimeout(() => saveAllPreferencesRef.current(), 100);
-  }, []); // Stable callback
+    // Update backend
+    await updatePreferences({
+      bedtimes: bedtimesArray
+    });
+  }, [updatePreferences]);
 
   // Function to sync busy times from WeekCalendar
-  const handleBusyTimesChange = useCallback((newBusyTimes: any[]) => {
+  const handleBusyTimesChange = useCallback(async (newBusyTimes: any[]) => {
     // Convert busy times array to StudyTimeList format
     const busyTimesList: StudyTimeList[] = [
       { head: null, size: 0 }, // Monday
@@ -227,37 +202,34 @@ export function Preferences() {
       }
     });
 
-    setBusyTimes(busyTimesList);
-    
-    // Auto-save preferences using stable reference
-    setTimeout(() => saveAllPreferencesRef.current(), 100);
-  }, []); // Stable callback
+    // Update backend
+    await updatePreferences({
+      busyTimes: busyTimesList
+    });
+  }, [updatePreferences]);
 
-  const handleNotificationToggle = (notificationType: keyof typeof emailNotifications) => {
-    setEmailNotifications(prev => ({
-      ...prev,
-      [notificationType]: !prev[notificationType]
-    }));
+  const handleNotificationToggle = async (notificationType: keyof typeof emailNotifications) => {
+    const newValue = !emailNotifications[notificationType];
     
-    // Auto-save preferences using stable reference
-    setTimeout(() => saveAllPreferencesRef.current(), 100);
+    // Update backend immediately
+    await updatePreferences({
+      [notificationType]: newValue
+    });
   };
 
-  const handleDataSharingToggle = () => {
-    setShareDataAnonymously(prev => !prev);
+  const handleDataSharingToggle = async () => {
+    const newValue = !shareDataAnonymously;
     
-    // Auto-save preferences using stable reference
-    setTimeout(() => saveAllPreferencesRef.current(), 100);
+    // Update backend immediately
+    await updatePreferences({
+      shareDataAnonymously: newValue
+    });
   };
 
-  const handleThemeToggle = () => {
+  const handleThemeToggle = async () => {
     const newTheme = !isDarkMode;
-    setIsDarkMode(newTheme);
 
-    // Save to localStorage
-    localStorage.setItem('scheduleSort_theme', newTheme ? 'dark' : 'light');
-
-    // Apply theme immediately
+    // Apply theme immediately for better UX
     if (newTheme) {
       document.documentElement.classList.remove('light-theme');
       document.documentElement.classList.add('dark-theme');
@@ -265,18 +237,15 @@ export function Preferences() {
       document.documentElement.classList.remove('dark-theme');
       document.documentElement.classList.add('light-theme');
     }
-    
-    // Auto-save preferences using stable reference
-    setTimeout(() => saveAllPreferencesRef.current(), 100);
+
+    // Update backend
+    await updatePreferences({
+      isDarkMode: newTheme
+    });
   };
 
-  const handleAccentColorChange = (color: string) => {
-    setAccentColor(color);
-
-    // Save to localStorage
-    localStorage.setItem('scheduleSort_accentColor', color);
-
-    // Apply accent color immediately
+  const handleAccentColorChange = async (color: string) => {
+    // Apply accent color immediately for better UX
     document.documentElement.style.setProperty('--accent-color', color);
 
     // Also set the light variant (slightly different shade)
@@ -286,9 +255,11 @@ export function Preferences() {
     // Set gradient variables
     document.documentElement.style.setProperty('--accent-gradient', `linear-gradient(135deg, ${color} 0%, ${lightVariant} 100%)`);
     document.documentElement.style.setProperty('--accent-gradient-hover', `linear-gradient(135deg, ${lightVariant} 0%, ${color} 100%)`);
-    
-    // Auto-save preferences using stable reference
-    setTimeout(() => saveAllPreferencesRef.current(), 100);
+
+    // Update backend
+    await updatePreferences({
+      accentColor: color
+    });
   };
 
   // Calendar import handlers
@@ -387,6 +358,41 @@ export function Preferences() {
     }
   }, [accentColor, isDarkMode]); // Include dependencies that are used in the effect
 
+  // Show loading state
+  if (loading) {
+    return (
+      <>
+        <Navigation />
+        <div className="preferences-page">
+          <div className="preferences-container">
+            <div className="loading-state">
+              <div className="loading-spinner"></div>
+              <p>Loading your preferences...</p>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <>
+        <Navigation />
+        <div className="preferences-page">
+          <div className="preferences-container">
+            <div className="error-state">
+              <h2>Error Loading Preferences</h2>
+              <p>{error}</p>
+              <button onClick={() => window.location.reload()}>Retry</button>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       {/* Navigation */}
@@ -398,6 +404,21 @@ export function Preferences() {
         <div className="preferences-header">
           <h1>Preferences & Settings</h1>
           <p>Customize your Schedule Sort experience to match your study preferences and academic needs.</p>
+          
+          {/* Save Message */}
+          {saveMessage && (
+            <div className={`save-message ${saveMessage.success ? 'success' : 'error'}`}>
+              {saveMessage.success ? '✅' : '❌'} {saveMessage.message}
+            </div>
+          )}
+          
+          {/* Saving Indicator */}
+          {isSaving && (
+            <div className="saving-indicator">
+              <div className="saving-spinner"></div>
+              <span>Saving preferences...</span>
+            </div>
+          )}
         </div>
 
         <div className="preferences-content">
