@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import '../styles/PreferencesWeekCalendar.css';
-import { useCalendarData } from '../hooks/useCalendarData';
+import { useScheduleApi } from '../hooks/useScheduleApi';
 import type { TimeBlock } from '@shared/types/activities';
 
 interface InputCalendarProps {
@@ -11,16 +11,17 @@ interface InputCalendarProps {
 }
 
 export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtimesChange, onBusyTimesChange }: InputCalendarProps) {
-  // Use Firestore-backed calendar data
+  // Use API-backed calendar data
   const { 
     calendarData, 
-    loading: calendarLoading, 
-    error: calendarError,
-    saveWakeUpTimes: saveWakeUpTimesToFirestore,
-    saveBedtimes: saveBedtimesToFirestore,
-    saveBusyTimes: saveBusyTimesToFirestore,
+    loading: apiLoading, 
+    error: apiError,
+    saving: apiSaving,
+    saveWakeUpTimes: saveWakeUpTimesToApi,
+    saveBedtimes: saveBedtimesToApi,
+    saveBusyTimes: saveBusyTimesToApi,
     clearError
-  } = useCalendarData();
+  } = useScheduleApi();
 
   // Local state for UI interactions
   const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([]);
@@ -37,9 +38,9 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
   const [isMinimized, setIsMinimized] = useState(false);
   const calendarRef = useRef<HTMLDivElement>(null);
 
-  // Sync data from Firestore to local state
+  // Sync data from API to local state
   useEffect(() => {
-    if (!calendarLoading) {
+    if (!apiLoading) {
       setTimeBlocks(calendarData.busyTimes);
       setWakeUpTimes(calendarData.wakeUpTimes);
       setBedtimes(calendarData.bedtimes);
@@ -56,12 +57,12 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
         onBusyTimesChange(calendarData.busyTimes);
       }
     }
-  }, [calendarData, calendarLoading, onScheduleChange, onWakeUpTimesChange, onBedtimesChange, onBusyTimesChange]);
+  }, [calendarData, apiLoading, onScheduleChange, onWakeUpTimesChange, onBedtimesChange, onBusyTimesChange]);
 
-  // Handle Firestore errors
+  // Handle API errors
   useEffect(() => {
-    if (calendarError) {
-      setErrorMessage(calendarError);
+    if (apiError) {
+      setErrorMessage(apiError);
       // Auto-clear error after 5 seconds
       const timer = setTimeout(() => {
         clearError();
@@ -69,9 +70,9 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [calendarError, clearError]);
+  }, [apiError, clearError]);
 
-  // Data is now loaded via useCalendarData hook - no localStorage loading needed
+  // Data is now loaded via useScheduleApi hook - no localStorage loading needed
 
   // Notify parent component when wake up times change
   useEffect(() => {
@@ -246,7 +247,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
         [day]: newWakeTime
       };
       setWakeUpTimes(updatedWakeUpTimes);
-      saveWakeUpTimesToFirestore(updatedWakeUpTimes);
+      saveWakeUpTimesToApi(updatedWakeUpTimes);
       setErrorMessage(''); // Clear error on successful placement
     } else if (selectedButton === 'bedtime') {
       // Convert slot to minutes (30-minute intervals)
@@ -273,7 +274,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
         [day]: newBedtime
       };
       setBedtimes(updatedBedtimes);
-      saveBedtimesToFirestore(updatedBedtimes);
+      saveBedtimesToApi(updatedBedtimes);
       setErrorMessage(''); // Clear error on successful placement
     } else if (selectedButton === 'busy') {
       // Two-click busy time creation pattern
@@ -326,7 +327,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
         
         const updatedBlocks = [...timeBlocks, newBusyTime];
         setTimeBlocks(updatedBlocks);
-        saveBusyTimesToFirestore(updatedBlocks);
+        saveBusyTimesToApi(updatedBlocks);
         onScheduleChange(updatedBlocks);
         
         // Reset creation state
@@ -399,7 +400,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
         return block;
       });
       setTimeBlocks(updatedBlocks);
-      saveBusyTimesToFirestore(updatedBlocks);
+      saveBusyTimesToApi(updatedBlocks);
       onScheduleChange(updatedBlocks);
     }
   };
@@ -451,7 +452,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
       return block;
     });
     setTimeBlocks(updatedBlocks);
-    saveBusyTimesToFirestore(updatedBlocks);
+    saveBusyTimesToApi(updatedBlocks);
     onScheduleChange(updatedBlocks);
   };
 
@@ -466,7 +467,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
   const deleteBlock = (blockId: string) => {
     const updatedBlocks = timeBlocks.filter(block => block.id !== blockId);
     setTimeBlocks(updatedBlocks);
-    saveBusyTimesToFirestore(updatedBlocks);
+    saveBusyTimesToApi(updatedBlocks);
     onScheduleChange(updatedBlocks);
   };
 
@@ -476,7 +477,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
       [day]: null
     };
     setWakeUpTimes(updatedWakeUpTimes);
-    saveWakeUpTimesToFirestore(updatedWakeUpTimes);
+    saveWakeUpTimesToApi(updatedWakeUpTimes);
   };
 
   const deleteBedtime = (day: number) => {
@@ -485,7 +486,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
       [day]: null
     };
     setBedtimes(updatedBedtimes);
-    saveBedtimesToFirestore(updatedBedtimes);
+    saveBedtimesToApi(updatedBedtimes);
   };
 
   // Helper function to check if time A is before time B in a 24-hour cycle
@@ -575,7 +576,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
   }, [isCreating, selectedButton]);
 
   // Show loading state while data is being fetched
-  if (calendarLoading) {
+  if (apiLoading) {
     return (
       <div className={`preferences-week-calendar-container ${isMinimized ? 'minimized' : ''}`}>
         <div className="preferences-calendar-header">
@@ -595,7 +596,7 @@ export function InputCalendar({ onScheduleChange, onWakeUpTimesChange, onBedtime
       <div className="preferences-calendar-header">
         <div className="preferences-header-content">
           <div className="preferences-header-text">
-            <h3>Weekly Schedule</h3>
+            <h3>Weekly Schedule {apiSaving && <span style={{fontSize: '0.8em', color: '#4ecdc4'}}>• Saving...</span>}</h3>
             <p>Click on the buttons below to set your wake up times, bedtimes, and busy times</p>
           </div>
           <button 
