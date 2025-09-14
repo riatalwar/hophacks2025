@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Activities with Firebase Emulator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin: 10px 0;
+        }
+        .button {
+            background: #4ecdc4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #45b7d1;
+        }
+        .button.danger {
+            background: #ff6b6b;
+        }
+        .button.danger:hover {
+            background: #ff5252;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .activity-item {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            border-left: 4px solid #4ecdc4;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Activities with Firebase Emulator</h1>
+    <p>This page tests the activities system with the Firebase emulator to verify data flows correctly between the backend and frontend.</p>
+
+    <div class="test-section">
+        <h2>1. Emulator Status Check</h2>
+        <button class="button" onclick="checkEmulatorStatus()">Check Emulator Status</button>
+        <div id="emulator-status" class="test-result">Click the button above to check emulator status</div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Test Activities API</h2>
+        <button class="button" onclick="testActivitiesAPI()">Test Activities API</button>
+        <div id="api-result" class="test-result">Click the button above to test the activities API</div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Add Test Activities</h2>
+        <button class="button" onclick="addTestActivities()">Add Test Activities to Firestore</button>
+        <div id="add-result" class="test-result">Click the button above to add test activities</div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Verify Activities in Firestore</h2>
+        <button class="button" onclick="verifyActivitiesInFirestore()">Check Firestore Data</button>
+        <div id="firestore-result" class="test-result">Click the button above to verify activities in Firestore</div>
+    </div>
+
+    <div class="test-section">
+        <h2>5. Test Frontend Integration</h2>
+        <button class="button" onclick="testFrontendIntegration()">Test Frontend Integration</button>
+        <div id="frontend-result" class="test-result">Click the button above to test frontend integration</div>
+    </div>
+
+    <div class="test-section">
+        <h2>6. Activities Display</h2>
+        <button class="button" onclick="displayActivities()">Display All Activities</button>
+        <div id="activities-display" class="test-result">Click the button above to display activities</div>
+    </div>
+
+    <div class="test-section">
+        <h2>7. Clean Up</h2>
+        <button class="button danger" onclick="cleanupTestData()">Clear Test Data</button>
+        <div id="cleanup-result" class="test-result">Click the button above to clear test data</div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://127.0.0.1:5001/hophacks2025/us-central1/api';
+        const TEST_USER_ID = 'test-user-123';
+
+        // Test activities data
+        const testActivities = [
+            {
+                name: "Math 101 - Calculus",
+                type: "class",
+                startTime: "09:00",
+                endTime: "10:30",
+                day: "Monday",
+                location: "Room 201",
+                description: "Introduction to Calculus"
+            },
+            {
+                name: "Physics Lab",
+                type: "lab",
+                startTime: "14:00",
+                endTime: "16:00",
+                day: "Wednesday",
+                location: "Lab 301",
+                description: "Mechanics Lab Session"
+            },
+            {
+                name: "Study Group",
+                type: "study",
+                startTime: "19:00",
+                endTime: "21:00",
+                day: "Friday",
+                location: "Library",
+                description: "Group study session for finals"
+            }
+        ];
+
+        async function checkEmulatorStatus() {
+            const resultDiv = document.getElementById('emulator-status');
+            resultDiv.textContent = 'Checking emulator status...';
+
+            try {
+                // Check if emulator UI is accessible
+                const emulatorResponse = await fetch('http://127.0.0.1:4000');
+                const emulatorStatus = emulatorResponse.ok ? '✅ Running' : '❌ Not accessible';
+
+                // Check if functions are running
+                const functionsResponse = await fetch(`${API_BASE_URL}/health`);
+                const functionsData = await functionsResponse.json();
+                const functionsStatus = functionsResponse.ok ? '✅ Running' : '❌ Not accessible';
+
+                resultDiv.textContent = `Emulator Status:
+- Emulator UI (http://127.0.0.1:4000): ${emulatorStatus}
+- Functions API (http://127.0.0.1:5001): ${functionsStatus}
+- Health Check: ${functionsData.message || 'Unknown'}
+
+Next Steps:
+1. If emulators are running, proceed to test the API
+2. If not running, start emulators with: firebase emulators:start --only functions,firestore
+3. Open Emulator UI at: http://127.0.0.1:4000`;
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Error checking emulator status: ${error.message}
+
+Make sure emulators are running:
+cd backend && firebase emulators:start --only functions,firestore`;
+            }
+        }
+
+        async function testActivitiesAPI() {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.textContent = 'Testing activities API...';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/activities/${TEST_USER_ID}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.textContent = `✅ API Test Successful!
+
+Response:
+${JSON.stringify(data, null, 2)}
+
+Status: ${response.status}
+Activities Count: ${data.activities ? data.activities.length : 0}`;
+                } else {
+                    resultDiv.textContent = `❌ API Test Failed!
+
+Status: ${response.status}
+Response: ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.textContent = `❌ API Test Error: ${error.message}
+
+Make sure:
+1. Emulators are running
+2. Functions are built and deployed
+3. API endpoint is correct: ${API_BASE_URL}/api/activities/${TEST_USER_ID}`;
+            }
+        }
+
+        async function addTestActivities() {
+            const resultDiv = document.getElementById('add-result');
+            resultDiv.textContent = 'Adding test activities...';
+
+            try {
+                // Add activities one by one
+                const results = [];
+                for (const activity of testActivities) {
+                    const response = await fetch(`${API_BASE_URL}/api/activities`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            ...activity,
+                            userId: TEST_USER_ID
+                        })
+                    });
+
+                    const result = await response.json();
+                    results.push({
+                        activity: activity.name,
+                        success: response.ok,
+                        result: result
+                    });
+                }
+
+                const successCount = results.filter(r => r.success).length;
+                const totalCount = results.length;
+
+                resultDiv.textContent = `✅ Added ${successCount}/${totalCount} test activities!
+
+Results:
+${results.map(r => `${r.success ? '✅' : '❌'} ${r.activity}: ${r.success ? 'Success' : r.result.message || 'Failed'}`).join('\n')}
+
+Full Response:
+${JSON.stringify(results, null, 2)}`;
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Error adding test activities: ${error.message}
+
+Make sure:
+1. POST endpoint exists for activities
+2. Request body format is correct
+3. Backend is handling POST requests properly`;
+            }
+        }
+
+        async function verifyActivitiesInFirestore() {
+            const resultDiv = document.getElementById('firestore-result');
+            resultDiv.textContent = 'Verifying activities in Firestore...';
+
+            try {
+                // Get activities from API
+                const response = await fetch(`${API_BASE_URL}/api/activities/${TEST_USER_ID}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.textContent = `✅ Firestore Verification Complete!
+
+Activities in Firestore:
+${data.activities.length > 0 ? 
+    data.activities.map((activity, index) => 
+        `${index + 1}. ${activity.name} (${activity.type}) - ${activity.day} ${activity.startTime}-${activity.endTime}`
+    ).join('\n') : 
+    'No activities found in Firestore'}
+
+Total Activities: ${data.activities.length}
+
+Full Data:
+${JSON.stringify(data, null, 2)}
+
+Next: Check the Firebase Emulator UI at http://127.0.0.1:4000/firestore to see the data visually.`;
+
+                } else {
+                    resultDiv.textContent = `❌ Firestore Verification Failed!
+
+Status: ${response.status}
+Response: ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.textContent = `❌ Firestore Verification Error: ${error.message}`;
+            }
+        }
+
+        async function testFrontendIntegration() {
+            const resultDiv = document.getElementById('frontend-result');
+            resultDiv.textContent = 'Testing frontend integration...';
+
+            try {
+                // Simulate what the frontend would do
+                const response = await fetch(`${API_BASE_URL}/api/activities/${TEST_USER_ID}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Simulate frontend processing
+                    const activities = data.activities || [];
+                    const processedActivities = activities.map(activity => ({
+                        id: activity.id,
+                        name: activity.name,
+                        type: activity.type,
+                        time: `${activity.startTime} - ${activity.endTime}`,
+                        day: activity.day,
+                        location: activity.location
+                    }));
+
+                    resultDiv.textContent = `✅ Frontend Integration Test Successful!
+
+Raw API Response:
+${JSON.stringify(data, null, 2)}
+
+Processed for Frontend Display:
+${JSON.stringify(processedActivities, null, 2)}
+
+Integration Status:
+- API Connection: ✅ Working
+- Data Processing: ✅ Working
+- Ready for UI: ✅ Ready
+
+To test in the actual frontend:
+1. Go to http://localhost:5174/activities
+2. Check if activities appear in the UI
+3. Verify data matches what's shown here`;
+
+                } else {
+                    resultDiv.textContent = `❌ Frontend Integration Test Failed!
+
+Status: ${response.status}
+Response: ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.textContent = `❌ Frontend Integration Error: ${error.message}`;
+            }
+        }
+
+        async function displayActivities() {
+            const resultDiv = document.getElementById('activities-display');
+            resultDiv.textContent = 'Loading activities...';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/activities/${TEST_USER_ID}`);
+                const data = await response.json();
+
+                if (response.ok && data.activities) {
+                    let display = `📚 Activities for User: ${TEST_USER_ID}\n\n`;
+                    
+                    if (data.activities.length === 0) {
+                        display += 'No activities found. Add some test activities first!\n\n';
+                    } else {
+                        data.activities.forEach((activity, index) => {
+                            display += `${index + 1}. 📖 ${activity.name}\n`;
+                            display += `   Type: ${activity.type}\n`;
+                            display += `   Day: ${activity.day}\n`;
+                            display += `   Time: ${activity.startTime} - ${activity.endTime}\n`;
+                            display += `   Location: ${activity.location || 'Not specified'}\n`;
+                            display += `   Description: ${activity.description || 'No description'}\n`;
+                            display += `   ID: ${activity.id}\n\n`;
+                        });
+                    }
+
+                    display += `\n📊 Summary:\n`;
+                    display += `- Total Activities: ${data.activities.length}\n`;
+                    display += `- API Status: ${response.status}\n`;
+                    display += `- Response Time: ${new Date().toLocaleTimeString()}\n\n`;
+                    display += `🔗 Links:\n`;
+                    display += `- Emulator UI: http://127.0.0.1:4000/firestore\n`;
+                    display += `- Frontend: http://localhost:5174/activities\n`;
+
+                    resultDiv.textContent = display;
+                } else {
+                    resultDiv.textContent = `❌ No activities found or API error
+
+Status: ${response.status}
+Response: ${JSON.stringify(data, null, 2)}
+
+Try adding test activities first!`;
+                }
+            } catch (error) {
+                resultDiv.textContent = `❌ Error loading activities: ${error.message}`;
+            }
+        }
+
+        async function cleanupTestData() {
+            const resultDiv = document.getElementById('cleanup-result');
+            resultDiv.textContent = 'Cleaning up test data...';
+
+            try {
+                // Note: This would require a DELETE endpoint
+                // For now, just show instructions
+                resultDiv.textContent = `🧹 Cleanup Instructions:
+
+To clean up test data:
+
+1. **Via Emulator UI:**
+   - Go to http://127.0.0.1:4000/firestore
+   - Navigate to the 'activities' collection
+   - Delete individual documents or clear the collection
+
+2. **Via API (if DELETE endpoint exists):**
+   - Call DELETE /api/activities/{activityId} for each activity
+
+3. **Via Code:**
+   - Restart the emulators to clear all data
+   - Run: pkill -f "firebase emulators" && firebase emulators:start --only functions,firestore
+
+4. **Current Test Data:**
+   - User ID: ${TEST_USER_ID}
+   - Activities: ${testActivities.length} test activities
+   - Location: Firestore 'activities' collection
+
+Note: The emulator data is temporary and will be cleared when you restart the emulators.`;
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Cleanup Error: ${error.message}`;
+            }
+        }
+
+        // Auto-run emulator status check on page load
+        window.addEventListener('load', () => {
+            checkEmulatorStatus();
+        });
+    </script>
+</body>
+</html>

@@ -3,6 +3,7 @@ import { Navigation } from '../components/Navigation';
 import { WeekCalendar } from '../components/WeekCalendar';
 import type { StudyTimeList, StudyTimeNode, Preferences } from '../types/ClassTypes';
 import '../styles/Preferences.css';
+import ICAL from 'ical.js';
 
 export function Preferences() {
   const [, setStudySchedule] = useState<any[]>([]);
@@ -38,6 +39,13 @@ export function Preferences() {
     { head: null, size: 0 }  // Sunday
   ]);
 
+  // Calendar upload state
+  const [uploadedCalendar, setUploadedCalendar] = useState<any>(null);
+  const [calendarEvents, setCalendarEvents] = useState<any[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
+
   const accentColors = [
     '#4ecdc4', '#ff6b6b', '#45b7d1', '#96ceb4',
     '#feca57', '#ff9ff3', '#54a0ff', '#a55eea'
@@ -61,6 +69,119 @@ export function Preferences() {
 
   const handleScheduleChange = useCallback((schedule: any[]) => {
     setStudySchedule(schedule);
+  }, []);
+
+  // Calendar upload and parsing functions
+  const handleCalendarUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.ics')) {
+      setUploadError('Please upload a valid .ics calendar file');
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadError(null);
+    setUploadSuccess(null);
+
+    try {
+      const text = await file.text();
+      const jcalData = ICAL.parse(text);
+      const vcalendar = new ICAL.Component(jcalData);
+      const vevents = vcalendar.getAllSubcomponents('vevent');
+
+      const events = vevents.map((vevent: any) => {
+        const event = new ICAL.Event(vevent);
+        const start = event.startDate;
+        const end = event.endDate;
+        
+        return {
+          summary: event.summary || 'Untitled Event',
+          description: event.description || '',
+          location: event.location || '',
+          start: start.toJSDate(),
+          end: end.toJSDate(),
+          startTime: start.toJSDate().toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: false 
+          }),
+          endTime: end.toJSDate().toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: false 
+          }),
+          dayOfWeek: start.toJSDate().getDay(),
+          isRecurring: event.isRecurring(),
+          duration: end.toJSDate().getTime() - start.toJSDate().getTime()
+        };
+      });
+
+      setCalendarEvents(events);
+      setUploadedCalendar({ name: file.name, events });
+      setUploadSuccess(`Successfully imported ${events.length} events from ${file.name}`);
+      
+      // Auto-populate study times from calendar events
+      populateStudyTimesFromCalendar(events);
+      
+    } catch (error) {
+      console.error('Error parsing calendar file:', error);
+      setUploadError('Failed to parse calendar file. Please ensure it\'s a valid .ics file.');
+    } finally {
+      setIsUploading(false);
+    }
+  }, []);
+
+  const populateStudyTimesFromCalendar = useCallback((events: any[]) => {
+    const newStudyTimes: StudyTimeList[] = [
+      { head: null, size: 0 }, // Monday
+      { head: null, size: 0 }, // Tuesday
+      { head: null, size: 0 }, // Wednesday
+      { head: null, size: 0 }, // Thursday
+      { head: null, size: 0 }, // Friday
+      { head: null, size: 0 }, // Saturday
+      { head: null, size: 0 }  // Sunday
+    ];
+
+    events.forEach((event) => {
+      const day = event.dayOfWeek;
+      const startTime = parseTimeToNumber(event.startTime);
+      const endTime = parseTimeToNumber(event.endTime);
+      
+      if (day >= 0 && day <= 6 && startTime !== null && endTime !== null) {
+        const node: StudyTimeNode = {
+          data: [startTime, endTime],
+          next: null
+        };
+        
+        if (newStudyTimes[day].head === null) {
+          newStudyTimes[day].head = node;
+        } else {
+          let current = newStudyTimes[day].head;
+          while (current.next !== null) {
+            current = current.next;
+          }
+          current.next = node;
+        }
+        newStudyTimes[day].size++;
+      }
+    });
+
+    setStudyTimes(newStudyTimes);
+  }, []);
+
+  const parseTimeToNumber = (timeString: string): number | null => {
+    const [hours, minutes] = timeString.split(':').map(Number);
+    if (isNaN(hours) || isNaN(minutes)) return null;
+    return hours * 60 + minutes; // Convert to minutes since midnight
+  };
+
+  const clearUploadedCalendar = useCallback(() => {
+    setUploadedCalendar(null);
+    setCalendarEvents([]);
+    setUploadError(null);
+    setUploadSuccess(null);
   }, []);
 
   // Comprehensive function to save all preferences
@@ -317,6 +438,116 @@ export function Preferences() {
 
         <div className="preferences-content">
           <div className="preferences-grid">
+            {/* Calendar Upload Section */}
+            <div className="preferences-section calendar-upload">
+              <h2>📅 Calendar Import</h2>
+              <div className="section-content">
+                <p>Upload your class schedule from a .ics calendar file to automatically populate your study preferences and schedule.</p>
+                
+                <div className="calendar-upload-area">
+                  <div className="upload-zone">
+                    <input
+                      type="file"
+                      id="calendar-upload"
+                      accept=".ics"
+                      onChange={handleCalendarUpload}
+                      style={{ display: 'none' }}
+                    />
+                    <label htmlFor="calendar-upload" className="upload-button">
+                      {isUploading ? (
+                        <span>⏳ Processing...</span>
+                      ) : (
+                        <span>📁 Choose .ics File</span>
+                      )}
+                    </label>
+                    <p className="upload-hint">Supported formats: .ics (iCalendar)</p>
+                  </div>
+
+                  {/* Upload Status Messages */}
+                  {uploadError && (
+                    <div className="upload-status error">
+                      <span>❌ {uploadError}</span>
+                    </div>
+                  )}
+                  
+                  {uploadSuccess && (
+                    <div className="upload-status success">
+                      <span>✅ {uploadSuccess}</span>
+                    </div>
+                  )}
+
+                  {/* Uploaded Calendar Info */}
+                  {uploadedCalendar && (
+                    <div className="uploaded-calendar-info">
+                      <div className="calendar-summary">
+                        <h4>📋 Imported Calendar: {uploadedCalendar.name}</h4>
+                        <p>Found {calendarEvents.length} events</p>
+                        <button 
+                          onClick={clearUploadedCalendar}
+                          className="clear-calendar-button"
+                        >
+                          🗑️ Clear Calendar
+                        </button>
+                      </div>
+                      
+                      {calendarEvents.length > 0 && (
+                        <div className="events-preview">
+                          <h5>📝 Events Preview:</h5>
+                          <div className="events-list">
+                            {calendarEvents.slice(0, 5).map((event, index) => (
+                              <div key={index} className="event-item">
+                                <span className="event-time">{event.startTime} - {event.endTime}</span>
+                                <span className="event-title">{event.summary}</span>
+                                {event.location && (
+                                  <span className="event-location">📍 {event.location}</span>
+                                )}
+                              </div>
+                            ))}
+                            {calendarEvents.length > 5 && (
+                              <div className="more-events">
+                                ... and {calendarEvents.length - 5} more events
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Instructions */}
+                  <div className="upload-instructions">
+                    <h4>📖 How to Export Your Calendar:</h4>
+                    <div className="instructions-grid">
+                      <div className="instruction-item">
+                        <h5>Google Calendar</h5>
+                        <ol>
+                          <li>Go to Google Calendar settings</li>
+                          <li>Click "Export" in the left sidebar</li>
+                          <li>Download the .ics file</li>
+                        </ol>
+                      </div>
+                      <div className="instruction-item">
+                        <h5>Outlook</h5>
+                        <ol>
+                          <li>Go to Calendar view</li>
+                          <li>Click "File" → "Save Calendar"</li>
+                          <li>Choose .ics format</li>
+                        </ol>
+                      </div>
+                      <div className="instruction-item">
+                        <h5>Apple Calendar</h5>
+                        <ol>
+                          <li>Select your calendar</li>
+                          <li>File → Export → Export...</li>
+                          <li>Save as .ics file</li>
+                        </ol>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Study Preferences Section */}
             <div className="preferences-section study-preferences">
               <h2>Study Preferences</h2>

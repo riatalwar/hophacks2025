@@ -426,6 +426,252 @@
   color: var(--text-primary);
 }
 
+/* Calendar Upload Section */
+.calendar-upload {
+  grid-column: 1 / -1; /* Span full width */
+  margin-bottom: 2rem;
+}
+
+.calendar-upload-area {
+  margin-top: 1.5rem;
+}
+
+.upload-zone {
+  text-align: center;
+  padding: 2rem;
+  border: 2px dashed var(--border-color);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  transition: all 0.3s ease;
+  margin-bottom: 1.5rem;
+}
+
+.upload-zone:hover {
+  border-color: var(--accent-color);
+  background: rgba(78, 205, 196, 0.05);
+}
+
+.upload-button {
+  display: inline-block;
+  background: var(--accent-gradient);
+  color: var(--text-primary);
+  padding: 1rem 2rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+  border: none;
+  text-decoration: none;
+}
+
+.upload-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(78, 205, 196, 0.4);
+}
+
+.upload-hint {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
+/* Upload Status Messages */
+.upload-status {
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.upload-status.success {
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  color: #4caf50;
+}
+
+.upload-status.error {
+  background: rgba(244, 67, 54, 0.1);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+  color: #f44336;
+}
+
+/* Uploaded Calendar Info */
+.uploaded-calendar-info {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.calendar-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.calendar-summary h4 {
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.calendar-summary p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.clear-calendar-button {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.clear-calendar-button:hover {
+  background: rgba(244, 67, 54, 0.1);
+  border-color: #f44336;
+  color: #f44336;
+}
+
+/* Events Preview */
+.events-preview {
+  margin-top: 1rem;
+}
+
+.events-preview h5 {
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.event-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.event-time {
+  color: var(--accent-color);
+  font-weight: 600;
+  min-width: 120px;
+}
+
+.event-title {
+  color: var(--text-primary);
+  font-weight: 500;
+  flex: 1;
+}
+
+.event-location {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.more-events {
+  color: var(--text-secondary);
+  font-style: italic;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 0.5rem;
+}
+
+/* Upload Instructions */
+.upload-instructions {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.upload-instructions h4 {
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.instructions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.instruction-item {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.instruction-item h5 {
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.instruction-item ol {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.instruction-item li {
+  margin-bottom: 0.25rem;
+  line-height: 1.4;
+}
+
+/* Responsive Design for Calendar Upload */
+@media (max-width: 768px) {
+  .calendar-summary {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .event-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .event-time {
+    min-width: auto;
+  }
+  
+  .instructions-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Study Preferences Section */
 .study-preferences {
   grid-column: 1 / -1; /* Span full width */
